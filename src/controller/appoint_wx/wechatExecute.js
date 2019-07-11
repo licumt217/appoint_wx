@@ -1,5 +1,5 @@
 const Base = require('./base.js');
-const Util = require('../../util/Util')
+const WechatUtil = require('../../util/WechatUtil')
 
 module.exports = class extends Base {
     /**
@@ -9,7 +9,7 @@ module.exports = class extends Base {
 
         let echostr = this.get('echostr')
 
-        if(Util.checkSignature(this.get('signature'),this.get('timestamp'),this.get('nonce'))){
+        if(WechatUtil.checkSignature(this.get('signature'),this.get('timestamp'),this.get('nonce'))){
             this.body = echostr
         }else{
             this.body = false
