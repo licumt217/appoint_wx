@@ -1,0 +1,15 @@
+{
+  "apps": [{
+    "name": "appoint_wx",
+    "script": "production.js",
+    "cwd": "/home/backend/appoint_wx",
+    "exec_mode": "fork",
+    "max_memory_restart": "1G",
+    "autorestart": true,
+    "node_args": [],
+    "args": [],
+    "env": {
+
+    }
+  }]
+}
