@@ -7,6 +7,7 @@ const WechatTemplates=require("../config/WechatTemplates")
 const Sha1SignUtil = require('./Sha1SignUtil')
 
 const fs = require("fs")
+const path = require("path")
 
 schedule = require('node-schedule')
 
@@ -23,23 +24,25 @@ let Util={
 
         let token=null;
 
+        console.log(__dirname)
+
         //说明执行过此方法，直接文件中获取token
         if(scheduleJob){
 
-            token=fs.readFileSync('../config/access_token');
+            token=fs.readFileSync(path.join(__dirname,'../config/access_token'));
 
         }else{//首次进入，通过接口获取
 
             token = await Util.realGetAccessToken();
 
-            fs.writeFileSync('../config/access_token', token);
+            fs.writeFileSync(path.join(__dirname,'../config/access_token'), token);
 
             console.log("-------->access_token写入文件，然后每100分钟刷新token");
 
             scheduleJob=schedule.scheduleJob('* 30 * * * *', async ()=>{
                 token = await Util.realGetAccessToken();
 
-                fs.writeFileSync('../../access_token', token);
+                fs.writeFileSync(path.join(__dirname,'../config/access_token'), token);
             })
         }
 
@@ -55,9 +58,10 @@ let Util={
     realGetAccessToken:()=> {
 
         return new Promise(((resolve, reject) => {
-            request.get(`${WechatConfig.URL_OF_GET_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
+            request.get(`${WechatConfig.URL_OF_GET_ACCESS_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
 
                 if (error) {
+                    console.log(error)
                     resolve(null)
                 } else {
 

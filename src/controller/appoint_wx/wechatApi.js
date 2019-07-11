@@ -10,7 +10,7 @@ module.exports = class extends Base {
     /**
      * 验证消息来自微信服务器
      */
-    async getAccessToken() {
+    async getAccessTokenAction() {
 
         this.body = WechatUtil.getAccessToken();
 
@@ -21,7 +21,7 @@ module.exports = class extends Base {
      * @param code
      * @returns {Promise<void>}
      */
-    async getOpenId(code) {
+    async getOpenIdAction(code) {
         let openId = await WechatUtil.getOpenId(code);
 
         this.body = openId;
@@ -37,7 +37,7 @@ module.exports = class extends Base {
      * @param bottom 底部提示文字
      * @returns {Promise<any>}
      */
-    async sendTemplateMsg(openId,templateName,dataArray,url,top,bottom){
+    async sendTemplateMsgAction(openId,templateName,dataArray,url,top,bottom){
 
         let data= await WechatUtil.sendTemplateMsg(openId,templateName,dataArray,url,top,bottom);
 
