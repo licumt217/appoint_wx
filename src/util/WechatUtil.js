@@ -4,7 +4,9 @@ const WechatConfig=require("../config/WechatConfig")
 
 const WechatTemplates=require("../config/WechatTemplates")
 
-const Sha1SignUtil = require('./Sha1SignUtil')
+const SignUtil = require('./SignUtil')
+
+const BaseUtil = require('./Util')
 
 const fs = require("fs")
 const path = require("path")
@@ -87,7 +89,7 @@ let Util={
 
         let content = array.join("");
 
-        content = Sha1SignUtil.sha1(content).toUpperCase();
+        content = SignUtil.sha1(content).toUpperCase();
 
         if (content === signature.toUpperCase()) {
             return true;
@@ -207,7 +209,80 @@ let Util={
                 }
             )
         }))
-    }
+    },
+
+    /**
+     * 获取微信支付签名算法sign
+     * @param obj
+     * @returns {string}
+     */
+    getPaySign(obj){
+        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=`).toUpperCase()
+    },
+
+    /**
+     * 微信支付统一下单
+     * @param xml
+     * @returns {Promise<any>}
+     */
+    unifiedOrder:(out_trade_no,total_fee,ip)=>{
+
+        let trade_type="JSAPI"
+
+        let body="北大-心理咨询"
+
+        let obj={
+            appid:WechatConfig.APP_ID,
+            mch_id:WechatConfig.MCH_ID,
+            nonce_str:BaseUtil.uuid(),
+            body:body,
+            out_trade_no:out_trade_no,//商户订单号
+            total_fee:total_fee,//单位分
+            spbill_create_ip:ip,
+            notify_url:WechatConfig.NOTIFY_URL,
+            trade_type:trade_type
+        }
+
+        let sign=Util.getPaySign(obj);
+
+        obj.sign=sign;
+
+        let xml=BaseUtil.obj2xml(obj)
+
+
+        return new Promise((async (resolve, reject) =>  {
+
+            request.post(
+                {
+                    url:WechatConfig.URL_OF_UNIFIED_ORDER,
+                    form:xml
+                },
+                (error, response, body)=>{
+                    if (error) {
+                        console.log(1)
+                        resolve({"error":"error"})
+                    } else {
+                        console.log(2,body)
+                        let json=BaseUtil.xml2JsonObj(body)
+
+                        console.log(json)
+
+                        let return_code=json.return_code;
+                        let return_msg=json.return_msg;
+
+                        if(return_code==="FAIL"){
+                            resolve({"error":return_msg})
+                        }else{
+                            resolve({"error":return_msg})
+                        }
+
+
+
+                    }
+                }
+            )
+        }))
+    },
 
 }
 

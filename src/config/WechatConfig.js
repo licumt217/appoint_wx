@@ -26,6 +26,22 @@ module.exports={
      */
     DEFAULT_COLOR:"#173177",
 
+    /**
+     * 商户号
+     */
+    MCH_ID:"1494200172",
+
+    /**
+     * 微信支付下单URL
+     */
+    URL_OF_UNIFIED_ORDER:"https://api.mch.weixin.qq.com/pay/unifiedorder",
+
+    /**
+     * 微信支付通知URL
+     * 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     */
+    URL_OF_NOTIFY_URL:"http://47.92.74.29/appoint_wx/wechatApi/payNotifyUrl",
+
 
 
 }

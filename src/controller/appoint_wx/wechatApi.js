@@ -1,6 +1,9 @@
 const Base = require('./base.js');
 
 const WechatUtil = require('../../util/WechatUtil')
+const WechatConfig = require('../../config/WechatConfig')
+const Util = require('../../util/Util')
+const SignUtil = require('../../util/SignUtil')
 
 
 
@@ -54,6 +57,28 @@ module.exports = class extends Base {
         let bottom=this.post("bottom")
 
         let data= await WechatUtil.sendTemplateMsg(openId,templateName,dataArray,url,top,bottom);
+
+        this.body=data;
+
+    }
+
+    /**
+     * 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     * @returns {Promise<void>}
+     */
+    async payNotifyUrlAction(){
+
+        this.body=null;
+
+    }
+
+    /**
+     * 微信支付统一下单接口
+     * @returns {Promise<void>}
+     */
+    async unifiedOrderAction(){
+
+        let data=await WechatUtil.unifiedOrder("xxxxx",2,this.ip)
 
         this.body=data;
 
