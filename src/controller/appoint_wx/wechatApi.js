@@ -21,7 +21,14 @@ module.exports = class extends Base {
      * @param code
      * @returns {Promise<void>}
      */
-    async getOpenIdAction(code) {
+    async getOpenIdAction() {
+
+        // 我的openID，对应一圈一圈的。
+
+        // ohZcctykmVT2Lx3eOTX-DQKKwomw
+
+        let code =this.get('code')
+
         let openId = await WechatUtil.getOpenId(code);
 
         this.body = openId;
@@ -37,7 +44,14 @@ module.exports = class extends Base {
      * @param bottom 底部提示文字
      * @returns {Promise<any>}
      */
-    async sendTemplateMsgAction(openId,templateName,dataArray,url,top,bottom){
+    async sendTemplateMsgAction(){
+
+        let openId=this.post("openId")
+        let templateName=this.post("templateName")
+        let dataArray=this.post("dataArray")
+        let url=this.post("url")
+        let top=this.post("top")
+        let bottom=this.post("bottom")
 
         let data= await WechatUtil.sendTemplateMsg(openId,templateName,dataArray,url,top,bottom);
 

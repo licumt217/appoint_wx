@@ -171,7 +171,7 @@ let Util={
 
             let obj=dataArray[i];
 
-                data[`keyword${i}`]={
+                data[`keyword${i+1}`]={
                     "value":obj.value,
                     "color":obj.color||WechatConfig.DEFAULT_COLOR
                 }
@@ -185,14 +185,17 @@ let Util={
             "data":data
         };
 
-        return new Promise(((resolve, reject) => {
 
-            let ACCESS_TOKEN=Util.getAccessToken();
+        return new Promise((async (resolve, reject) =>  {
+
+            let ACCESS_TOKEN=await Util.getAccessToken();
+
+            console.log("token"+ACCESS_TOKEN);
 
             request.post(
                 {
                     url:`https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${ACCESS_TOKEN}`,
-                    form:form
+                    form:JSON.stringify(form)
                 },
                 (error, response, body)=>{
                     if (error) {
