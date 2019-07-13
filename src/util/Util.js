@@ -65,6 +65,14 @@ let Util={
         let obj= x2jParser.parse(xml);
 
         return obj.xml;
+    },
+
+    /**
+     * 返回时间戳，签名算法用到
+     * @returns {number}
+     */
+    getTimestamp(){
+        return new Date().getTime()/1000
     }
 
 }

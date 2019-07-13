@@ -4,7 +4,15 @@ module.exports={
 
     SECRET:"bccf7d2d46b446ec5749fc173f1e051b",
 
+    /**
+     * 接口调用token
+     */
     URL_OF_GET_ACCESS_TOKEN:"https://api.weixin.qq.com/cgi-bin/token",
+
+    /**
+     * jsapi_ticket
+     */
+    URL_OF_GET_JSAPI_TICKET:"https://api.weixin.qq.com/cgi-bin/ticket/getticket",
 
     /**
      * 返回access_token和openId,网页授权接口调用凭证,注意：此access_token与基础支持的access_token不同
@@ -35,6 +43,22 @@ module.exports={
      * 微信支付下单URL
      */
     URL_OF_UNIFIED_ORDER:"https://api.mch.weixin.qq.com/pay/unifiedorder",
+
+    /**
+     * 微信退款接口
+     */
+    URL_OF_REFUND:"https://api.mch.weixin.qq.com/secapi/pay/refund",
+
+    /**
+     * 微信查询订单接口
+     */
+    URL_OF_ORDER_QUERY:"https://api.mch.weixin.qq.com/pay/orderquery",
+
+    /**
+     * 发送客服消息接口
+     */
+    URL_OF_CUSTOMER_SERVICE_MSG:"https://api.weixin.qq.com/cgi-bin/message/custom/send",
+
 
     /**
      * 微信支付通知URL

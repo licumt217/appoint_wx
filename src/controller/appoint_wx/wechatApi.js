@@ -68,7 +68,41 @@ module.exports = class extends Base {
      */
     async payNotifyUrlAction(){
 
-        this.body=null;
+        let return_code=this.post('return_code')
+        let return_msg=this.post('return_msg')
+        let transaction_id=this.post('transaction_id')
+        let out_trade_no=this.post('out_trade_no')
+        let total_fee=this.post('total_fee')
+
+        //接收通知后，更改数据库中的订单状态，改为已支付等
+
+        this.body=Util.obj2xml({
+            return_code:"SUCCESS",
+            return_msg:"OK"
+        });
+
+    }
+
+    /**
+     * 异步接收微信退款结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     * 退款结果对重要的数据进行了加密，商户需要用商户秘钥进行解密后才能获得结果通知的内容
+     * @returns {Promise<void>}
+     */
+    async refundNotifyUrlAction(){
+
+        let return_code=this.post('return_code')
+        let return_msg=this.post('return_msg')
+        let req_info=this.post('req_info')//需要解密
+
+
+        req_info=WechatUtil.decryptRefundNotifyParam(req_info);
+
+        //验证参数后，更改数据库中的订单状态，改为已退款之类的等
+
+        this.body=Util.obj2xml({
+            return_code:"SUCCESS",
+            return_msg:"OK"
+        });
 
     }
 
@@ -78,11 +112,72 @@ module.exports = class extends Base {
      */
     async unifiedOrderAction(){
 
-        let data=await WechatUtil.unifiedOrder("xxxxx",2,this.ip)
+        let prepay_id=await WechatUtil.unifiedOrder("xxxxx",2,this.ip)
+
+        this.body=WechatUtil.getJsApiPaySign(prepay_id);
+
+    }
+
+
+    /**
+     * 退款
+     * @returns {Promise<void>}
+     */
+    async refundAction(){
+
+        let out_trade_no=""
+        let out_refund_no=""
+        let total_fee=""
+        let refund_fee=""
+
+
+        await WechatUtil.refund(out_trade_no,out_refund_no,total_fee,refund_fee);
+
+        this.body=null;
+
+    }
+
+    /**
+     * 查询订单接口
+     * @returns {Promise<void>}
+     */
+    async orderQueryAction(out_trade_no){
+
+        let json=await WechatUtil.orderQuery(out_trade_no);
 
         this.body=data;
 
     }
+
+    /**
+     * 发送客服消息，默认文本消息
+     * @returns {Promise<void>}
+     */
+    async sendCustomerServiceMsgAction(){
+
+        let json=await WechatUtil.sendCustomerServiceMsg(null,"你好啊");
+
+        this.body=json;
+
+    }
+
+    /**
+     * 前端调用微信jssdk 时要用到的签名
+     * @returns {Promise<void>}
+     */
+    async getJsSdkSignatureAction(){
+
+        let url=this.post('url')
+
+        let signatureObj=await WechatUtil.getJsSdkSignature(url);
+
+        this.body=signatureObj;
+
+    }
+
+
+
+
 }
 
 

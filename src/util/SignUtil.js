@@ -1,4 +1,6 @@
 const md5=require("md5")
+const base64=require("base64-url")
+const simpleAes = require('simple-aes-256')
 
 let Util={
     encodeUTF8:(s)=> {
@@ -22,7 +24,7 @@ let Util={
      * @returns {string}
      */
     sha1:(s)=> {
-        var data = new Uint8Array(encodeUTF8(s))
+        var data = new Uint8Array(Util.encodeUTF8(s))
         var i, j, t;
         var l = ((data.length + 8) >>> 6 << 4) + 16, s = new Uint8Array(l << 2);
         s.set(new Uint8Array(data.buffer)), s = new Uint32Array(s.buffer);
@@ -85,7 +87,35 @@ let Util={
 
     md5:(param)=>{
         return md5(param);
-    }
+    },
+
+    /**
+     * base64编码
+     * @param param
+     * @returns {*}
+     */
+    base64encode:(param)=>{
+        return base64.encode(param)
+    },
+
+    /**
+     * base64解码
+     * @param param
+     * @returns {*}
+     */
+    base64decode:(param)=>{
+        return base64.decode(param)
+    },
+
+    aes256encrypt:(secret,message)=>{
+        return simpleAes.encrypt(secret, message);
+    },
+
+    aes256decrypt:(secret,encrypted)=>{
+        return simpleAes.decrypt(secret, encrypted);
+    },
+
+
 }
 
 
