@@ -4,6 +4,7 @@ const WechatUtil = require('../../util/WechatUtil')
 const WechatConfig = require('../../config/WechatConfig')
 const Util = require('../../util/Util')
 const SignUtil = require('../../util/SignUtil')
+const Response = require('../../config/response')
 
 
 
@@ -30,11 +31,16 @@ module.exports = class extends Base {
 
         // ohZcctykmVT2Lx3eOTX-DQKKwomw
 
+
         let code =this.get('code')
 
-        let openId = await WechatUtil.getOpenId(code);
+        console.log("code:"+code)
 
-        this.body = openId;
+        let openid = await WechatUtil.getOpenId(code);
+
+        console.log('openid:'+openid)
+
+        this.body = Response.success(openid);
     }
 
     /**
