@@ -1,8 +1,8 @@
 module.exports={
 
-    APP_ID:"wx983e6f0f3345a6c6",
+    APP_ID:"wxb4a0f8c89361efe2",
 
-    SECRET:"bccf7d2d46b446ec5749fc173f1e051b",
+    SECRET:"9baa2dca71483cb0c268d2d332d20219",
 
     /**
      * 接口调用token
@@ -37,7 +37,7 @@ module.exports={
     /**
      * 商户号
      */
-    MCH_ID:"1494200172",
+    MCH_ID:"1545814681",
 
     /**
      * 微信支付下单URL

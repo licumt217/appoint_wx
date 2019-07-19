@@ -15,7 +15,7 @@ module.exports = class extends Base {
      */
     async getAccessTokenAction() {
 
-        this.body = WechatUtil.getAccessToken();
+        this.body = await WechatUtil.getAccessToken();
 
     }
 
@@ -112,7 +112,11 @@ module.exports = class extends Base {
      */
     async unifiedOrderAction(){
 
-        let prepay_id=await WechatUtil.unifiedOrder("xxxxx",2,this.ip)
+        let openid=this.post('openid')
+        let out_trade_no=this.post('out_trade_no')
+        let total_fee=Number(this.post('total_fee'))*100
+
+        let prepay_id=await WechatUtil.unifiedOrder(openid,out_trade_no,total_fee,this.ip)
 
         this.body=WechatUtil.getJsApiPaySign(prepay_id);
 
@@ -141,9 +145,14 @@ module.exports = class extends Base {
      * 查询订单接口
      * @returns {Promise<void>}
      */
-    async orderQueryAction(out_trade_no){
+    async orderQueryAction(){
 
         let json=await WechatUtil.orderQuery(out_trade_no);
+        let openid=this.post('openid')
+        let out_trade_no=this.post('out_trade_no')
+        let total_fee=Number(this.post('total_fee'))*100
+
+        let data=await WechatUtil.unifiedOrder(openid,out_trade_no,total_fee,this.ip)
 
         this.body=data;
 

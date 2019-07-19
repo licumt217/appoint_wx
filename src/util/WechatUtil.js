@@ -72,6 +72,8 @@ let Util={
                     resolve(null)
                 } else {
 
+                    console.log("获取token接口返回："+body)
+
                     resolve(JSON.parse(body).access_token)
                 }
             })
@@ -278,7 +280,9 @@ let Util={
      * @returns {string}
      */
     getPaySign(obj){
-        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=`).toUpperCase()
+        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=xinhangtuadmin007xinhangtuadmin0`)
+
+        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=xinhangtuadmin007xinhangtuadmin0`).toUpperCase()
     },
 
     /**
@@ -286,13 +290,14 @@ let Util={
      * @param xml
      * @returns {Promise<any>}
      */
-    unifiedOrder:(out_trade_no,total_fee,ip)=>{
+    unifiedOrder:(openid,out_trade_no,total_fee,ip)=>{
 
         let trade_type="JSAPI"
 
         let body="北大-心理咨询"
 
         let obj={
+            openid:openid,
             appid:WechatConfig.APP_ID,
             mch_id:WechatConfig.MCH_ID,
             nonce_str:BaseUtil.uuid(),
@@ -300,7 +305,7 @@ let Util={
             out_trade_no:out_trade_no,//商户订单号
             total_fee:total_fee,//单位分
             spbill_create_ip:ip,
-            notify_url:WechatConfig.NOTIFY_URL,
+            notify_url:WechatConfig.URL_OF_NOTIFY_URL,
             trade_type:trade_type
         }
 
@@ -309,6 +314,8 @@ let Util={
         obj.sign=sign;
 
         let xml=BaseUtil.obj2xml(obj)
+
+        console.log("统一下单参数："+xml)
 
 
         return new Promise((async (resolve, reject) =>  {
