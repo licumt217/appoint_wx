@@ -283,9 +283,49 @@ let Util={
      * @returns {string}
      */
     getPaySign(obj){
-        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=xinhangtuadmin007xinhangtuadmin0`)
+        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=${WechatConfig.KEY}`)
 
-        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=xinhangtuadmin007xinhangtuadmin0`).toUpperCase()
+        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=${WechatConfig.KEY}`).toUpperCase()
+    },
+
+    /**
+     * 校验微信服务器发送的异步通知消息：比如支付回调校验
+     * @param json
+     * @returns {boolean}
+     */
+    checkWechatMessageSignature(json){
+
+        for(let key in json){
+            if(typeof json[key]==='object'){//array
+                json[key]=json[key][0]
+            }
+
+            if(json[key] ===""){
+                delete json[key]
+            }
+        }
+
+
+        if(!json.sign){
+            return false;
+        }else{
+            let sign=json.sign;
+
+            delete json.sign;
+
+            console.log('sign:'+sign)
+
+            let calculatedSign=Util.getPaySign(json);
+
+            console.log('calculatedSign:'+calculatedSign)
+
+            if(sign===calculatedSign){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
     },
 
     /**
@@ -339,12 +379,13 @@ let Util={
                         console.log(json)
 
                         let return_code=json.return_code;
+                        let result_code=json.result_code;
                         let return_msg=json.return_msg;
 
-                        if(return_code==="FAIL"){
-                            resolve({"error":return_msg})
+                        if(return_code==="SUCCESS" && result_code==="SUCCESS" ){
+                            resolve(json.prepay_id)
                         }else{
-                            resolve({"error":return_msg})
+                            reject(return_msg)
                         }
 
 
@@ -362,8 +403,9 @@ let Util={
      * @param total_fee 总金额
      * @param refund_fee 退款金额
      * @returns {Promise<any>}
+     * 需要双向签名
      */
-    refund:(out_trade_no,out_refund_no,total_fee,refund_fee)=>{
+    refund:(out_trade_no,out_refund_no,total_fee,refund_fee,notify_url)=>{
 
         let obj={
             appid:WechatConfig.APP_ID,
@@ -375,38 +417,131 @@ let Util={
             refund_fee:refund_fee,
         }
 
+        if(notify_url){
+            obj.notify_url=notify_url;
+        }
+
         let sign=Util.getPaySign(obj);
 
         obj.sign=sign;
 
         let xml=BaseUtil.obj2xml(obj)
 
-
         return new Promise((async (resolve, reject) =>  {
 
             request.post(
                 {
                     url:WechatConfig.URL_OF_REFUND,
-                    form:xml
+                    form:xml,
+                    agentOptions: {
+                        pfx: fs.readFileSync(path.join(__dirname,'../config/cert/apiclient_cert.p12')), //微信商户平台证书,
+                        passphrase: WechatConfig.MCH_ID // 商家id
+                    }
                 },
                 (error, response, body)=>{
+
                     if (error) {
-                        console.log(1)
-                        resolve({"error":"error"})
+                        resolve({"退款失败":error})
                     } else {
-                        console.log(2,body)
+
                         let json=BaseUtil.xml2JsonObj(body)
 
-                        console.log(json)
+                        console.log("退款接口返回信息："+JSON.stringify(json))
 
-                        let return_code=json.return_code;
-                        let return_msg=json.return_msg;
+                        //再次校验签名
+                        if(Util.checkWechatMessageSignature(json)){
+                            let return_code=json.return_code;
+                            let return_msg=json.return_msg;
+                            let result_code=json.result_code;
 
-                        if(return_code==="FAIL"){
-                            resolve({"error":return_msg})
+                            if(return_code==="SUCCESS"){
+
+                                if(result_code==="SUCCESS"){
+
+
+                                    resolve(json)
+                                }else{
+                                    reject(return_msg)
+                                }
+
+                            }else{
+                                reject(return_msg)
+                            }
                         }else{
-                            resolve({"error":return_msg})
+                            reject("退款接口微信返回信息签名校验错误！")
                         }
+
+
+
+
+
+                    }
+                }
+            )
+        }))
+    },
+    /**
+     * 退款查询
+     * @param out_refund_no 商户退款订单号
+     * @returns {Promise<any>}
+     */
+    refundQuery:(out_refund_no)=>{
+
+        let obj={
+            appid:WechatConfig.APP_ID,
+            mch_id:WechatConfig.MCH_ID,
+            nonce_str:BaseUtil.uuid(),
+            out_refund_no:out_refund_no
+        }
+
+        let sign=Util.getPaySign(obj);
+
+
+        obj.sign=sign;
+
+        let xml=BaseUtil.obj2xml(obj)
+
+        return new Promise((async (resolve, reject) =>  {
+
+            request.post(
+                {
+                    url:WechatConfig.URL_OF_REFUND_QUERY,
+                    form:xml,
+                },
+                (error, response, body)=>{
+
+                    if (error) {
+                        resolve({"退款查询失败":error})
+                    } else {
+
+                        let json=BaseUtil.xml2JsonObj(body)
+
+                        console.log("退款查询接口返回信息："+JSON.stringify(json))
+
+                        //再次校验签名
+                        if(Util.checkWechatMessageSignature(json)){
+                            let return_code=json.return_code;
+                            let return_msg=json.return_msg;
+                            let result_code=json.result_code;
+
+                            if(return_code==="SUCCESS"){
+
+                                if(result_code==="SUCCESS"){
+
+
+                                    resolve(json)
+                                }else{
+                                    reject(return_msg)
+                                }
+
+                            }else{
+                                reject(return_msg)
+                            }
+                        }else{
+                            reject("退款查询接口微信返回信息签名校验错误！")
+                        }
+
+
 
 
 
@@ -448,24 +583,36 @@ let Util={
      */
     decryptRefundNotifyParam:(req_info)=>{
 
-        let shanghuKey="xxx"
-
-        req_info=SignUtil.base64decode(req_info)
+        let shanghuKey=WechatConfig.KEY
 
         shanghuKey=SignUtil.md5(shanghuKey)
 
-        //TODO 此处解密用的aes-256,不一定行，需要试试
-        let returnStr=SignUtil.aes256decrypt(shanghuKey,req_info);
+        // req_info=SignUtil.base64decode(req_info)
 
-        return BaseUtil.xml2JsonObj(returnStr)
+        let returnStr=SignUtil.decryption(req_info,shanghuKey);
+
+        // return BaseUtil.xml2JsonObj(returnStr)
     },
     /**
-     * 微信退款
-     * @param out_trade_no 订单号
-     * @param out_refund_no 退款单号
-     * @param total_fee 总金额
-     * @param refund_fee 退款金额
+     * 查询订单
+     * @param out_trade_no
      * @returns {Promise<any>}
+     *
+     * trade_state：交易状态
+     * SUCCESS—支付成功
+
+         REFUND—转入退款
+
+         NOTPAY—未支付
+
+         CLOSED—已关闭
+
+         REVOKED—已撤销（付款码支付）
+
+         USERPAYING--用户支付中（付款码支付）
+
+         PAYERROR--支付失败(其他原因，如银行返回失败)
+
      */
     orderQuery:(out_trade_no)=>{
 
@@ -501,12 +648,13 @@ let Util={
                         console.log(json)
 
                         let return_code=json.return_code;
+                        let result_code=json.result_code;
                         let return_msg=json.return_msg;
 
-                        if(return_code==="FAIL"){
-                            resolve({"error":return_msg})
+                        if(return_code==="SUCCESS" && result_code==="SUCCESS" ){
+                            resolve(json.trade_state)
                         }else{
-                            resolve({"error":return_msg})
+                            reject(return_msg)
                         }
 
 
@@ -641,5 +789,8 @@ let Util={
 
 }
 
+let mm="+EkBcKs4rbi/rcj8YsNXp/Y53snuVh+e2z6AG0M/tzGzOU69P5RXEGfaPpEbB1rxVsDSllOv2ktcf4GArDjvP6IAvY/x8jpwObfiiulyblbCAOxIfDJb8Jy60Qp/axkdcoIA6vPKbKRIDISoMLR4kknOeifZTcyDWADaYVstIsIWlJm/1sbflB92WV5B90K0O3NZasrydIUqoPwiNo+JMG0K0SWatG1yWU5j7kjKxdQ7Ho6ibE01I/ODhtitEgzU4F5EwZFF5NH82lKOAGnRHVtCJmasO8C3Ufr3ODKImcEKCUlvjFC+ZncmcFKoMqktvVD8e9Bycu31hw9MSfI6CYsXJfiNsbYNloQ3368W2D4U6pRyXhCoSVtcYkRSENASrLYHiaOE44TVZyFWaHIDVdTsiKrgDuGAl34kqC28z9BFfIqCBVSD49hU9Wlvx7daVYxvxMbgyqht0i9LKhAH4DiDKNq1EHjUWb81r3mIVdDYqcW1GPXdM78zFr0w9R4jDvPRc5AQ2246HI4pl0NWDASDGvRMztHD1kPuQWuFn/ftonw6uLIhEV0tcBVjj6+PCXHwVfJHB3waJgmMGGdaJ2y5w0pwB1KLlLWGXK1LKgAT+qELZiP4NyKrTVnt8Q8cdEmV4lD0AOhOQn2++hoEQdwz2wh5C99VBNT8tw7ljhR/CXSs8BaF8xTzfwnlUeIEx7hW/BME6oG41t+P7U5yz4iREGOgroz3AlVSrMlglwb9AUf7gMCdiKGwWWaaZcuCPHOO4q4YlnY9BZasr+6kQvfvM5KNPF4gZ2irW30kX7+ahFRMxIUapGtRVq7v9jZt+6ePezfCUPbT7p5J6Io9PlDzivAVcw8oiRgSYRvmTdZw4EMwQGJ/zhrehkdUtGQaji8GfXmETZznukqCnvcHLzhyzfMieBLdfX3cHrZrXH1Kg/z0TvyXJt6ydMAJf5SUgUxq0d4Pm8GEbI6dyaKidcm1YzgioSJNgZGQ/gUMRRRnGE4V4uLvIDJR1A9mj5ErzaK+8A9Xnan1GCa+x+RtBw=="
 
-module.exports=Util;
+console.log(Util.decryptRefundNotifyParam(mm))
+
+// module.exports=Util;

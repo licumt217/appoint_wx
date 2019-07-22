@@ -5,6 +5,11 @@ module.exports={
     SECRET:"9baa2dca71483cb0c268d2d332d20219",
 
     /**
+     * 商户平台秘钥key
+     */
+    KEY:"xinhangtuadmin007xinhangtuadmin0",
+
+    /**
      * 接口调用token
      */
     URL_OF_GET_ACCESS_TOKEN:"https://api.weixin.qq.com/cgi-bin/token",
@@ -48,6 +53,10 @@ module.exports={
      * 微信退款接口
      */
     URL_OF_REFUND:"https://api.mch.weixin.qq.com/secapi/pay/refund",
+    /**
+     * 微信退款查询接口
+     */
+    URL_OF_REFUND_QUERY:"https://api.mch.weixin.qq.com/pay/refundquery",
 
     /**
      * 微信查询订单接口

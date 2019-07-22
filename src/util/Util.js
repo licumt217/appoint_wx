@@ -1,7 +1,7 @@
 const j2xParser = require("fast-xml-parser").j2xParser;
 const x2jParser = require("fast-xml-parser");
 
-json2xmlParser=new j2xParser();
+json2xmlParser = new j2xParser();
 const defaultOptions = {
     // attributeNamePrefix : "@_",
     // attrNodeName: "@", //default is false
@@ -15,8 +15,8 @@ const defaultOptions = {
 };
 
 
-let Util={
-    uuid:()=>{
+let Util = {
+    uuid: () => {
         return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             let r = Math.random() * 16 | 0,
                 v = c == 'x' ? r : r & 0x3 | 0x8;
@@ -29,28 +29,27 @@ let Util={
      * @param obj
      * @returns {string}
      */
-    obj2xml:(obj)=>{
-
+    obj2xml: (obj) => {
 
 
         let xml = json2xmlParser.parse(obj);
 
-        xml=`<xml>${xml}</xml>`
+        xml = `<xml>${xml}</xml>`
 
         return xml;
     },
 
-    xml2JsonObj(xml){
+    xml2JsonObj(xml) {
 
         var options = {
-            attributeNamePrefix : "@_",
+            attributeNamePrefix: "@_",
             attrNodeName: "attr", //default is 'false'
-            textNodeName : "#text",
-            ignoreAttributes : true,
-            ignoreNameSpace : false,
-            allowBooleanAttributes : false,
-            parseNodeValue : true,
-            parseAttributeValue : false,
+            textNodeName: "#text",
+            ignoreAttributes: true,
+            ignoreNameSpace: false,
+            allowBooleanAttributes: false,
+            parseNodeValue: true,
+            parseAttributeValue: false,
             trimValues: true,
             cdataTagName: "__cdata", //default is 'false'
             cdataPositionChar: "\\c",
@@ -61,9 +60,7 @@ let Util={
         };
 
 
-
-        let obj= x2jParser.parse(xml);
-
+        let obj = x2jParser.parse(xml);
         return obj.xml;
     },
 
@@ -71,14 +68,28 @@ let Util={
      * 返回时间戳，签名算法用到
      * @returns {number}
      */
-    getTimestamp(){
-        return new Date().getTime()/1000
+    getTimestamp() {
+        return Math.floor(new Date().getTime() / 1000)
+    },
+
+    clone(obj) {
+        if (typeof obj === 'object') {
+            let returnObj = null
+            if (Array.isArray(obj)) {
+                returnObj = []
+                for (let i = 0; i < obj.length; i++) returnObj.push(obj[i])
+            } else {
+                returnObj = {}
+                for (let key in obj) {
+                    returnObj[key] = Util.clone(obj[key])
+                }
+            }
+            return returnObj
+        }
+        return obj
     }
 
 }
 
 
-
-
-
-module.exports=Util;
+module.exports = Util;

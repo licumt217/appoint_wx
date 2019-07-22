@@ -1,6 +1,6 @@
 const md5=require("md5")
 const base64=require("base64-url")
-const simpleAes = require('simple-aes-256')
+const crypto = require('crypto')
 
 let Util={
     encodeUTF8:(s)=> {
@@ -107,16 +107,54 @@ let Util={
         return base64.decode(param)
     },
 
-    aes256encrypt:(secret,message)=>{
-        return simpleAes.encrypt(secret, message);
+    /**
+     * aes加密
+     * @param data 待加密内容
+     * @param key 必须为32位私钥
+     * @returns {string}
+     */
+    encryption :function (data, key, iv) {
+        iv = iv || "";
+        var clearEncoding = 'utf8';
+        var cipherEncoding = 'base64';
+        var cipherChunks = [];
+        var cipher = crypto.createCipheriv('aes-256-ecb', key, iv);
+        cipher.setAutoPadding(true);
+        cipherChunks.push(cipher.update(data, clearEncoding, cipherEncoding));
+        cipherChunks.push(cipher.final(cipherEncoding));
+        return cipherChunks.join('');
     },
 
-    aes256decrypt:(secret,encrypted)=>{
-        return simpleAes.decrypt(secret, encrypted);
-    },
+    /**
+     * aes解密
+     * @param data 待解密内容
+     * @param key 必须为32位私钥
+     * @returns {string}
+     */
+    decryption :function (data, key, iv) {
+        if (!data) {
+            return "";
+        }
+        iv = iv || "";
+        var clearEncoding = 'utf8';
+        var cipherEncoding = 'base64';
+        var cipherChunks = [];
+        var decipher = crypto.createDecipheriv('aes-256-ecb', key, iv);
+        decipher.setAutoPadding(true);
+        cipherChunks.push(decipher.update(data, cipherEncoding, clearEncoding));
+
+        console.log(222)
+
+
+        cipherChunks.push(decipher.final(clearEncoding));
+
+        console.log(cipherChunks.join(''))
+        return cipherChunks.join('');
+    }
 
 
 }
+
 
 
 

@@ -74,18 +74,30 @@ module.exports = class extends Base {
      */
     async payNotifyUrlAction(){
 
-        let return_code=this.post('return_code')
-        let return_msg=this.post('return_msg')
-        let transaction_id=this.post('transaction_id')
-        let out_trade_no=this.post('out_trade_no')
-        let total_fee=this.post('total_fee')
+        console.log("支付结果通知：")
+        console.log("支付结果通知："+this.post())
+        console.log("支付结果通知："+JSON.stringify(this.post()))
 
-        //接收通知后，更改数据库中的订单状态，改为已支付等
+        let flag=WechatUtil.checkWechatMessageSignature(this.post().xml)
 
-        this.body=Util.obj2xml({
-            return_code:"SUCCESS",
-            return_msg:"OK"
-        });
+        if(flag){
+
+            let json=this.post().xml;
+
+            let out_trade_no=json.out_trade_no;
+
+            //TODO 更新支付订单的状态，存储微信订单号等
+
+
+            this.body=Util.obj2xml({
+                return_code:"SUCCESS",
+                return_msg:"OK"
+            });
+        }else{
+            this.body=Response.businessException("支付回调签名错误！")
+        }
+
+
 
     }
 
@@ -96,19 +108,44 @@ module.exports = class extends Base {
      */
     async refundNotifyUrlAction(){
 
-        let return_code=this.post('return_code')
-        let return_msg=this.post('return_msg')
-        let req_info=this.post('req_info')//需要解密
+        console.log("-------")
+        console.log(JSON.stringify(this.post()))
+
+        let return_code=this.post('xml').return_code[0]
 
 
-        req_info=WechatUtil.decryptRefundNotifyParam(req_info);
+        console.log("退款通知内容："+JSON.stringify(this.post()))
 
-        //验证参数后，更改数据库中的订单状态，改为已退款之类的等
 
-        this.body=Util.obj2xml({
-            return_code:"SUCCESS",
-            return_msg:"OK"
-        });
+        if(return_code==="SUCCESS"){
+
+            let req_info=this.post('xml').req_info[0]
+
+            console.log('222222')
+
+            req_info=WechatUtil.decryptRefundNotifyParam(req_info);
+
+            console.log("解密出来的内容："+req_info)
+            console.log("解密出来的内容："+JSON.stringify(req_info))
+
+
+            //验证参数后，更改数据库中的订单状态，改为已退款之类的等
+
+            this.body=Util.obj2xml({
+                return_code:"SUCCESS",
+                return_msg:"OK"
+            });
+        }else{
+
+            this.body=Util.obj2xml({
+                return_code:"FAIL",
+                return_msg:""
+            });
+        }
+
+
+
+
 
     }
 
@@ -124,7 +161,7 @@ module.exports = class extends Base {
 
         let prepay_id=await WechatUtil.unifiedOrder(openid,out_trade_no,total_fee,this.ip)
 
-        this.body=WechatUtil.getJsApiPaySign(prepay_id);
+        this.body=Response.success(WechatUtil.getJsApiPaySign(prepay_id));
 
     }
 
@@ -135,15 +172,31 @@ module.exports = class extends Base {
      */
     async refundAction(){
 
-        let out_trade_no=""
-        let out_refund_no=""
-        let total_fee=""
-        let refund_fee=""
+        let out_trade_no=this.post('out_trade_no')
+        let out_refund_no=this.post('out_refund_no')
+        let total_fee=Number(this.post('total_fee'))*100
+        let refund_fee=Number(this.post('refund_fee'))*100
+        let notify_url=this.post('notify_url')
 
 
-        await WechatUtil.refund(out_trade_no,out_refund_no,total_fee,refund_fee);
+        let data=await WechatUtil.refund(out_trade_no,out_refund_no,total_fee,refund_fee,notify_url);
 
-        this.body=null;
+        this.body=Response.success(data);
+
+    }
+
+    /**
+     * 查询退款
+     * @returns {Promise<void>}
+     */
+    async refundQueryAction(){
+
+        //商户退款订单号
+        let out_refund_no=this.post('out_refund_no')
+
+        let data=await WechatUtil.refundQuery(out_refund_no);
+
+        this.body=Response.success(data);
 
     }
 
@@ -153,14 +206,13 @@ module.exports = class extends Base {
      */
     async orderQueryAction(){
 
-        let json=await WechatUtil.orderQuery(out_trade_no);
-        let openid=this.post('openid')
-        let out_trade_no=this.post('out_trade_no')
-        let total_fee=Number(this.post('total_fee'))*100
+        let out_trade_no=this.post("out_trade_no")
 
-        let data=await WechatUtil.unifiedOrder(openid,out_trade_no,total_fee,this.ip)
+        console.log("订单查询订单号："+out_trade_no)
 
-        this.body=data;
+        let trade_state=await WechatUtil.orderQuery(out_trade_no);
+
+        this.body=Response.success(trade_state);
 
     }
 
@@ -172,7 +224,7 @@ module.exports = class extends Base {
 
         let json=await WechatUtil.sendCustomerServiceMsg(null,"你好啊");
 
-        this.body=json;
+        this.body=Response.success(json);
 
     }
 
@@ -186,7 +238,7 @@ module.exports = class extends Base {
 
         let signatureObj=await WechatUtil.getJsSdkSignature(url);
 
-        this.body=signatureObj;
+        this.body=Response.success(signatureObj);
 
     }
 
