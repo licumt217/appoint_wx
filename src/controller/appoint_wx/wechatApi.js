@@ -21,7 +21,7 @@ module.exports = class extends Base {
     }
 
     /**
-     * 根据code获取openId
+     * 根据code获取openid
      * @param code
      * @returns {Promise<void>}
      */
@@ -29,7 +29,7 @@ module.exports = class extends Base {
 
         let code =this.get('code')
 
-        console.log("code:"+code)
+        think.logger.info(`根据code获取openid参数 code:${code}`);
 
         try{
 
@@ -38,39 +38,14 @@ module.exports = class extends Base {
             this.body = response;
 
         }catch (e) {
+            think.logger.info(`根据code获取openid异常 msg:${JSON.stringify(e)}`);
             this.body = e;
         }
 
 
     }
 
-    /**
-     * 根据openid获取对应的c端用户手机号
-     * @param code
-     * @returns {Promise<void>}
-     */
-    async getPhoneByOpenidAction() {
 
-        let openid =this.get('openid')
-
-        console.log("openid:"+openid)
-
-        try{
-
-            let phone='18601965856'
-
-            if(Math.random()>0.5){
-                phone=''
-            }
-
-            this.body = Response.success(phone);
-
-        }catch (e) {
-            this.body = e;
-        }
-
-
-    }
 
     /**
      * 发送模板消息

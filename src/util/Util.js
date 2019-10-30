@@ -87,7 +87,25 @@ let Util = {
             return returnObj
         }
         return obj
+    },
+    /**
+     * 是否空对象
+     * @param obj
+     */
+    isEmptyObject(obj){
+        return (JSON.stringify(obj) === "{}");
+    },
+    /**
+     * 验证是否合法手机号
+     * @param p
+     * @returns {boolean}
+     */
+    isValidPhone(p){
+        let re = /^1\d{10}$/
+        return re.test(p)
     }
+
+
 
 }
 

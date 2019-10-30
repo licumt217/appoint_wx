@@ -192,17 +192,22 @@ let Util={
     getOpenid:(code)=> {
 
         return new Promise(((resolve, reject) => {
-            request.get(`${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`, (error, response, body) => {
 
-                console.log("根据code获取openid返回信息",error,body)
+            const url=`${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`
+
+            think.logger.info(`根据code获取openid调用微信接口URL：${url}`);
+
+            request.get(url, (error, response, body) => {
+
+                think.logger.info(`根据code获取openid返回信息 error:${error}， body:${body}， response:${response}`);
 
                 body=JSON.parse(body)
 
                 if(error){
-                    reject(Response.businessException(error))
+                    reject(error)
                 }else{
                     if(body.errcode){
-                        reject(Response.businessException(body.errmsg))
+                        reject(body.errmsg)
                     }else{
                         resolve(Response.success(body.openid))
                     }
