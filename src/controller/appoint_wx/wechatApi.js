@@ -25,15 +25,51 @@ module.exports = class extends Base {
      * @param code
      * @returns {Promise<void>}
      */
-    async getOpenIdAction() {
+    async getOpenidAction() {
 
         let code =this.get('code')
 
         console.log("code:"+code)
 
-        let response = await WechatUtil.getOpenId(code);
+        try{
 
-        this.body = response;
+            let response = await WechatUtil.getOpenid(code);
+
+            this.body = response;
+
+        }catch (e) {
+            this.body = e;
+        }
+
+
+    }
+
+    /**
+     * 根据openid获取对应的c端用户手机号
+     * @param code
+     * @returns {Promise<void>}
+     */
+    async getPhoneByOpenidAction() {
+
+        let openid =this.get('openid')
+
+        console.log("openid:"+openid)
+
+        try{
+
+            let phone='18601965856'
+
+            if(Math.random()>0.5){
+                phone=''
+            }
+
+            this.body = Response.success(phone);
+
+        }catch (e) {
+            this.body = e;
+        }
+
+
     }
 
     /**

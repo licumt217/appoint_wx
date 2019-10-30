@@ -186,22 +186,27 @@ let Util={
     },
 
     /**
-     * 根据code获取openId
+     * 根据code获取openid
      * @param code
      * @returns {Promise<any>}
      */
-    getOpenId:(code)=> {
+    getOpenid:(code)=> {
 
         return new Promise(((resolve, reject) => {
             request.get(`${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`, (error, response, body) => {
 
-                console.log("根据code获取openId返回信息",error,body)
+                console.log("根据code获取openid返回信息",error,body)
 
-                if (error) {
-                    resolve(Response.businessException(error))
-                } else {
+                body=JSON.parse(body)
 
-                    resolve(Response.success(JSON.parse(body).openid))
+                if(error){
+                    reject(Response.businessException(error))
+                }else{
+                    if(body.errcode){
+                        reject(Response.businessException(body.errmsg))
+                    }else{
+                        resolve(Response.success(body.openid))
+                    }
                 }
             })
         }))
@@ -794,4 +799,4 @@ let mm="+EkBcKs4rbi/rcj8YsNXp/Y53snuVh+e2z6AG0M/tzGzOU69P5RXEGfaPpEbB1rxVsDSllOv
 
 console.log(Util.decryptRefundNotifyParam(mm))
 
-// module.exports=Util;
+module.exports=Util;
