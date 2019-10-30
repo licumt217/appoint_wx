@@ -12,7 +12,7 @@ function reset() {
     response ={
         isSuccess:'0',
         errorMsg:''
-    };
+  };
 }
 
 response.success=(data)=>{

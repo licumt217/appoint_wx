@@ -7,7 +7,8 @@
     "start": "node development.js",
     "test": "THINK_UNIT_TEST=1 nyc ava test/ && nyc report --reporter=html",
     "lint": "eslint src/",
-    "lint-fix": "eslint --fix src/"
+    "lint-fix": "eslint --fix src/",
+    "jshint": "jshint --exclude ./node_modules ."
   },
   "dependencies": {
     "base64-url": "^2.2.2",
@@ -28,11 +29,13 @@
     "thinkjs": "^3.0.0"
   },
   "devDependencies": {
-    "think-watcher": "^3.0.0",
-    "eslint": "^4.2.0",
-    "eslint-config-think": "^1.0.0",
     "ava": "^0.18.0",
-    "nyc": "^7.0.0"
+    "eslint": "^4.2.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-config-think": "^1.0.0",
+    "eslint-plugin-html": "^6.0.0",
+    "nyc": "^7.0.0",
+    "think-watcher": "^3.0.0"
   },
   "repository": "",
   "license": "MIT",
