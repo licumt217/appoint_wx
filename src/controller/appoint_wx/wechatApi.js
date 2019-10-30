@@ -27,20 +27,13 @@ module.exports = class extends Base {
      */
     async getOpenIdAction() {
 
-        // 我的openID，对应一圈一圈的。
-
-        // ohZcctykmVT2Lx3eOTX-DQKKwomw
-
-
         let code =this.get('code')
 
         console.log("code:"+code)
 
-        let openid = await WechatUtil.getOpenId(code);
+        let response = await WechatUtil.getOpenId(code);
 
-        console.log('openid:'+openid)
-
-        this.body = Response.success(openid);
+        this.body = response;
     }
 
     /**

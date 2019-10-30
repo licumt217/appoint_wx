@@ -20,6 +20,8 @@ let scheduleJob=null;
 
 let scheduleJobOfJsapiTicket=null;
 
+const Response = require('../config/response')
+
 
 let Util={
     /**
@@ -193,14 +195,13 @@ let Util={
         return new Promise(((resolve, reject) => {
             request.get(`${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`, (error, response, body) => {
 
-                console.log(error,body)
-
+                console.log("根据code获取openId返回信息",error,body)
 
                 if (error) {
-                    resolve(error)
+                    resolve(Response.businessException(error))
                 } else {
 
-                    resolve(JSON.parse(body).openid)
+                    resolve(Response.success(JSON.parse(body).openid))
                 }
             })
         }))
