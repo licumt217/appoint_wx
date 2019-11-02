@@ -3,48 +3,48 @@
  */
 const systemException = "网络繁忙请稍等";
 
-let response = {
-    isSuccess: '0',
-    errorMsg: ''
-};
+let Response = {}, json = {};
 
 function reset(isException) {
-    response = {
+    json = {
         isSuccess: '0',
         errorMsg: '',
-        data: null
+        data: null,
+        isSuccessful: () => {
+            return json.isSuccess === '0';
+        }
     }
 
     if (isException) {
-        delete response.data;
+        delete json.data;
     }
 }
 
-response.success = (data) => {
+Response.success = (data) => {
     reset();
     if (data) {
-        response.data = data;
+        json.data = data;
     }
 
-    return response;
+    return json;
 }
 
-response.businessException = (errorMsg) => {
+Response.businessException = (errorMsg) => {
     reset(true);
-    response.isSuccess = '1';
+    json.isSuccess = '1';
     if (errorMsg) {
-        response.errorMsg = errorMsg;
+        json.errorMsg = errorMsg;
     }
 
-    return response;
+    return json;
 }
-response.systemException = (errorMsg) => {
+Response.systemException = (errorMsg) => {
     reset(true);
-    response.isSuccess = '2';
-    response.errorMsg = systemException;
+    json.isSuccess = '2';
+    json.errorMsg = systemException;
 
-    return response;
+    return json;
 }
 
 
-module.exports = response
+module.exports = Response

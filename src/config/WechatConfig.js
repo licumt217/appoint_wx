@@ -73,7 +73,7 @@ module.exports={
      * 微信支付通知URL
      * 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
      */
-    URL_OF_NOTIFY_URL:"http://47.92.74.29/appoint_wx/wechatApi/payNotifyUrl",
+    URL_OF_NOTIFY_URL:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/payNotifyUrl",
 
 
 
