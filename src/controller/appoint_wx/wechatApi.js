@@ -74,7 +74,7 @@ module.exports = class extends Base {
 
                 let out_trade_no = data.out_trade_no;
 
-                let response = await orderService.getOrderById(out_trade_no)
+                let response = await orderService.getOrderByTradeNo(out_trade_no)
 
 
                 if (response.isSuccessful()) {
@@ -141,38 +141,70 @@ module.exports = class extends Base {
      */
     async refundNotifyUrlAction() {
 
-
-        let return_code = this.post('xml').return_code[0]
-
-
-        console.log("退款通知内容：" + JSON.stringify(this.post()))
+        try{
+            let return_code = this.post('xml').return_code[0]
 
 
-        if (return_code === "SUCCESS") {
-
-            let req_info = this.post('xml').req_info[0]
-
-            console.log('222222')
-
-            req_info = WechatUtil.decryptRefundNotifyParam(req_info);
-
-            console.log("解密出来的内容：" + req_info)
-            console.log("解密出来的内容：" + JSON.stringify(req_info))
+            logger.info("退款通知内容：" + JSON.stringify(this.post()))
 
 
-            //验证参数后，更改数据库中的订单状态，改为已退款之类的等
+            if (return_code === "SUCCESS") {
 
-            this.body = Util.obj2xml({
-                return_code: "SUCCESS",
-                return_msg: "OK"
-            });
-        } else {
+                let req_info = this.post('xml').req_info[0]
 
+                const data = WechatUtil.decryptRefundNotifyParam(req_info);
+
+                logger.info("解密出来的内容：" + JSON.stringify(data))
+
+                //如果库里已经记录过了，则直接返回成功
+
+                let record = await this.model('refund_record').where({
+                    transaction_id:data.transaction_id
+                }).find()
+
+                if(Util.isEmptyObject(record)){
+                    //验证参数后，在退款记录表添加一条记录
+                    let refund_record_id=await this.model('refund_record').add({
+                        out_refund_no:data.out_refund_no,
+                        out_trade_no:data.out_trade_no,
+                        refund_account:data.refund_account,
+                        refund_fee:Number(data.refund_fee)/100,
+                        refund_id:data.refund_id,
+                        refund_recv_accout:data.refund_recv_accout,
+                        refund_request_source:data.refund_request_source,
+                        refund_status:data.refund_status,
+                        settlement_refund_fee:Number(data.settlement_refund_fee)/100,
+                        settlement_total_fee:Number(data.settlement_total_fee)/100,
+                        success_time:data.success_time,
+                        total_fee:Number(data.total_fee)/100,
+                        transaction_id:data.transaction_id,
+                    })
+                    logger.info(`添加退款记录成功，id:${refund_record_id}`)
+                }else{
+                    logger.info(`退款记录已存在，直接返回成功`)
+                }
+
+                this.body = Util.obj2xml({
+                    return_code: "SUCCESS",
+                    return_msg: "OK"
+                });
+            } else {
+
+                this.body = Util.obj2xml({
+                    return_code: "FAIL",
+                    return_msg: ""
+                });
+            }
+        }catch (e) {
+            logger.error(`退款通知接口异常：${e}`)
             this.body = Util.obj2xml({
                 return_code: "FAIL",
                 return_msg: ""
             });
         }
+
+
+
 
 
     }

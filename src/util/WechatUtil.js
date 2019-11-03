@@ -22,6 +22,8 @@ let scheduleJobOfJsapiTicket=null;
 
 const Response = require('../config/response')
 
+const logger = think.logger
+
 let Util={
     /**
      * 获取token
@@ -415,7 +417,9 @@ let Util={
      * @returns {Promise<any>}
      * 需要双向签名
      */
-    refund:(out_trade_no,out_refund_no,total_fee,refund_fee,notify_url)=>{
+    refund:(out_trade_no,out_refund_no,total_fee,refund_fee)=>{
+
+        logger.info(`退款接口参数：out_trade_no：${out_trade_no},：out_refund_no：${out_refund_no},：total_fee：${total_fee},：refund_fee：${refund_fee}`)
 
         let obj={
             appid:WechatConfig.APP_ID,
@@ -425,17 +429,18 @@ let Util={
             out_refund_no:out_refund_no,
             total_fee:total_fee,//单位分
             refund_fee:refund_fee,
+            notify_url:WechatConfig.URL_OF_REFUND_NOTIFY_URL
         }
 
-        if(notify_url){
-            obj.notify_url=notify_url;
-        }
+        logger.info(`微信退款加密前参数 obj:${JSON.stringify(obj)}`)
 
         let sign=Util.getPaySign(obj);
 
         obj.sign=sign;
 
         let xml=BaseUtil.obj2xml(obj)
+
+        logger.info(`微信退款xml数据 xml:${xml}`)
 
         return new Promise((async (resolve, reject) =>  {
 
@@ -450,13 +455,15 @@ let Util={
                 },
                 (error, response, body)=>{
 
+                    logger.info(`退款接口微信返回 error:${error},response:${JSON.stringify(response)},body:${JSON.stringify(body)}`)
+
                     if (error) {
                         resolve({"退款失败":error})
                     } else {
 
                         let json=BaseUtil.xml2JsonObj(body)
 
-                        console.log("退款接口返回信息："+JSON.stringify(json))
+                        logger.info("退款接口返回信息："+JSON.stringify(json))
 
                         //再次校验签名
                         if(Util.checkWechatMessageSignature(json)){
@@ -593,15 +600,19 @@ let Util={
      */
     decryptRefundNotifyParam:(req_info)=>{
 
+        logger.info(`退款解密参数：req_info:${req_info}`)
+
         let shanghuKey=WechatConfig.KEY
 
         shanghuKey=SignUtil.md5(shanghuKey)
 
-        // req_info=SignUtil.base64decode(req_info)
+        logger.info(`md5加密后的商户key:${shanghuKey}`)
 
         let returnStr=SignUtil.decryption(req_info,shanghuKey);
 
-        // return BaseUtil.xml2JsonObj(returnStr)
+        logger.info(`解密后的数据： returnStr:${returnStr}`)
+
+        return BaseUtil.xml2JsonObj(returnStr)
     },
     /**
      * 查询订单

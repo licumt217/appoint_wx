@@ -75,6 +75,11 @@ module.exports={
      */
     URL_OF_NOTIFY_URL:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/payNotifyUrl",
 
+    /**
+     * 退款通知URL
+     */
+    URL_OF_REFUND_NOTIFY_URL:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/refundNotifyUrl",
+
 
 
 }

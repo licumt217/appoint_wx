@@ -7,11 +7,11 @@ module.exports =  {
 
 
     /**
-     * 根据订单id查询订单
+     * 根据订单号查询订单
      * @param orderId
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getOrderById(trade_no){
+    async getOrderByTradeNo(trade_no){
 
         if(!trade_no){
             return Response.businessException("业务订单号不能为空！")
@@ -23,7 +23,7 @@ module.exports =  {
                 trade_no
             }).find();
 
-            logger.info(`根据订单id查询订单数据库返回：${JSON.stringify(data)}`)
+            logger.info(`根据订单号查询订单数据库返回：${JSON.stringify(data)}`)
 
             if(Util.isEmptyObject(data)){
                 return Response.businessException("未找到对应订单！");

@@ -61,7 +61,13 @@ let Util = {
 
 
         let obj = x2jParser.parse(xml);
-        return obj.xml;
+
+        if(obj.xml){
+            return obj.xml;
+        }else{
+            return obj.root;
+        }
+
     },
 
     /**
