@@ -3,9 +3,10 @@
  */
 let Role = {
     admin: 0,      //超管
-    caseManager: 1,       //案例管理员
-    therapist: 2,    //咨询师
-    client: 3,    //c端用户
+    divisionManager: 1,       //分部管理员
+    caseManager: 2,       //案例管理员
+    therapist: 3,    //咨询师
+    client: 4,    //c端用户
 };
 
 

@@ -60,9 +60,38 @@ module.exports = class extends Base {
                 return false;
             }
 
+            //新增咨询师，需要校验流派等
+
+            let schoolTypeId, qualificationTypeId, mannerTypeId, levelTypeId
+            if(role===Role.therapist){
+                schoolTypeId = this.post('schoolTypeId')
+                qualificationTypeId = this.post('qualificationTypeId')
+                mannerTypeId = this.post('mannerTypeId')
+                levelTypeId = this.post('levelTypeId')
+
+                if (!schoolTypeId) {
+                    this.body = Response.businessException(`流派类型不能为空！`)
+                    return false;
+                }
+
+                if (!qualificationTypeId) {
+                    this.body = Response.businessException(`资历类型不能为空！`)
+                    return false;
+                }
+
+                if (!mannerTypeId) {
+                    this.body = Response.businessException(`咨询方式类型不能为空！`)
+                    return false;
+                }
+
+                if (!levelTypeId) {
+                    this.body = Response.businessException(`等级类型不能为空！`)
+                    return false;
+                }
+
+            }
+
             let op_date=DateUtil.getNowStr()
-
-
 
             let addJson={
                 name,
@@ -78,11 +107,23 @@ module.exports = class extends Base {
                 addJson.password=Constant.defaultPassword
             }
 
-            let data = await this.model('user').add(addJson);
+            let userId = await this.model('user').add(addJson);
 
-            logger.info(`新增用户，数据库返回：${JSON.stringify(data)}`)
+            logger.info(`新增用户，数据库返回：${JSON.stringify(userId)}`)
 
-            this.body = Response.success(data);
+            //新增咨询师，需要添加咨询师和流派、资历等的关系表
+            if(role===Role.therapist){
+                await this.model('therapist_attach_relation').add({
+                    therapist_id:userId,
+                    schoolTypeId,
+                    qualificationTypeId,
+                    mannerTypeId,
+                    levelTypeId,
+                    op_date
+                });
+            }
+
+            this.body = Response.success(userId);
 
         } catch (e) {
             logger.info(`新增用户异常 msg:${e}`);
@@ -200,10 +241,18 @@ module.exports = class extends Base {
                 return false;
             }
 
+            //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
+            let data=[]
+            if(role===Role.therapist){
+                data = await this.model('user').where({
+                    role
+                }).join('appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id').page(page,pageSize).countSelect();
+            }else{
+                data = await this.model('user').where({
+                    role
+                }).page(page,pageSize).countSelect();
+            }
 
-            let data = await this.model('user').where({
-                role
-            }).page(page,pageSize).countSelect();
 
             logger.info(`获取用户列表，数据库返回：${JSON.stringify(data)}`)
 

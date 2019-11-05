@@ -8,7 +8,6 @@ const ORDER_STATE =require('../../config/ORDER_STATE')
 const DateUtil = require('../../util/DateUtil')
 const moment =require('moment')
 const orderService = require('../../service/order')
-const DateUtil = require('../../util/DateUtil')
 
 const logger =think.logger
 
