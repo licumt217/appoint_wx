@@ -5,6 +5,7 @@ const Response = require('../../config/response')
 const Util = require('../../util/Util')
 const WechatUtil = require('../../util/WechatUtil')
 const ORDER_STATE =require('../../config/ORDER_STATE')
+const DateUtil = require('../../util/DateUtil')
 const moment =require('moment')
 const orderService = require('../../service/order')
 const DateUtil = require('../../util/DateUtil')
@@ -28,7 +29,7 @@ module.exports = class extends Base {
 
         let state=ORDER_STATE.UN_PAYED
 
-        let create_date=moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        let create_date=DateUtil.getNowStr()
 
         try{
 

@@ -2,6 +2,9 @@ const Base = require('./base.js');
 
 const request = require('request');
 const Response = require('../../config/response')
+const Role = require('../../config/Role')
+const Page = require('../../config/Page')
+const Constant = require('../../config/Constant')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
@@ -71,9 +74,8 @@ module.exports = class extends Base {
                 role
             }
 
-            if(role!==0){
-                let password=md5('123456')
-                addJson.password=password
+            if(role!==Role.client){
+                addJson.password=Constant.defaultPassword
             }
 
             let data = await this.model('user').add(addJson);
@@ -188,10 +190,10 @@ module.exports = class extends Base {
         try {
 
             let role = this.post('role')
-            let page = this.post('page')||1
-            let pageSize = this.post('pageSize')||2
+            let page = this.post('page')||Page.currentPage
+            let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取用户列表参数 role:${role}`)
+            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}`)
 
             if (!role) {
                 this.body = Response.businessException(`用户类型不能为空！`)
