@@ -4,8 +4,8 @@ const Response = require('../../config/response')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 
-const entityName='咨询方式类型'
-const tableName='manner_type'
+const entityName='房间'
+const tableName='room'
 
 
 module.exports = class extends Base {
@@ -19,11 +19,17 @@ module.exports = class extends Base {
         try {
 
             let name = this.post('name')
+            let position = this.post('position')
 
-            logger.info(`新增${entityName}参数 name:${name}`)
+            logger.info(`新增${entityName}参数 name:${name}, position:${position},`)
 
             if (!name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
+                return false;
+            }
+
+            if (!position) {
+                this.body = Response.businessException(`${entityName}位置不能为空！`)
                 return false;
             }
 
@@ -31,6 +37,7 @@ module.exports = class extends Base {
 
             let addJson={
                 name,
+                position,
                 op_date
             }
 
@@ -90,22 +97,29 @@ module.exports = class extends Base {
 
             let id = this.post('id')
             let name = this.post('name')
+            let position = this.post('position')
 
-            logger.info(`修改${entityName}参数 id:${id}，name:${name}`)
+            logger.info(`修改${entityName}参数 id:${id}，name:${name}，position:${position}`)
 
-            let updateJson={}
             if (!name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
                 return false;
             }
 
-            updateJson.name=name
+            if (!position) {
+                this.body = Response.businessException(`${entityName}位置不能为空！`)
+                return false;
+            }
 
-            updateJson.op_date=DateUtil.getNowStr();
+            let op_date=DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
                 id
-            }).update(updateJson);
+            }).update({
+                name,
+                position,
+                op_date
+            })
 
             logger.info(`修改${entityName}，数据库返回：${JSON.stringify(data)}`)
 
@@ -126,9 +140,13 @@ module.exports = class extends Base {
     async listAction() {
         try {
 
-            logger.info(`获取${entityName}列表参数 `)
+            let page = this.post('page')||Page.currentPage
+            let pageSize = this.post('pageSize')||Page.pageSize
 
-            let data = await this.model(tableName).select();
+            logger.info(`获取${entityName}列表参数 page:${page}, pageSize:${pageSize}`)
+
+            let data = await this.model(tableName).page(page,pageSize).countSelect();
+
 
             logger.info(`获取${entityName}列表，数据库返回：${JSON.stringify(data)}`)
 

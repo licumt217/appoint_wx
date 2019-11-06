@@ -4,8 +4,8 @@ const Response = require('../../config/response')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 
-const entityName='房间'
-const tableName='room'
+const entityName='房间占用状态'
+const tableName='room_occupy'
 
 
 module.exports = class extends Base {
@@ -18,26 +18,51 @@ module.exports = class extends Base {
     async addAction() {
         try {
 
-            let name = this.post('name')
-            let position = this.post('position')
+            let room_id = this.post('room_id')
+            let year = this.post('year')
+            let month = this.post('month')
+            let day = this.post('day')
+            let period = this.post('period')
+            let state = this.post('state')
 
-            logger.info(`新增${entityName}参数 name:${name}, position:${position},`)
+            logger.info(`新增${entityName}参数 room_id:${room_id}, year:${year}，month:${month}，day:${day}， period:${period}, state:${state}`)
 
-            if (!name) {
-                this.body = Response.businessException(`${entityName}名称不能为空！`)
+            if (!room_id) {
+                this.body = Response.businessException(`${entityName}房间不能为空！`)
                 return false;
             }
 
-            if (!position) {
-                this.body = Response.businessException(`${entityName}位置不能为空！`)
+            if (!year) {
+                this.body = Response.businessException(`${entityName}年份不能为空！`)
                 return false;
             }
+
+            if (!month && month!==0) {
+                this.body = Response.businessException(`${entityName}月份不能为空！`)
+                return false;
+            }
+
+            if (!day) {
+                this.body = Response.businessException(`${entityName}天不能为空！`)
+                return false;
+            }
+
+            if (!period) {
+                this.body = Response.businessException(`${entityName}占用时间段不能为空！`)
+                return false;
+            }
+
+            state=state||0;
 
             let op_date=DateUtil.getNowStr()
 
             let addJson={
-                name,
-                position,
+                room_id,
+                year,
+                month,
+                day,
+                period,
+                state,
                 op_date
             }
 
@@ -96,29 +121,60 @@ module.exports = class extends Base {
         try {
 
             let id = this.post('id')
-            let name = this.post('name')
-            let position = this.post('position')
+            let room_id = this.post('room_id')
+            let year = this.post('year')
+            let month = this.post('month')
+            let day = this.post('day')
+            let period = this.post('period')
+            let state = this.post('state')
 
-            logger.info(`修改${entityName}参数 id:${id}，name:${name}，position:${position}`)
+            logger.info(`修改${entityName}参数 id:${id}，room_id:${room_id}，year:${year}，month:${month}，day:${day}，period:${period}，state:${state}`)
 
-            let updateJson={}
-            if (!name) {
-                this.body = Response.businessException(`${entityName}名称不能为空！`)
+            if (!id) {
+                this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
-            if (!position) {
-                this.body = Response.businessException(`${entityName}位置不能为空！`)
+            if (!room_id) {
+                this.body = Response.businessException(`${entityName}房间不能为空！`)
                 return false;
             }
 
-            updateJson.name=name
+            if (!year) {
+                this.body = Response.businessException(`${entityName}年份不能为空！`)
+                return false;
+            }
 
-            updateJson.op_date=DateUtil.getNowStr();
+            if (!month && month!==0) {
+                this.body = Response.businessException(`${entityName}月份不能为空！`)
+                return false;
+            }
+
+            if (!day) {
+                this.body = Response.businessException(`${entityName}天不能为空！`)
+                return false;
+            }
+
+            if (!period) {
+                this.body = Response.businessException(`${entityName}占用时间段不能为空！`)
+                return false;
+            }
+
+            state=state||0;
+
+            let op_date=DateUtil.getNowStr()
 
             let data = await this.model(tableName).where({
                 id
-            }).update(updateJson);
+            }).update({
+                room_id,
+                year,
+                month,
+                day,
+                state,
+                period,
+                op_date
+            });
 
             logger.info(`修改${entityName}，数据库返回：${JSON.stringify(data)}`)
 
@@ -139,9 +195,17 @@ module.exports = class extends Base {
     async listAction() {
         try {
 
-            logger.info(`获取${entityName}列表参数 `)
+            let room_id = this.post('room_id')
+            let year = this.post('year')
+            let month = this.post('month')
 
-            let data = await this.model(tableName).select();
+            logger.info(`获取${entityName}列表参数 room_id:${room_id}，year:${year}，month:${month}，`)
+
+            let data = await this.model(tableName).where({
+                room_id,
+                year,
+                month
+            }).select();
 
             logger.info(`获取${entityName}列表，数据库返回：${JSON.stringify(data)}`)
 
