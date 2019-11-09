@@ -310,12 +310,16 @@ module.exports = class extends Base {
                 logger.info(`pc端用户登录根据手机号和密码查询，数据库返回：${JSON.stringify(data)}`)
 
                 if (Util.isEmptyObject(data)) {
-                    logger.info(Response.businessException(`密码不正确！`))
-                    logger.info(Response.systemException(`密码不正确！`))
-                    logger.info(Response.success(`成功！`))
                     this.body = Response.businessException(`密码不正确！`);
                 } else {
-                    this.body = Response.success(data);
+                    const TokenSerivce = this.service('token');
+
+                    const token = await TokenSerivce.create({userInfo:data});
+
+                    this.body = Response.success({
+                        userInfo:data,
+                        token
+                    });
                 }
             }
 
@@ -326,6 +330,8 @@ module.exports = class extends Base {
 
 
     }
+
+
 
     /**
      * 根据openid获取对应的c端用户信息
