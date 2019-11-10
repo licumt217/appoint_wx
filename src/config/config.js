@@ -14,6 +14,7 @@ module.exports = {
         "schooltype",
         "user",
         "wechatApi",
+        "consulttype"
     ],
     divisionManager: [
         "login",
@@ -27,6 +28,7 @@ module.exports = {
         "schooltype",
         "user",
         "wechatApi",
+        "consulttype"
     ],
     admin: [
         "login",
@@ -40,6 +42,7 @@ module.exports = {
         "schooltype",
         "user",
         "wechatApi",
+        "consulttype"
     ],
     therapist: [
         "login",
@@ -53,6 +56,7 @@ module.exports = {
         "schooltype",
         "user",
         "wechatApi",
+        "consulttype"
     ],
     client: [
         "login",
@@ -66,5 +70,6 @@ module.exports = {
         "schooltype",
         "user",
         "wechatApi",
+        "consulttype"
     ]
 };

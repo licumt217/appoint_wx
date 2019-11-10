@@ -27,8 +27,9 @@ module.exports = class extends Base {
             let birthday = this.post('birthday')
             let email = this.post('email')
             let role = this.post('role')
+            let isEmergency = this.post('isEmergency')
 
-            logger.info(`新增用户参数 name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email}， role:${role}`)
+            logger.info(`新增用户参数 name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email}， role:${role}, isEmergency:${isEmergency},`)
 
             if (!name) {
                 this.body = Response.businessException(`姓名不能为空！`)
@@ -59,6 +60,8 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`用户类型不能为空！`)
                 return false;
             }
+
+            isEmergency=isEmergency||0;
 
             //新增咨询师，需要校验流派等
 
@@ -100,7 +103,8 @@ module.exports = class extends Base {
                 birthday,
                 email,
                 op_date,
-                role
+                role,
+                isEmergency
             }
 
             if(role!==Role.client){
@@ -179,8 +183,11 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
+            let isEmergency = this.post('isEmergency')
 
-            logger.info(`修改用户信息参数 id:${id}，name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email}`)
+            logger.info(`修改用户信息参数 id:${id}，name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email},isEmergency:${isEmergency}`)
+
+            isEmergency=isEmergency||0
 
             let updateJson={}
             if (name) {
@@ -206,12 +213,61 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             updateJson.op_date=op_date;
+            updateJson.isEmergency=isEmergency;
+
+            let userInfo=await this.model('user').where({
+                id:id
+            }).find()
+
+            //修改咨询师，需要添加咨询师和流派、资历等的关系表
+            let schoolTypeId, qualificationTypeId, mannerTypeId, levelTypeId
+            if(userInfo.role===Role.therapist){
+                schoolTypeId = this.post('schoolTypeId')
+                qualificationTypeId = this.post('qualificationTypeId')
+                mannerTypeId = this.post('mannerTypeId')
+                levelTypeId = this.post('levelTypeId')
+
+                if (!schoolTypeId) {
+                    this.body = Response.businessException(`流派类型不能为空！`)
+                    return false;
+                }
+
+                if (!qualificationTypeId) {
+                    this.body = Response.businessException(`资历类型不能为空！`)
+                    return false;
+                }
+
+                if (!mannerTypeId) {
+                    this.body = Response.businessException(`咨询方式类型不能为空！`)
+                    return false;
+                }
+
+                if (!levelTypeId) {
+                    this.body = Response.businessException(`等级类型不能为空！`)
+                    return false;
+                }
+            }
+
+
 
             let data = await this.model('user').where({
                 id
             }).update(updateJson);
 
             logger.info(`修改用户信息，数据库返回：${JSON.stringify(data)}`)
+
+            //修改咨询师和流派、资历等的关系表
+            if(userInfo.role===Role.therapist){
+                await this.model('therapist_attach_relation').where({
+                    therapist_id: id
+                }).update({
+                    schoolTypeId,
+                    qualificationTypeId,
+                    mannerTypeId,
+                    levelTypeId,
+                    op_date
+                });
+            }
 
             this.body = Response.success(data);
 
@@ -231,10 +287,11 @@ module.exports = class extends Base {
         try {
 
             let role = this.post('role')
+            let isEmergency = this.post('isEmergency')
             let page = this.post('page')||Page.currentPage
             let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}`)
+            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}, isEmergency:${isEmergency}`)
 
             if (!role) {
                 this.body = Response.businessException(`用户类型不能为空！`)
@@ -244,9 +301,17 @@ module.exports = class extends Base {
             //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
             let data=[]
             if(role===Role.therapist){
-                data = await this.model('user').where({
+
+                let whereObj={
                     role
-                }).join('appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id').page(page,pageSize).countSelect();
+                }
+
+                //添加紧急咨询条件
+                if(isEmergency===1){
+                    whereObj.isEmergency=isEmergency;
+                }
+
+                data = await this.model('user').where(whereObj).join('appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id').page(page,pageSize).countSelect();
             }else{
                 data = await this.model('user').where({
                     role

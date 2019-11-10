@@ -28,7 +28,7 @@ let buttons={
         {
             "type": "view",
             "name": "测试菜单2",
-            "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/pay')
+            "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/myAppoint')
         }
     ]
 }
