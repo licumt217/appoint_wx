@@ -333,46 +333,7 @@ module.exports = class extends Base {
 
 
 
-    /**
-     * 根据openid获取对应的c端用户信息
-     * @param code
-     * @returns {Promise<void>}
-     */
-    async getUserByOpenidAction() {
 
-        let openid = this.get('openid')
-
-        logger.info(`根据openid获取对应的c端用户信息参数 openid:${openid}`);
-
-        try {
-
-            let data = await this.model('weixin_user').where({
-                openid
-            }).find();
-
-            logger.info(`根据openid查询user_id数据库返回：${JSON.stringify(data)}`)
-
-            if (Util.isEmptyObject(data)) {
-                this.body = Response.success();
-            } else {
-                const user_id = data.user_id;
-
-                data = await this.model('user').where({
-                    id: user_id
-                }).find();
-
-                logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
-
-                this.body = Response.success(data);
-            }
-
-        } catch (e) {
-            logger.info(`根据openid获取对应的c端用户信息异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-
-
-    }
 
     /**
      * 用户注册，同时将userId和openid绑定

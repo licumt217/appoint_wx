@@ -2,6 +2,7 @@ const Base = require('./base.js');
 
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
+const Role = require('../../config/Role')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;
@@ -73,7 +74,53 @@ module.exports = class extends Base {
 
     }
 
+    /**
+     * 根据openid获取对应的c端用户信息
+     * @param code
+     * @returns {Promise<void>}
+     */
+    async getUserByOpenidAction() {
 
+        let openid = this.get('openid')
+
+        logger.info(`根据openid获取对应的c端用户信息参数 openid:${openid}`);
+
+        try {
+
+            let data = await this.model('weixin_user').where({
+                openid
+            }).find();
+
+            logger.info(`根据openid查询user_id数据库返回：${JSON.stringify(data)}`)
+
+            if (Util.isEmptyObject(data)) {
+                this.body = Response.success();
+            } else {
+                const user_id = data.user_id;
+
+                data = await this.model('user').where({
+                    id: user_id
+                }).find();
+
+                logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
+
+                const TokenSerivce = this.service('token');
+
+                const token = await TokenSerivce.create({userInfo:data});
+
+                this.body = Response.success({
+                    userInfo:data,
+                    token
+                });
+            }
+
+        } catch (e) {
+            logger.info(`根据openid获取对应的c端用户信息异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
 
 
     /**
@@ -134,8 +181,13 @@ module.exports = class extends Base {
                 email,
                 birthday: DateUtil.format(birthday, 'date'),
                 name,
-                op_date
+                op_date,
+                role:Role.client
             })
+
+            let data = await this.model('user').where({
+                id:user_id
+            }).find()
 
             logger.info(`用户注册数据库返回：user_id:${user_id}`)
 
@@ -145,8 +197,14 @@ module.exports = class extends Base {
                 op_date
             })
 
+            const TokenSerivce = this.service('token');
 
-            this.body = Response.success(user_id);
+            const token = await TokenSerivce.create({userInfo:data});
+
+            this.body = Response.success({
+                userInfo:data,
+                token
+            });
 
         } catch (e) {
             logger.info(`用户注册，同时将userId和openid绑定异常 msg:${e}`);

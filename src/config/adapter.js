@@ -37,7 +37,7 @@ exports.model = {
     },
     mysql: {
         handle: mysql,
-        database: 'questionnaire',
+        database: 'appoint',
         prefix: 'appoint_',
         encoding: 'utf8',
         host: '47.92.74.29',
