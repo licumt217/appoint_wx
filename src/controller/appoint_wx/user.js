@@ -287,11 +287,12 @@ module.exports = class extends Base {
         try {
 
             let role = this.post('role')
+            let mannerTypeId = this.post('mannerTypeId')
             let isEmergency = this.post('isEmergency')
             let page = this.post('page')||Page.currentPage
             let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}, isEmergency:${isEmergency}`)
+            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}, isEmergency:${isEmergency}, mannerTypeId:${mannerTypeId}`)
 
             if (!role) {
                 this.body = Response.businessException(`用户类型不能为空！`)
@@ -306,12 +307,22 @@ module.exports = class extends Base {
                     role
                 }
 
+
+
                 //添加紧急咨询条件
                 if(isEmergency===1){
                     whereObj.isEmergency=isEmergency;
                 }
 
-                data = await this.model('user').where(whereObj).join('appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id').page(page,pageSize).countSelect();
+                let joinStr=    'appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id'
+
+                //咨询方式：线上、线下
+                if(mannerTypeId){
+                    whereObj.mannerTypeId=mannerTypeId;
+                    joinStr+=` and appoint_therapist_attach_relation.mannerTypeId=${mannerTypeId}`
+                }
+                data = await this.model('user').where(whereObj).join(joinStr).page(page,pageSize).countSelect();
+
             }else{
                 data = await this.model('user').where({
                     role
