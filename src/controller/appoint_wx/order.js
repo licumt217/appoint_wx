@@ -8,7 +8,6 @@ const ORDER_STATE = require('../../config/ORDER_STATE')
 const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
-const orderService = require('../../service/order')
 const therapistperiodService = require('../../service/therapistperiod')
 const orderService = require('../../service/order')
 const pushService = require('../../service/push')
@@ -30,6 +29,8 @@ module.exports = class extends Base {
 
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
+        let consult_type_id = this.post('consult_type_id')
+        let manner_type_id = this.post('manner_type_id')
 
         logger.info(`微信支付统一下单接口参数 ${JSON.stringify(this.post())}`);
 
@@ -88,12 +89,7 @@ module.exports = class extends Base {
             })
 
             //将咨询师时间段存库
-            let therapistperiodResponse=await therapistperiodService.add(therapist_id,appoint_date,periodArray)
-
-            if (!therapistperiodResponse.isSuccessful()) {
-                logger.info(`取消订单接口异常 msg:${response.errorMsg}`);
-                this.body = Response.businessException(response.errorMsg);
-            }
+            await therapistperiodService.add(therapist_id,appoint_date,periodArray)
 
             let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -102,12 +98,35 @@ module.exports = class extends Base {
             //给咨询师发送模板消息，通知他审核
 
             let url='http://www.baidu.com'
-            let top='你好，我是头部'
-            let bottom='你好，我是底部'
+            let top={
+                value:'你好，我是头部',
+                color:'red'
+            }
+            let bottom={
+                value:'我是底部',
+                color:'pink'
+            }
+
+            let weixin_user_obj=await this.model('weixin_user').where({
+                user_id:therapist_id
+            }).find()
 
 
 
-            await pushService.sendTemplateMsg(openid,WechatTemplates.appoint_audit,['李强','18601965856',DateUtil.getNowStr(),'看病','备注'],url,top,bottom);
+            await pushService.sendTemplateMsg(weixin_user_obj.openid,'appoint_audit',[{
+                value:'李强',
+            },{
+                value:'18601965856'
+
+            },{
+                value:DateUtil.getNowStr()
+
+            },{
+                value:'看病',
+
+            },{
+                value:'备注'
+            }],url,top,bottom);
 
             this.body = Response.success({
                 secuParam: paySign
@@ -115,7 +134,7 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`微信支付统一下单接口异常 msg:${e}`);
-            this.body = Response.businessException(e);
+            this.body = Response.businessException(e.message);
         }
 
 

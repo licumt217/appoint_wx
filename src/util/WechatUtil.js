@@ -1,8 +1,8 @@
 const request = require('request');
 
-const WechatConfig=require("../config/WechatConfig")
+const WechatConfig = require("../config/WechatConfig")
 
-const WechatTemplates=require("../config/WechatTemplates")
+const WechatTemplates = require("../config/WechatTemplates")
 
 const SignUtil = require('./SignUtil')
 
@@ -18,41 +18,41 @@ const schedule = require('node-schedule')
 
 let scheduleJob = null;
 
-let scheduleJobOfJsapiTicket=null;
+let scheduleJobOfJsapiTicket = null;
 
 const Response = require('../config/response')
 
 const logger = think.logger
 
-let Util={
+let Util = {
     /**
      * 获取token
      * 基础支持的token
      * @returns {Promise<any>}
      */
-    getAccessToken:async ()=> {
+    getAccessToken: async () => {
 
-        let token=null;
+        let token = null;
 
         console.log(__dirname)
 
         //说明执行过此方法，直接文件中获取token
-        if(scheduleJob){
+        if (scheduleJob) {
 
-            token=fs.readFileSync(path.join(__dirname,'../config/access_token'));
+            token = fs.readFileSync(path.join(__dirname, '../config/access_token'));
 
-        }else{//首次进入，通过接口获取
+        } else {//首次进入，通过接口获取
 
             token = await Util.realGetAccessToken();
 
-            fs.writeFileSync(path.join(__dirname,'../config/access_token'), token);
+            fs.writeFileSync(path.join(__dirname, '../config/access_token'), token);
 
             console.log("-------->access_token写入文件，然后每100分钟刷新token");
 
-            scheduleJob=schedule.scheduleJob('* 30 * * * *', async ()=>{
+            scheduleJob = schedule.scheduleJob('* 30 * * * *', async () => {
                 token = await Util.realGetAccessToken();
 
-                fs.writeFileSync(path.join(__dirname,'../config/access_token'), token);
+                fs.writeFileSync(path.join(__dirname, '../config/access_token'), token);
             })
         }
 
@@ -65,7 +65,7 @@ let Util={
      * 基础支持的token
      * @returns {Promise<any>}
      */
-    realGetAccessToken:()=> {
+    realGetAccessToken: () => {
 
         return new Promise(((resolve, reject) => {
             request.get(`${WechatConfig.URL_OF_GET_ACCESS_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
@@ -75,7 +75,7 @@ let Util={
                     resolve(null)
                 } else {
 
-                    console.log("获取token接口返回："+body)
+                    console.log("获取token接口返回：" + body)
 
                     resolve(JSON.parse(body).access_token)
                 }
@@ -88,27 +88,27 @@ let Util={
      * 获取jsapi_ticket
      * @returns {Promise<*>}
      */
-    getJsapiTicket:async ()=> {
+    getJsapiTicket: async () => {
 
-        let jsapiTicket=null;
+        let jsapiTicket = null;
 
         //说明执行过此方法，直接文件中获取token
-        if(scheduleJobOfJsapiTicket){
+        if (scheduleJobOfJsapiTicket) {
 
-            jsapiTicket=fs.readFileSync(path.join(__dirname,'../config/jsapi_ticket'));
+            jsapiTicket = fs.readFileSync(path.join(__dirname, '../config/jsapi_ticket'));
 
-        }else{//首次进入，通过接口获取
+        } else {//首次进入，通过接口获取
 
             jsapiTicket = await Util.realGetJsapiTicket();
 
-            fs.writeFileSync(path.join(__dirname,'../config/jsapi_ticket'), jsapiTicket);
+            fs.writeFileSync(path.join(__dirname, '../config/jsapi_ticket'), jsapiTicket);
 
             console.log("-------->jsapi_ticket写入文件，然后每100分钟刷新jsapi_ticket")
 
-            scheduleJobOfJsapiTicket=schedule.scheduleJob('* 40 * * * *', async ()=>{
+            scheduleJobOfJsapiTicket = schedule.scheduleJob('* 40 * * * *', async () => {
                 jsapiTicket = await Util.realGetJsapiTicket();
 
-                fs.writeFileSync(path.join(__dirname,'../config/jsapi_ticket'), jsapiTicket);
+                fs.writeFileSync(path.join(__dirname, '../config/jsapi_ticket'), jsapiTicket);
             })
         }
 
@@ -120,11 +120,11 @@ let Util={
      * 通过接口获取jsapi_ticket
      * @returns {Promise<any>}
      */
-    realGetJsapiTicket:()=> {
+    realGetJsapiTicket: () => {
 
         return new Promise((async (resolve, reject) => {
 
-            let ACCESS_TOKEN=await Util.getAccessToken();
+            let ACCESS_TOKEN = await Util.getAccessToken();
 
             request.get(`${WechatConfig.URL_OF_GET_JSAPI_TICKET}?access_token=${ACCESS_TOKEN}&type=jsapi`, (error, response, body) => {
 
@@ -147,7 +147,7 @@ let Util={
      * @param nonce
      * @returns {boolean}
      */
-    checkSignature:(signature,timestamp,nonce)=> {
+    checkSignature: (signature, timestamp, nonce) => {
 
         let array = [WechatConfig.TOKEN, timestamp, nonce]
 
@@ -170,7 +170,7 @@ let Util={
      * @param openId
      * @returns {Promise<any>}
      */
-    getUserInfo:(openId)=> {
+    getUserInfo: (openId) => {
 
         return new Promise(((resolve, reject) => {
             request.get(`${WechatConfig.URL_OF_GET_ACCESS_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
@@ -191,11 +191,11 @@ let Util={
      * @param code
      * @returns {Promise<any>}
      */
-    getOpenid:(code)=> {
+    getOpenid: (code) => {
 
         return new Promise(((resolve, reject) => {
 
-            const url=`${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`
+            const url = `${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`
 
             think.logger.info(`根据code获取openid调用微信接口URL：${url}`);
 
@@ -203,14 +203,14 @@ let Util={
 
                 think.logger.info(`根据code获取openid返回信息 error:${error}， body:${body}， response:${response}`);
 
-                body=JSON.parse(body)
+                body = JSON.parse(body)
 
-                if(error){
+                if (error) {
                     reject(error)
-                }else{
-                    if(body.errcode){
+                } else {
+                    if (body.errcode) {
                         reject(body.errmsg)
-                    }else{
+                    } else {
                         resolve(Response.success(body.openid))
                     }
                 }
@@ -229,64 +229,76 @@ let Util={
      * @param bottom 底部提示文字
      * @returns {Promise<any>}
      */
-    sendTemplateMsg:(openId,templateName,dataArray,url,top,bottom)=>{
+    sendTemplateMsg: (openId, templateName, dataArray, url, top, bottom) => {
 
-        let data={}
+            let data = {}
 
-        if(top){
-            data.first={
-                "value":top.value,
-                "color":top.color||WechatConfig.DEFAULT_COLOR
+            if (top) {
+                data.first = {
+                    "value": top.value,
+                    "color": top.color || WechatConfig.DEFAULT_COLOR
+                }
             }
-        }
 
-        if(bottom){
-            data.remark={
-                "value":bottom.value,
-                "color":bottom.color||WechatConfig.DEFAULT_COLOR
+            if (bottom) {
+                data.remark = {
+                    "value": bottom.value,
+                    "color": bottom.color || WechatConfig.DEFAULT_COLOR
+                }
             }
-        }
 
-        for(let i=0;i<dataArray.length;i++){
+            for (let i = 0; i < dataArray.length; i++) {
 
-            let obj=dataArray[i];
+                let obj = dataArray[i];
 
-                data[`keyword${i+1}`]={
-                    "value":obj.value,
-                    "color":obj.color||WechatConfig.DEFAULT_COLOR
+                data[`keyword${i + 1}`] = {
+                    "value": obj.value,
+                    "color": obj.color || WechatConfig.DEFAULT_COLOR
                 }
 
-        }
+            }
 
-        let form={
-            "touser":openId,
-            "template_id":WechatTemplates[templateName],
-            "url":url || "",
-            "data":data
-        };
+            let form = {
+                "touser": openId,
+                "template_id": WechatTemplates[templateName],
+                "url": url || "",
+                "data": data
+            };
 
 
-        return new Promise((async (resolve, reject) =>  {
+            return new Promise((async (resolve, reject) => {
 
-            let ACCESS_TOKEN=await Util.getAccessToken();
+                let ACCESS_TOKEN = await Util.getAccessToken();
 
-            console.log("token"+ACCESS_TOKEN);
+                request.post({
+                        url: `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${ACCESS_TOKEN}`,
+                        form: JSON.stringify(form)
+                    }, (error, response, body) => {
 
-            request.post(
-                {
-                    url:`https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${ACCESS_TOKEN}`,
-                    form:JSON.stringify(form)
-                },
-                (error, response, body)=>{
-                    if (error) {
-                        resolve(null)
-                    } else {
+                        try{
+                            logger.info(`模板消息接口返回 error:${error}, response:${JSON.stringify(response)}, body:${body}`)
 
-                        resolve({})
+                            body=JSON.parse(body)
+
+                            if (error) {
+                                reject(`发送模板消息错误 ${error}`)
+                            } else {
+
+                                let errcode=body.errcode
+                                let errmsg=body.errmsg
+
+                                if (errcode===0) {
+                                    resolve()
+                                } else {
+                                    reject(`发送模板消息接口异常 ${errmsg}`)
+                                }
+                            }
+                        }catch (e) {
+                            reject(`发送模板消息接口异常 ${e}`)
+                        }
                     }
-                }
-            )
-        }))
+                )
+            }))
     },
 
     /**
@@ -294,10 +306,10 @@ let Util={
      * @param obj
      * @returns {string}
      */
-    getPaySign(obj){
-        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=${WechatConfig.KEY}`)
+    getPaySign(obj) {
+        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj) + `&key=${WechatConfig.KEY}`)
 
-        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj)+`&key=${WechatConfig.KEY}`).toUpperCase()
+        return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj) + `&key=${WechatConfig.KEY}`).toUpperCase()
     },
 
     /**
@@ -305,35 +317,35 @@ let Util={
      * @param json
      * @returns {boolean}
      */
-    checkWechatMessageSignature(json){
+    checkWechatMessageSignature(json) {
 
-        for(let key in json){
-            if(typeof json[key]==='object'){//array
-                json[key]=json[key][0]
+        for (let key in json) {
+            if (typeof json[key] === 'object') {//array
+                json[key] = json[key][0]
             }
 
-            if(json[key] ===""){
+            if (json[key] === "") {
                 delete json[key]
             }
         }
 
 
-        if(!json.sign){
+        if (!json.sign) {
             return false;
-        }else{
-            let sign=json.sign;
+        } else {
+            let sign = json.sign;
 
             delete json.sign;
 
-            console.log('sign:'+sign)
+            console.log('sign:' + sign)
 
-            let calculatedSign=Util.getPaySign(json);
+            let calculatedSign = Util.getPaySign(json);
 
-            console.log('calculatedSign:'+calculatedSign)
+            console.log('calculatedSign:' + calculatedSign)
 
-            if(sign===calculatedSign){
+            if (sign === calculatedSign) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         }
@@ -345,61 +357,60 @@ let Util={
      * @param xml
      * @returns {Promise<any>}
      */
-    unifiedOrder:(openid,out_trade_no,total_fee,ip)=>{
+    unifiedOrder: (openid, out_trade_no, total_fee, ip) => {
 
-        let trade_type="JSAPI"
+        let trade_type = "JSAPI"
 
-        let body="北大-心理咨询"
+        let body = "北大-心理咨询"
 
-        let obj={
-            openid:openid,
-            appid:WechatConfig.APP_ID,
-            mch_id:WechatConfig.MCH_ID,
-            nonce_str:BaseUtil.uuid(),
-            body:body,
-            out_trade_no:out_trade_no,//商户订单号
-            total_fee:total_fee,//单位分
-            spbill_create_ip:ip,
-            notify_url:WechatConfig.URL_OF_NOTIFY_URL,
-            trade_type:trade_type
+        let obj = {
+            openid: openid,
+            appid: WechatConfig.APP_ID,
+            mch_id: WechatConfig.MCH_ID,
+            nonce_str: BaseUtil.uuid(),
+            body: body,
+            out_trade_no: out_trade_no,//商户订单号
+            total_fee: total_fee,//单位分
+            spbill_create_ip: ip,
+            notify_url: WechatConfig.URL_OF_NOTIFY_URL,
+            trade_type: trade_type
         }
 
-        let sign=Util.getPaySign(obj);
+        let sign = Util.getPaySign(obj);
 
-        obj.sign=sign;
+        obj.sign = sign;
 
-        let xml=BaseUtil.obj2xml(obj)
+        let xml = BaseUtil.obj2xml(obj)
 
-        console.log("统一下单参数："+xml)
+        console.log("统一下单参数：" + xml)
 
 
-        return new Promise((async (resolve, reject) =>  {
+        return new Promise((async (resolve, reject) => {
 
             request.post(
                 {
-                    url:WechatConfig.URL_OF_UNIFIED_ORDER,
-                    form:xml
+                    url: WechatConfig.URL_OF_UNIFIED_ORDER,
+                    form: xml
                 },
-                (error, response, body)=>{
+                (error, response, body) => {
                     if (error) {
                         console.log(1)
-                        resolve({"error":"error"})
+                        resolve({"error": "error"})
                     } else {
-                        console.log(2,body)
-                        let json=BaseUtil.xml2JsonObj(body)
+                        console.log(2, body)
+                        let json = BaseUtil.xml2JsonObj(body)
 
                         console.log(json)
 
-                        let return_code=json.return_code;
-                        let result_code=json.result_code;
-                        let return_msg=json.return_msg;
+                        let return_code = json.return_code;
+                        let result_code = json.result_code;
+                        let return_msg = json.return_msg;
 
-                        if(return_code==="SUCCESS" && result_code==="SUCCESS" ){
+                        if (return_code === "SUCCESS" && result_code === "SUCCESS") {
                             resolve(json.prepay_id)
-                        }else{
+                        } else {
                             reject(return_msg)
                         }
-
 
 
                     }
@@ -417,83 +428,80 @@ let Util={
      * @returns {Promise<any>}
      * 需要双向签名
      */
-    refund:(out_trade_no,total_fee,refund_fee)=>{
-        let out_refund_no=BaseUtil.uuid()
+    refund: (out_trade_no, total_fee, refund_fee) => {
+        let out_refund_no = BaseUtil.uuid()
 
         logger.info(`退款接口参数：out_trade_no：${out_trade_no},total_fee：${total_fee},：refund_fee：${refund_fee}`)
 
-        total_fee=Number(total_fee) * 100
-        refund_fee=Number(refund_fee) * 100
+        total_fee = Number(total_fee) * 100
+        refund_fee = Number(refund_fee) * 100
 
-        let obj={
-            appid:WechatConfig.APP_ID,
-            mch_id:WechatConfig.MCH_ID,
-            nonce_str:BaseUtil.uuid(),
-            out_trade_no:out_trade_no,
-            out_refund_no:out_refund_no,
-            total_fee:total_fee,//单位分
-            refund_fee:refund_fee,
-            notify_url:WechatConfig.URL_OF_REFUND_NOTIFY_URL
+        let obj = {
+            appid: WechatConfig.APP_ID,
+            mch_id: WechatConfig.MCH_ID,
+            nonce_str: BaseUtil.uuid(),
+            out_trade_no: out_trade_no,
+            out_refund_no: out_refund_no,
+            total_fee: total_fee,//单位分
+            refund_fee: refund_fee,
+            notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL
         }
 
         logger.info(`微信退款加密前参数 obj:${JSON.stringify(obj)}`)
 
-        let sign=Util.getPaySign(obj);
+        let sign = Util.getPaySign(obj);
 
-        obj.sign=sign;
+        obj.sign = sign;
 
-        let xml=BaseUtil.obj2xml(obj)
+        let xml = BaseUtil.obj2xml(obj)
 
         logger.info(`微信退款xml数据 xml:${xml}`)
 
-        return new Promise((async (resolve, reject) =>  {
+        return new Promise((async (resolve, reject) => {
 
             request.post(
                 {
-                    url:WechatConfig.URL_OF_REFUND,
-                    form:xml,
+                    url: WechatConfig.URL_OF_REFUND,
+                    form: xml,
                     agentOptions: {
-                        pfx: fs.readFileSync(path.join(__dirname,'../config/cert/apiclient_cert.p12')), //微信商户平台证书,
+                        pfx: fs.readFileSync(path.join(__dirname, '../config/cert/apiclient_cert.p12')), //微信商户平台证书,
                         passphrase: WechatConfig.MCH_ID // 商家id
                     }
                 },
-                (error, response, body)=>{
+                (error, response, body) => {
 
                     logger.info(`退款接口微信返回 error:${error},response:${JSON.stringify(response)},body:${JSON.stringify(body)}`)
 
                     if (error) {
-                        resolve({"退款失败":error})
+                        resolve({"退款失败": error})
                     } else {
 
-                        let json=BaseUtil.xml2JsonObj(body)
+                        let json = BaseUtil.xml2JsonObj(body)
 
-                        logger.info("退款接口返回信息："+JSON.stringify(json))
+                        logger.info("退款接口返回信息：" + JSON.stringify(json))
 
                         //再次校验签名
-                        if(Util.checkWechatMessageSignature(json)){
-                            let return_code=json.return_code;
-                            let return_msg=json.return_msg;
-                            let result_code=json.result_code;
+                        if (Util.checkWechatMessageSignature(json)) {
+                            let return_code = json.return_code;
+                            let return_msg = json.return_msg;
+                            let result_code = json.result_code;
 
-                            if(return_code==="SUCCESS"){
+                            if (return_code === "SUCCESS") {
 
-                                if(result_code==="SUCCESS"){
+                                if (result_code === "SUCCESS") {
 
 
                                     resolve(json)
-                                }else{
+                                } else {
                                     reject(return_msg)
                                 }
 
-                            }else{
+                            } else {
                                 reject(return_msg)
                             }
-                        }else{
+                        } else {
                             reject("退款接口微信返回信息签名校验错误！")
                         }
-
-
-
 
 
                     }
@@ -506,64 +514,61 @@ let Util={
      * @param out_refund_no 商户退款订单号
      * @returns {Promise<any>}
      */
-    refundQuery:(out_refund_no)=>{
+    refundQuery: (out_refund_no) => {
 
-        let obj={
-            appid:WechatConfig.APP_ID,
-            mch_id:WechatConfig.MCH_ID,
-            nonce_str:BaseUtil.uuid(),
-            out_refund_no:out_refund_no
+        let obj = {
+            appid: WechatConfig.APP_ID,
+            mch_id: WechatConfig.MCH_ID,
+            nonce_str: BaseUtil.uuid(),
+            out_refund_no: out_refund_no
         }
 
-        let sign=Util.getPaySign(obj);
+        let sign = Util.getPaySign(obj);
 
 
-        obj.sign=sign;
+        obj.sign = sign;
 
-        let xml=BaseUtil.obj2xml(obj)
+        let xml = BaseUtil.obj2xml(obj)
 
-        return new Promise((async (resolve, reject) =>  {
+        return new Promise((async (resolve, reject) => {
 
             request.post(
                 {
-                    url:WechatConfig.URL_OF_REFUND_QUERY,
-                    form:xml,
+                    url: WechatConfig.URL_OF_REFUND_QUERY,
+                    form: xml,
                 },
-                (error, response, body)=>{
+                (error, response, body) => {
 
                     if (error) {
-                        resolve({"退款查询失败":error})
+                        resolve({"退款查询失败": error})
                     } else {
 
-                        let json=BaseUtil.xml2JsonObj(body)
+                        let json = BaseUtil.xml2JsonObj(body)
 
-                        console.log("退款查询接口返回信息："+JSON.stringify(json))
+                        console.log("退款查询接口返回信息：" + JSON.stringify(json))
 
                         //再次校验签名
-                        if(Util.checkWechatMessageSignature(json)){
-                            let return_code=json.return_code;
-                            let return_msg=json.return_msg;
-                            let result_code=json.result_code;
+                        if (Util.checkWechatMessageSignature(json)) {
+                            let return_code = json.return_code;
+                            let return_msg = json.return_msg;
+                            let result_code = json.result_code;
 
-                            if(return_code==="SUCCESS"){
+                            if (return_code === "SUCCESS") {
 
-                                if(result_code==="SUCCESS"){
+                                if (result_code === "SUCCESS") {
 
 
                                     resolve(json)
-                                }else{
+                                } else {
                                     reject(return_msg)
                                 }
 
-                            }else{
+                            } else {
                                 reject(return_msg)
                             }
-                        }else{
+                        } else {
                             reject("退款查询接口微信返回信息签名校验错误！")
                         }
-
-
-
 
 
                     }
@@ -577,19 +582,19 @@ let Util={
      * @param prepay_id
      * @returns {Promise<any>}
      */
-    getJsApiPaySign:(prepay_id)=>{
+    getJsApiPaySign: (prepay_id) => {
 
-        let obj={
-            appId:WechatConfig.APP_ID,
-            timeStamp:BaseUtil.getTimestamp(),
-            nonceStr:BaseUtil.uuid(),
-            package:`prepay_id=${prepay_id}`,
-            signType:'MD5'
+        let obj = {
+            appId: WechatConfig.APP_ID,
+            timeStamp: BaseUtil.getTimestamp(),
+            nonceStr: BaseUtil.uuid(),
+            package: `prepay_id=${prepay_id}`,
+            signType: 'MD5'
         }
 
-        let paySign=Util.getPaySign(obj);
+        let paySign = Util.getPaySign(obj);
 
-        obj.paySign=paySign;
+        obj.paySign = paySign;
 
         return obj;
     },
@@ -602,17 +607,17 @@ let Util={
      （2）对商户key做md5，得到32位小写key* ( key设置路径：微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置 )
      （3）用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
      */
-    decryptRefundNotifyParam:(req_info)=>{
+    decryptRefundNotifyParam: (req_info) => {
 
         logger.info(`退款解密参数：req_info:${req_info}`)
 
-        let shanghuKey=WechatConfig.KEY
+        let shanghuKey = WechatConfig.KEY
 
-        shanghuKey=SignUtil.md5(shanghuKey)
+        shanghuKey = SignUtil.md5(shanghuKey)
 
         logger.info(`md5加密后的商户key:${shanghuKey}`)
 
-        let returnStr=SignUtil.decryption(req_info,shanghuKey);
+        let returnStr = SignUtil.decryption(req_info, shanghuKey);
 
         logger.info(`解密后的数据： returnStr:${returnStr}`)
 
@@ -626,62 +631,61 @@ let Util={
      * trade_state：交易状态
      * SUCCESS—支付成功
 
-         REFUND—转入退款
+     REFUND—转入退款
 
-         NOTPAY—未支付
+     NOTPAY—未支付
 
-         CLOSED—已关闭
+     CLOSED—已关闭
 
-         REVOKED—已撤销（付款码支付）
+     REVOKED—已撤销（付款码支付）
 
-         USERPAYING--用户支付中（付款码支付）
+     USERPAYING--用户支付中（付款码支付）
 
-         PAYERROR--支付失败(其他原因，如银行返回失败)
+     PAYERROR--支付失败(其他原因，如银行返回失败)
 
      */
-    orderQuery:(out_trade_no)=>{
+    orderQuery: (out_trade_no) => {
 
-        let obj={
-            appid:WechatConfig.APP_ID,
-            mch_id:WechatConfig.MCH_ID,
-            nonce_str:BaseUtil.uuid(),
-            out_trade_no:out_trade_no,
+        let obj = {
+            appid: WechatConfig.APP_ID,
+            mch_id: WechatConfig.MCH_ID,
+            nonce_str: BaseUtil.uuid(),
+            out_trade_no: out_trade_no,
         }
 
-        let sign=Util.getPaySign(obj);
+        let sign = Util.getPaySign(obj);
 
-        obj.sign=sign;
+        obj.sign = sign;
 
-        let xml=BaseUtil.obj2xml(obj)
+        let xml = BaseUtil.obj2xml(obj)
 
 
-        return new Promise((async (resolve, reject) =>  {
+        return new Promise((async (resolve, reject) => {
 
             request.post(
                 {
-                    url:WechatConfig.URL_OF_ORDER_QUERY,
-                    form:xml
+                    url: WechatConfig.URL_OF_ORDER_QUERY,
+                    form: xml
                 },
-                (error, response, body)=>{
+                (error, response, body) => {
                     if (error) {
                         console.log(1)
-                        resolve({"error":"error"})
+                        resolve({"error": "error"})
                     } else {
-                        console.log(2,body)
-                        let json=BaseUtil.xml2JsonObj(body)
+                        console.log(2, body)
+                        let json = BaseUtil.xml2JsonObj(body)
 
                         console.log(json)
 
-                        let return_code=json.return_code;
-                        let result_code=json.result_code;
-                        let return_msg=json.return_msg;
+                        let return_code = json.return_code;
+                        let result_code = json.result_code;
+                        let return_msg = json.return_msg;
 
-                        if(return_code==="SUCCESS" && result_code==="SUCCESS" ){
+                        if (return_code === "SUCCESS" && result_code === "SUCCESS") {
                             resolve(json.trade_state)
-                        }else{
+                        } else {
                             reject(return_msg)
                         }
-
 
 
                     }
@@ -694,27 +698,27 @@ let Util={
      * 接收普通用户给公众号发送的消息
      * @param xml
      */
-    doMsg:(data)=>{
+    doMsg: (data) => {
 
-        console.log("接收到微信服务器普通消息："+JSON.stringify(data))
+        console.log("接收到微信服务器普通消息：" + JSON.stringify(data))
 
         // let json=BaseUtil.xml2JsonObj(xml)
 
-        data=data.xml
+        data = data.xml
 
-        let msgType=data.MsgType[0]
+        let msgType = data.MsgType[0]
 
         switch (msgType) {
 
             case MsgTypes.TEXT:
-                console.log("......文本消息："+JSON.stringify(data))
+                console.log("......文本消息：" + JSON.stringify(data))
                 break;
 
             case MsgTypes.EVENT:
 
                 console.log("......事件消息：")
 
-                let eventType=data.Event[0]
+                let eventType = data.Event[0]
 
                 switch (eventType) {
 
@@ -748,35 +752,34 @@ let Util={
      * @param refund_fee 退款金额
      * @returns {Promise<any>}
      */
-    sendCustomerServiceMsg:(openId,msg)=>{
+    sendCustomerServiceMsg: (openId, msg) => {
 
-        openId="ohZcctykmVT2Lx3eOTX-DQKKwomw"
+        openId = "ohZcctykmVT2Lx3eOTX-DQKKwomw"
 
-        let json={
+        let json = {
 
-            "touser":openId,
-            "msgtype":"text",
+            "touser": openId,
+            "msgtype": "text",
             "text":
                 {
-                    "content":msg
+                    "content": msg
                 }
         }
 
 
+        return new Promise((async (resolve, reject) => {
 
-        return new Promise((async (resolve, reject) =>  {
-
-            let ACCESS_TOKEN=await Util.getAccessToken();
+            let ACCESS_TOKEN = await Util.getAccessToken();
 
             request.post(
                 {
-                    url:`${WechatConfig.URL_OF_CUSTOMER_SERVICE_MSG}?access_token=${ACCESS_TOKEN}`,
-                    form:JSON.stringify(json)
+                    url: `${WechatConfig.URL_OF_CUSTOMER_SERVICE_MSG}?access_token=${ACCESS_TOKEN}`,
+                    form: JSON.stringify(json)
                 },
-                (error, response, body)=>{
+                (error, response, body) => {
                     if (error) {
                         console.log(1)
-                        resolve({"error":"error"})
+                        resolve({"error": "error"})
                     } else {
                         resolve("")
 
@@ -791,22 +794,21 @@ let Util={
      * @param url 调用js sdk所在的网页地址
      * @returns {Promise<any>}
      */
-    getJsSdkSignature:async (url)=>{
+    getJsSdkSignature: async (url) => {
 
-        let jsapi_ticket=await Util.getJsapiTicket()
+        let jsapi_ticket = await Util.getJsapiTicket()
 
-        let obj={
-            timeStamp:BaseUtil.getTimestamp(),
-            jsapi_ticket:jsapi_ticket,
-            noncestr:BaseUtil.uuid(),
-            url:url
+        let obj = {
+            timeStamp: BaseUtil.getTimestamp(),
+            jsapi_ticket: jsapi_ticket,
+            noncestr: BaseUtil.uuid(),
+            url: url
         }
 
 
+        let signature = SignUtil.sha1(SignUtil.transObj2UrlKeyValueByAscii(obj))
 
-        let signature=SignUtil.sha1(SignUtil.transObj2UrlKeyValueByAscii(obj))
-
-        obj.signature=signature;
+        obj.signature = signature;
 
         return obj;
 
@@ -814,8 +816,8 @@ let Util={
 
 }
 
-const mm="+EkBcKs4rbi/rcj8YsNXp/Y53snuVh+e2z6AG0M/tzGzOU69P5RXEGfaPpEbB1rxVsDSllOv2ktcf4GArDjvP6IAvY/x8jpwObfiiulyblbCAOxIfDJb8Jy60Qp/axkdcoIA6vPKbKRIDISoMLR4kknOeifZTcyDWADaYVstIsIWlJm/1sbflB92WV5B90K0O3NZasrydIUqoPwiNo+JMG0K0SWatG1yWU5j7kjKxdQ7Ho6ibE01I/ODhtitEgzU4F5EwZFF5NH82lKOAGnRHVtCJmasO8C3Ufr3ODKImcEKCUlvjFC+ZncmcFKoMqktvVD8e9Bycu31hw9MSfI6CYsXJfiNsbYNloQ3368W2D4U6pRyXhCoSVtcYkRSENASrLYHiaOE44TVZyFWaHIDVdTsiKrgDuGAl34kqC28z9BFfIqCBVSD49hU9Wlvx7daVYxvxMbgyqht0i9LKhAH4DiDKNq1EHjUWb81r3mIVdDYqcW1GPXdM78zFr0w9R4jDvPRc5AQ2246HI4pl0NWDASDGvRMztHD1kPuQWuFn/ftonw6uLIhEV0tcBVjj6+PCXHwVfJHB3waJgmMGGdaJ2y5w0pwB1KLlLWGXK1LKgAT+qELZiP4NyKrTVnt8Q8cdEmV4lD0AOhOQn2++hoEQdwz2wh5C99VBNT8tw7ljhR/CXSs8BaF8xTzfwnlUeIEx7hW/BME6oG41t+P7U5yz4iREGOgroz3AlVSrMlglwb9AUf7gMCdiKGwWWaaZcuCPHOO4q4YlnY9BZasr+6kQvfvM5KNPF4gZ2irW30kX7+ahFRMxIUapGtRVq7v9jZt+6ePezfCUPbT7p5J6Io9PlDzivAVcw8oiRgSYRvmTdZw4EMwQGJ/zhrehkdUtGQaji8GfXmETZznukqCnvcHLzhyzfMieBLdfX3cHrZrXH1Kg/z0TvyXJt6ydMAJf5SUgUxq0d4Pm8GEbI6dyaKidcm1YzgioSJNgZGQ/gUMRRRnGE4V4uLvIDJR1A9mj5ErzaK+8A9Xnan1GCa+x+RtBw=="
+const mm = "+EkBcKs4rbi/rcj8YsNXp/Y53snuVh+e2z6AG0M/tzGzOU69P5RXEGfaPpEbB1rxVsDSllOv2ktcf4GArDjvP6IAvY/x8jpwObfiiulyblbCAOxIfDJb8Jy60Qp/axkdcoIA6vPKbKRIDISoMLR4kknOeifZTcyDWADaYVstIsIWlJm/1sbflB92WV5B90K0O3NZasrydIUqoPwiNo+JMG0K0SWatG1yWU5j7kjKxdQ7Ho6ibE01I/ODhtitEgzU4F5EwZFF5NH82lKOAGnRHVtCJmasO8C3Ufr3ODKImcEKCUlvjFC+ZncmcFKoMqktvVD8e9Bycu31hw9MSfI6CYsXJfiNsbYNloQ3368W2D4U6pRyXhCoSVtcYkRSENASrLYHiaOE44TVZyFWaHIDVdTsiKrgDuGAl34kqC28z9BFfIqCBVSD49hU9Wlvx7daVYxvxMbgyqht0i9LKhAH4DiDKNq1EHjUWb81r3mIVdDYqcW1GPXdM78zFr0w9R4jDvPRc5AQ2246HI4pl0NWDASDGvRMztHD1kPuQWuFn/ftonw6uLIhEV0tcBVjj6+PCXHwVfJHB3waJgmMGGdaJ2y5w0pwB1KLlLWGXK1LKgAT+qELZiP4NyKrTVnt8Q8cdEmV4lD0AOhOQn2++hoEQdwz2wh5C99VBNT8tw7ljhR/CXSs8BaF8xTzfwnlUeIEx7hW/BME6oG41t+P7U5yz4iREGOgroz3AlVSrMlglwb9AUf7gMCdiKGwWWaaZcuCPHOO4q4YlnY9BZasr+6kQvfvM5KNPF4gZ2irW30kX7+ahFRMxIUapGtRVq7v9jZt+6ePezfCUPbT7p5J6Io9PlDzivAVcw8oiRgSYRvmTdZw4EMwQGJ/zhrehkdUtGQaji8GfXmETZznukqCnvcHLzhyzfMieBLdfX3cHrZrXH1Kg/z0TvyXJt6ydMAJf5SUgUxq0d4Pm8GEbI6dyaKidcm1YzgioSJNgZGQ/gUMRRRnGE4V4uLvIDJR1A9mj5ErzaK+8A9Xnan1GCa+x+RtBw=="
 
 console.log(Util.decryptRefundNotifyParam(mm))
 
-module.exports=Util;
+module.exports = Util;
