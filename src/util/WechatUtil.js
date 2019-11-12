@@ -412,14 +412,18 @@ let Util={
      * 微信退款
      * @param out_trade_no 订单号
      * @param out_refund_no 退款单号
-     * @param total_fee 总金额
+     * @param total_fee 总金额 参数的金额是元，需要*100后进行退款
      * @param refund_fee 退款金额
      * @returns {Promise<any>}
      * 需要双向签名
      */
-    refund:(out_trade_no,out_refund_no,total_fee,refund_fee)=>{
+    refund:(out_trade_no,total_fee,refund_fee)=>{
+        let out_refund_no=BaseUtil.uuid()
 
-        logger.info(`退款接口参数：out_trade_no：${out_trade_no},：out_refund_no：${out_refund_no},：total_fee：${total_fee},：refund_fee：${refund_fee}`)
+        logger.info(`退款接口参数：out_trade_no：${out_trade_no},total_fee：${total_fee},：refund_fee：${refund_fee}`)
+
+        total_fee=Number(total_fee) * 100
+        refund_fee=Number(refund_fee) * 100
 
         let obj={
             appid:WechatConfig.APP_ID,

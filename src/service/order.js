@@ -2,41 +2,105 @@ const Response = require('../config/response')
 const Util = require('../util/Util')
 
 const logger =think.logger
+const entityName = '订单'
+const tableName = 'order'
 
 module.exports =  {
 
 
     /**
-     * 根据订单号查询订单
-     * @param orderId
+     *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getOrderByTradeNo(trade_no){
-
-        if(!trade_no){
-            return Response.businessException("业务订单号不能为空！")
-        }
+    async add(obj){
 
         try{
 
-            let data = await think.model('order').where({
-                trade_no
-            }).find();
+            let op_date = DateUtil.getNowStr()
 
-            logger.info(`根据订单号查询订单数据库返回：${JSON.stringify(data)}`)
+            obj.op_date=op_date
 
-            if(Util.isEmptyObject(data)){
-                return Response.businessException("未找到对应订单！");
-            }else{
-                return Response.success(data)
-            }
+            let data = await think.model(tableName).add(obj);
+
+            logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
+
+            return data;
 
         }catch (e) {
-            logger.info(`根据订单id查询订单接口异常 msg:${e}`);
-            return Response.businessException(e);
+            let msg=`新增${entityName}接口异常 msg:${e}`
+            logger.info(msg);
+            throw Error(msg)
         }
 
 
+
+    },
+
+    /**
+     *
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getOne(whereObj){
+
+        try{
+
+            let data = await think.model(tableName).where(whereObj).find();
+
+            logger.info(`根据条件查询单个${entityName}数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        }catch (e) {
+            let msg=`根据条件查询单个${entityName}接口异常 msg:${e}`
+            logger.info(msg);
+            throw Error(msg)
+        }
+
+
+
+    },
+
+    /**
+     *
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getList(whereObj){
+
+        try{
+
+            let data = await think.model(tableName).where(whereObj).select();
+
+            logger.info(`根据条件查询${entityName}列表：${JSON.stringify(data)}`)
+
+            return data;
+
+        }catch (e) {
+            let msg=`根据条件查询${entityName}列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw Error(msg)
+        }
+
+
+
+    },
+
+    async update(whereObj,updateObj) {
+
+        try {
+            let op_date = DateUtil.getNowStr()
+
+            updateObj.op_date=op_date
+
+            let data = await think.model(tableName).where(whereObj).update(updateObj)
+
+            logger.info(`更新${entityName}，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg=`更新${entityName}异常 msg:${e}`
+            logger.info(msg);
+            throw Error(msg)
+        }
 
     }
 

@@ -3,8 +3,7 @@ const Base = require('./base.js');
 const request = require('request');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const ORDER_STATE =require('../../config/ORDER_STATE')
-
+const pushService = require('../../service/push')
 const logger =think.logger;
 
 module.exports = class extends Base {
@@ -21,16 +20,21 @@ module.exports = class extends Base {
      */
     async sendTemplateMsgAction(){
 
-        let openId=this.post("openId")
-        let templateName=this.post("templateName")
-        let dataArray=this.post("dataArray")
-        let url=this.post("url")
-        let top=this.post("top")
-        let bottom=this.post("bottom")
+        try{
+            let openId=this.post("openId")
+            let templateName=this.post("templateName")
+            let dataArray=this.post("dataArray")
+            let url=this.post("url")
+            let top=this.post("top")
+            let bottom=this.post("bottom")
 
-        let data= await WechatUtil.sendTemplateMsg(openId,templateName,dataArray,url,top,bottom);
+            await pushService.sendTemplateMsg(openId,templateName,dataArray,url,top,bottom);
 
-        this.body=data;
+            this.body=Response.success();
+        }catch (e) {
+            logger.info(`发送模板消息接口异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
 
     }
 

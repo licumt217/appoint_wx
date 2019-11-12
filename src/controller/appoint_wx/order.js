@@ -6,9 +6,12 @@ const Util = require('../../util/Util')
 const WechatUtil = require('../../util/WechatUtil')
 const ORDER_STATE = require('../../config/ORDER_STATE')
 const DateUtil = require('../../util/DateUtil')
+const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
 const orderService = require('../../service/order')
 const therapistperiodService = require('../../service/therapistperiod')
+const orderService = require('../../service/order')
+const pushService = require('../../service/push')
 
 const logger = think.logger
 
@@ -28,7 +31,7 @@ module.exports = class extends Base {
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
 
-        logger.info(`微信支付统一下单接口参数 openid:${openid}， therapist_id:${therapist_id}， amount:${amount}， appoint_date:${appoint_date}， periodArray:${periodArray}`);
+        logger.info(`微信支付统一下单接口参数 ${JSON.stringify(this.post())}`);
 
         if (!openid) {
             this.body = Response.businessException(`openid不能为空！`)
@@ -50,8 +53,13 @@ module.exports = class extends Base {
             return false;
         }
 
-        if (!amount) {
-            this.body = Response.businessException(`订单金额不能为空！`)
+        if (!consult_type_id) {
+            this.body = Response.businessException(`咨询类型不能为空！`)
+            return false;
+        }
+
+        if (!manner_type_id) {
+            this.body = Response.businessException(`咨询方式不能为空！`)
             return false;
         }
 
@@ -67,14 +75,16 @@ module.exports = class extends Base {
             logger.info(`微信支付统一下单接口订单存库参数 state:${state}， create_date:${create_date}， prepay_id:${prepay_id}`);
 
             //订单表存库
-            let order_id=await this.model('order').add({
+            let order_id=await orderService.add({
                 openid,
                 therapist_id,
                 amount,
                 state,
                 prepay_id,
                 create_date,
-                trade_no
+                trade_no,
+                consult_type_id,
+                manner_type_id
             })
 
             //将咨询师时间段存库
@@ -88,6 +98,16 @@ module.exports = class extends Base {
             let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
             logger.info(`微信支付统一下单接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
+
+            //给咨询师发送模板消息，通知他审核
+
+            let url='http://www.baidu.com'
+            let top='你好，我是头部'
+            let bottom='你好，我是底部'
+
+
+
+            await pushService.sendTemplateMsg(openid,WechatTemplates.appoint_audit,['李强','18601965856',DateUtil.getNowStr(),'看病','备注'],url,top,bottom);
 
             this.body = Response.success({
                 secuParam: paySign
@@ -114,9 +134,7 @@ module.exports = class extends Base {
         try {
 
             //订单表存库
-            let orders = await this.model('order').where({
-                openid,
-            }).select();
+            let orders = await orderService.getList({openid})
 
             logger.info(`获取当前用户的订单列表数据库返回 orders:${JSON.stringify(orders)}`);
 
@@ -138,30 +156,54 @@ module.exports = class extends Base {
 
         let trade_no = this.post('trade_no')
 
-        logger.info(`取消订单参数 trade_no:${trade_no}`);
+        logger.info(`取消订单参数 ${JSON.stringify(this.post())}`);
 
         try {
 
+
+            let order = await orderService.getOrder({trade_no})
+
+            if (Util.isEmptyObject(order)) {
+                logger.info(`取消订单时根据订单号获取订单信息接口，未找到订单`);
+                this.body = Response.businessException(response.errorMsg);
+            }
+
+            //TODO 后期添加完善的取消订单的限制
+
+            //只有未支付和已支付状态的订单可以取消
+
+            if(!(order.state===ORDER_STATE.UN_PAYED || order.state===ORDER_STATE.PAYED)){
+                let msg=`订单状态是 ${order.state} ,不允许取消订单`
+                logger.info(msg);
+                this.body = Response.businessException(msg);
+            }
+
             //更新订单状态
-            await this.model('order').where({
+            await orderService.update({
                 trade_no
-            }).update({
+            },{
                 state: ORDER_STATE.CANCELED,
                 cancel_date: DateUtil.getNowStr()
             })
 
-            let response = await orderService.getOrderByTradeNo(trade_no)
+            //将对应的咨询师时段占用释放掉
+            await therapistperiodService.update({
+                order_id:order.id
+            },{
+                state: Util.ONE
+            })
 
-            if (response.isSuccessful()) {
-                let order = response.data;
-                //退款
-                await WechatUtil.refund(trade_no, Util.uuid(), Number(order.amount) * 100, Number(order.amount) * 100)
-
-                this.body = Response.success();
-            } else {
-                logger.info(`取消订单接口异常 msg:${response.errorMsg}`);
-                this.body = Response.businessException(response.errorMsg);
+            //如果需要退款的话，进行退款操作
+            if(order.state===ORDER_STATE.PAYED){
+                await WechatUtil.refund(trade_no, order.amount,order.amount)
             }
+
+
+
+
+            this.body = Response.success();
+
+
 
 
         } catch (e) {

@@ -8,6 +8,7 @@ let ORDER_STATE = {
     UNFUNDED: 2,    //已退款
     CANCELED: 3,    //已取消
     EXPIRED: 4,     //已过期
+    DONE: 5,     //已完结
 };
 
 

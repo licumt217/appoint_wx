@@ -99,7 +99,7 @@ let Util = {
      * @param obj
      */
     isEmptyObject(obj){
-        return (JSON.stringify(obj) === "{}");
+        return !obj || (JSON.stringify(obj) === "{}");
     },
     /**
      * 验证是否合法手机号
@@ -116,6 +116,9 @@ let Util = {
 
 
 }
+
+Util.ZERO=0;
+Util.ONE=1;
 
 
 module.exports = Util;
