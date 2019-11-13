@@ -66,18 +66,18 @@ module.exports = class extends Base {
 
 
             //TODO 改为软删除
-            let id = this.post('id')
+            let therapist_period_id = this.post('therapist_period_id')
 
-            logger.info(`删除${entityName}参数 id:${id}`)
+            logger.info(`删除${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!therapist_period_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model(tableName).where({
-                id,
+                therapist_period_id,
             }).delete()
 
             logger.info(`删除${entityName}，数据库返回：${JSON.stringify(data)}`)
@@ -110,7 +110,7 @@ module.exports = class extends Base {
                 period7 = this.post('period7'),
                 period8 = this.post('period8')
 
-            logger.info(`修改${entityName}参数 therapist_id:${therapist_id}, appoint_date:${appoint_date}, period1:${period1}, period2:${period2}, period3:${period3}, period4:${period4}, period5:${period5}, period6:${period6}, period7:${period7}, period8:${period8},`)
+            logger.info(`修改${entityName}参数 :${this.post()}`)
 
             if (!therapist_id) {
                 this.body = Response.businessException(`${entityName}咨询师不能为空！`)
@@ -180,7 +180,7 @@ module.exports = class extends Base {
                 appoint_date = this.post('appoint_date')
 
 
-            logger.info(`获取${entityName}列表参数 therapist_id：${therapist_id},appoint_date:${appoint_date}`)
+            logger.info(`获取${entityName}列表参数 ：${this.post()}`)
 
             let data = await this.model(tableName).where({
                 therapist_id,

@@ -20,7 +20,12 @@ function reset(isException) {
     }
 }
 
+function isEmptyObject(obj) {
+    return !obj || (JSON.stringify(obj) === "{}");
+}
+
 Response.success = (data) => {
+    data = isEmptyObject(data) ? null : data;
     reset();
     if (data) {
         json.data = data;

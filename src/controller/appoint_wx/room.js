@@ -36,6 +36,7 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let addJson={
+                room_id:Util.uuid(),
                 name,
                 position,
                 op_date
@@ -62,18 +63,18 @@ module.exports = class extends Base {
     async deleteAction() {
         try {
 
-            let id = this.post('id')
+            let room_id = this.post('room_id')
 
-            logger.info(`删除${entityName}参数 id:${id}`)
+            logger.info(`删除${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!room_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model(tableName).where({
-                id,
+                room_id,
             }).delete()
 
             logger.info(`删除${entityName}，数据库返回：${JSON.stringify(data)}`)
@@ -95,11 +96,11 @@ module.exports = class extends Base {
     async updateAction() {
         try {
 
-            let id = this.post('id')
+            let room_id = this.post('room_id')
             let name = this.post('name')
             let position = this.post('position')
 
-            logger.info(`修改${entityName}参数 id:${id}，name:${name}，position:${position}`)
+            logger.info(`修改${entityName}参数 :${this.post()}`)
 
             if (!name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
@@ -114,7 +115,7 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
-                id
+                room_id
             }).update({
                 name,
                 position,

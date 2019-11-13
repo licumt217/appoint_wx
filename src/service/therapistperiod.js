@@ -11,14 +11,16 @@ module.exports = {
 
     async add(therapist_id,
               appoint_date,
-              periodArray) {
+              periodArray,order_id) {
 
         try {
             let op_date = DateUtil.getNowStr()
 
             let addJson = {
+                therapist_period_id:Util.uuid(),
                 therapist_id,
                 appoint_date,
+                order_id,
                 op_date
             }
 

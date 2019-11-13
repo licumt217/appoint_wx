@@ -65,29 +65,29 @@ module.exports = class extends Base {
 
             //新增咨询师，需要校验流派等
 
-            let schoolTypeId, qualificationTypeId, mannerTypeId, levelTypeId
+            let school_type_id, qualification_type_id, manner_type_id, level_type_id
             if(role===Role.therapist){
-                schoolTypeId = this.post('schoolTypeId')
-                qualificationTypeId = this.post('qualificationTypeId')
-                mannerTypeId = this.post('mannerTypeId')
-                levelTypeId = this.post('levelTypeId')
+                school_type_id = this.post('school_type_id')
+                qualification_type_id = this.post('qualification_type_id')
+                manner_type_id = this.post('manner_type_id')
+                level_type_id = this.post('level_type_id')
 
-                if (!schoolTypeId) {
+                if (!school_type_id) {
                     this.body = Response.businessException(`流派类型不能为空！`)
                     return false;
                 }
 
-                if (!qualificationTypeId) {
+                if (!qualification_type_id) {
                     this.body = Response.businessException(`资历类型不能为空！`)
                     return false;
                 }
 
-                if (!mannerTypeId) {
+                if (!manner_type_id) {
                     this.body = Response.businessException(`咨询方式类型不能为空！`)
                     return false;
                 }
 
-                if (!levelTypeId) {
+                if (!level_type_id) {
                     this.body = Response.businessException(`等级类型不能为空！`)
                     return false;
                 }
@@ -97,6 +97,7 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let addJson={
+                user_id:Util.uuid(),
                 name,
                 phone,
                 gender,
@@ -118,11 +119,12 @@ module.exports = class extends Base {
             //新增咨询师，需要添加咨询师和流派、资历等的关系表
             if(role===Role.therapist){
                 await this.model('therapist_attach_relation').add({
+                    therapist_attach_relation_id:Util.uuid(),
                     therapist_id:userId,
-                    schoolTypeId,
-                    qualificationTypeId,
-                    mannerTypeId,
-                    levelTypeId,
+                    school_type_id,
+                    qualification_type_id,
+                    manner_type_id,
+                    level_type_id,
                     op_date
                 });
             }
@@ -144,18 +146,18 @@ module.exports = class extends Base {
     async deleteAction() {
         try {
 
-            let id = this.post('id')
+            let user_id = this.post('user_id')
 
-            logger.info(`删除用户参数 id:${id}`)
+            logger.info(`删除用户参数 :${this.post()}`)
 
-            if (!id) {
+            if (!user_id) {
                 this.body = Response.businessException(`用户ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model('user').where({
-                id,
+                user_id,
             }).delete()
 
             logger.info(`删除用户，数据库返回：${JSON.stringify(data)}`)
@@ -177,7 +179,7 @@ module.exports = class extends Base {
     async updateAction() {
         try {
 
-            let id = this.post('id')
+            let user_id = this.post('user_id')
             let name = this.post('name')
             let phone = this.post('phone')
             let gender = this.post('gender')
@@ -185,7 +187,7 @@ module.exports = class extends Base {
             let email = this.post('email')
             let isEmergency = this.post('isEmergency')
 
-            logger.info(`修改用户信息参数 id:${id}，name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email},isEmergency:${isEmergency}`)
+            logger.info(`修改用户信息参数 :${this.post()}`)
 
             isEmergency=isEmergency||0
 
@@ -216,33 +218,33 @@ module.exports = class extends Base {
             updateJson.isEmergency=isEmergency;
 
             let userInfo=await this.model('user').where({
-                id:id
+                user_id
             }).find()
 
             //修改咨询师，需要添加咨询师和流派、资历等的关系表
-            let schoolTypeId, qualificationTypeId, mannerTypeId, levelTypeId
+            let school_type_id, qualification_type_id, manner_type_id, level_type_id
             if(userInfo.role===Role.therapist){
-                schoolTypeId = this.post('schoolTypeId')
-                qualificationTypeId = this.post('qualificationTypeId')
-                mannerTypeId = this.post('mannerTypeId')
-                levelTypeId = this.post('levelTypeId')
+                school_type_id = this.post('school_type_id')
+                qualification_type_id = this.post('qualification_type_id')
+                manner_type_id = this.post('manner_type_id')
+                level_type_id = this.post('level_type_id')
 
-                if (!schoolTypeId) {
+                if (!school_type_id) {
                     this.body = Response.businessException(`流派类型不能为空！`)
                     return false;
                 }
 
-                if (!qualificationTypeId) {
+                if (!qualification_type_id) {
                     this.body = Response.businessException(`资历类型不能为空！`)
                     return false;
                 }
 
-                if (!mannerTypeId) {
+                if (!manner_type_id) {
                     this.body = Response.businessException(`咨询方式类型不能为空！`)
                     return false;
                 }
 
-                if (!levelTypeId) {
+                if (!level_type_id) {
                     this.body = Response.businessException(`等级类型不能为空！`)
                     return false;
                 }
@@ -251,7 +253,7 @@ module.exports = class extends Base {
 
 
             let data = await this.model('user').where({
-                id
+                user_id
             }).update(updateJson);
 
             logger.info(`修改用户信息，数据库返回：${JSON.stringify(data)}`)
@@ -259,12 +261,12 @@ module.exports = class extends Base {
             //修改咨询师和流派、资历等的关系表
             if(userInfo.role===Role.therapist){
                 await this.model('therapist_attach_relation').where({
-                    therapist_id: id
+                    therapist_id: user_id
                 }).update({
-                    schoolTypeId,
-                    qualificationTypeId,
-                    mannerTypeId,
-                    levelTypeId,
+                    school_type_id,
+                    qualification_type_id,
+                    manner_type_id,
+                    level_type_id,
                     op_date
                 });
             }
@@ -287,12 +289,12 @@ module.exports = class extends Base {
         try {
 
             let role = this.post('role')
-            let mannerTypeId = this.post('mannerTypeId')
+            let manner_type_id = this.post('manner_type_id')
             let isEmergency = this.post('isEmergency')
             let page = this.post('page')||Page.currentPage
             let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取用户列表参数 role:${role}, page:${page}, pageSize:${pageSize}, isEmergency:${isEmergency}, mannerTypeId:${mannerTypeId}`)
+            logger.info(`获取用户列表参数 :${this.post()}`)
 
             if (!role) {
                 this.body = Response.businessException(`用户类型不能为空！`)
@@ -307,19 +309,17 @@ module.exports = class extends Base {
                     role
                 }
 
-
-
                 //添加紧急咨询条件
                 if(isEmergency===1){
                     whereObj.isEmergency=isEmergency;
                 }
 
-                let joinStr=    'appoint_therapist_attach_relation on appoint_user.id=appoint_therapist_attach_relation.therapist_id'
+                let joinStr=    'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
 
                 //咨询方式：线上、线下
-                if(mannerTypeId){
-                    whereObj.mannerTypeId=mannerTypeId;
-                    joinStr+=` and appoint_therapist_attach_relation.mannerTypeId=${mannerTypeId}`
+                if(manner_type_id){
+                    whereObj.manner_type_id=manner_type_id;
+                    joinStr+=` and appoint_therapist_attach_relation.manner_type_id=${manner_type_id}`
                 }
                 data = await this.model('user').where(whereObj).join(joinStr).page(page,pageSize).countSelect();
 
@@ -462,6 +462,7 @@ module.exports = class extends Base {
             let op_date = DateUtil.getNowStr()
 
             let user_id = await this.model('user').add({
+                user_id:Util.uuid(),
                 openid,
                 phone,
                 identification_no,
@@ -475,6 +476,7 @@ module.exports = class extends Base {
             logger.info(`用户注册数据库返回：user_id:${user_id}`)
 
             await this.model('weixin_user').add({
+                weixin_user_id:Util.uuid(),
                 openid,
                 user_id,
                 op_date

@@ -24,7 +24,7 @@ module.exports = class extends Base {
 
         let openid = this.post('openid')
         let therapist_id = this.post('therapist_id')
-        let trade_no = Util.uuid()
+        let order_id = Util.uuid()
         let amount = this.post('amount');
 
         let appoint_date = this.post('appoint_date')
@@ -70,13 +70,14 @@ module.exports = class extends Base {
 
         try {
 
-            let prepay_id = await WechatUtil.unifiedOrder(openid, trade_no, Number(amount) * 100, this.ip)
+            let prepay_id = await WechatUtil.unifiedOrder(openid, order_id, Number(amount) * 100, this.ip)
 
 
             logger.info(`微信支付统一下单接口订单存库参数 state:${state}， create_date:${create_date}， prepay_id:${prepay_id}`);
 
             //订单表存库
-            let order_id=await orderService.add({
+            await orderService.add({
+                order_id,
                 openid,
                 therapist_id,
                 amount,
@@ -89,7 +90,7 @@ module.exports = class extends Base {
             })
 
             //将咨询师时间段存库
-            await therapistperiodService.add(therapist_id,appoint_date,periodArray)
+            await therapistperiodService.add(therapist_id,appoint_date,periodArray,order_id)
 
             let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -141,6 +142,36 @@ module.exports = class extends Base {
     }
 
     /**
+     * 获取c端用户的当前预约订单
+     * @returns {Promise<void>}
+     */
+    async getCurAppointAction(){
+
+        logger.info(`获取c端用户的当前预约订单参数 ${this.post()}`);
+
+        let openid = this.post('openid')
+
+        let data = await this.model('order').where({
+            openid
+        }).join([
+            ` appoint_therapist_period on appoint_order.therapist_id=appoint_therapist_period.therapist_id`,
+            `left JOIN appoint_user ON appoint_user.user_id=appoint_therapist_period.therapist_id`,
+        ]).find();
+
+        try {
+
+
+            logger.info(`获取当前用户的订单列表数据库返回 :${data}`);
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取c端用户的当前预约订单异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+    }
+
+    /**
      * 获取当前用户的订单列表
      * @returns {Promise<void>}
      */
@@ -173,14 +204,14 @@ module.exports = class extends Base {
      */
     async cancelOrderAction() {
 
-        let trade_no = this.post('trade_no')
+        let order_id = this.post('order_id')
 
-        logger.info(`取消订单参数 ${JSON.stringify(this.post())}`);
+        logger.info(`取消订单参数 ${this.post()}`);
 
         try {
 
 
-            let order = await orderService.getOrder({trade_no})
+            let order = await orderService.getOne({order_id})
 
             if (Util.isEmptyObject(order)) {
                 logger.info(`取消订单时根据订单号获取订单信息接口，未找到订单`);
@@ -199,7 +230,7 @@ module.exports = class extends Base {
 
             //更新订单状态
             await orderService.update({
-                trade_no
+                order_id
             },{
                 state: ORDER_STATE.CANCELED,
                 cancel_date: DateUtil.getNowStr()
@@ -207,23 +238,17 @@ module.exports = class extends Base {
 
             //将对应的咨询师时段占用释放掉
             await therapistperiodService.update({
-                order_id:order.id
+                order_id:order_id
             },{
                 state: Util.ONE
             })
 
-            //如果需要退款的话，进行退款操作
+            //如果需要退款的话，进行退款操作。
             if(order.state===ORDER_STATE.PAYED){
-                await WechatUtil.refund(trade_no, order.amount,order.amount)
+                await WechatUtil.refund(order_id, order.amount,order.amount)
             }
 
-
-
-
             this.body = Response.success();
-
-
-
 
         } catch (e) {
             logger.info(`取消订单接口异常 msg:${e}`);

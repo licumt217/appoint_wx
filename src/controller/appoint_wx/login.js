@@ -99,7 +99,7 @@ module.exports = class extends Base {
                 const user_id = data.user_id;
 
                 data = await this.model('user').where({
-                    id: user_id
+                    user_id
                 }).find();
 
                 logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
@@ -180,6 +180,7 @@ module.exports = class extends Base {
             if(Util.isEmptyObject(userInfo)){
 
                 let user_id = await this.model('user').add({
+                    user_id:Util.uuid(),
                     openid,
                     phone,
                     identification_no,
@@ -192,7 +193,7 @@ module.exports = class extends Base {
                 })
 
                 userInfo = await this.model('user').where({
-                    id: user_id
+                    user_id
                 }).find()
 
                 logger.info(`用户注册数据库返回：user_id:${user_id}`)
@@ -200,8 +201,9 @@ module.exports = class extends Base {
             }
 
             await this.model('weixin_user').add({
+                weixin_user_id:Util.uuid(),
                 openid,
-                user_id:userInfo.id,
+                user_id:userInfo.user_id,
                 op_date
             })
 

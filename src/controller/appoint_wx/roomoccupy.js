@@ -25,7 +25,7 @@ module.exports = class extends Base {
             let period = this.post('period')
             let state = this.post('state')
 
-            logger.info(`新增${entityName}参数 room_id:${room_id}, year:${year}，month:${month}，day:${day}， period:${period}, state:${state}`)
+            logger.info(`新增${entityName}参数 :${this.post()}`)
 
             if (!room_id) {
                 this.body = Response.businessException(`${entityName}房间不能为空！`)
@@ -57,6 +57,7 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let addJson={
+                room_occupy_id:Util.uuid(),
                 room_id,
                 year,
                 month,
@@ -87,18 +88,18 @@ module.exports = class extends Base {
     async deleteAction() {
         try {
 
-            let id = this.post('id')
+            let room_occupy_id = this.post('room_occupy_id')
 
-            logger.info(`删除${entityName}参数 id:${id}`)
+            logger.info(`删除${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!room_occupy_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model(tableName).where({
-                id,
+                room_occupy_id,
             }).delete()
 
             logger.info(`删除${entityName}，数据库返回：${JSON.stringify(data)}`)
@@ -120,7 +121,7 @@ module.exports = class extends Base {
     async updateAction() {
         try {
 
-            let id = this.post('id')
+            let room_occupy_id = this.post('room_occupy_id')
             let room_id = this.post('room_id')
             let year = this.post('year')
             let month = this.post('month')
@@ -128,9 +129,9 @@ module.exports = class extends Base {
             let period = this.post('period')
             let state = this.post('state')
 
-            logger.info(`修改${entityName}参数 id:${id}，room_id:${room_id}，year:${year}，month:${month}，day:${day}，period:${period}，state:${state}`)
+            logger.info(`修改${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!room_occupy_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
@@ -165,7 +166,7 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let data = await this.model(tableName).where({
-                id
+                room_occupy_id
             }).update({
                 room_id,
                 year,

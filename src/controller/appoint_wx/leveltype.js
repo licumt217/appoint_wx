@@ -18,12 +18,12 @@ module.exports = class extends Base {
     async addAction() {
         try {
 
-            let name = this.post('name')
+            let level_type_name = this.post('level_type_name')
             let divide_ratio = this.post('divide_ratio')
 
-            logger.info(`新增${entityName}参数 name:${name}, divide_ratio:${divide_ratio}`)
+            logger.info(`新增${entityName}参数 :${this.post()}`)
 
-            if (!name) {
+            if (!level_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
                 return false;
             }
@@ -36,7 +36,8 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let addJson={
-                name,
+                level_type_id:Util.uuid(),
+                level_type_name,
                 divide_ratio,
                 op_date
             }
@@ -62,18 +63,18 @@ module.exports = class extends Base {
     async deleteAction() {
         try {
 
-            let id = this.post('id')
+            let level_type_id = this.post('level_type_id')
 
-            logger.info(`删除${entityName}参数 id:${id}`)
+            logger.info(`删除${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!level_type_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model(tableName).where({
-                id,
+                level_type_id,
             }).delete()
 
             logger.info(`删除${entityName}，数据库返回：${JSON.stringify(data)}`)
@@ -95,14 +96,14 @@ module.exports = class extends Base {
     async updateAction() {
         try {
 
-            let id = this.post('id')
-            let name = this.post('name')
+            let level_type_id = this.post('level_type_id')
+            let level_type_name = this.post('level_type_name')
             let divide_ratio = this.post('divide_ratio')
 
-            logger.info(`修改${entityName}参数 id:${id}，name:${name},divide_ratio:${divide_ratio}`)
+            logger.info(`修改${entityName}参数 :${this.post()}`)
 
             let updateJson={}
-            if (!name) {
+            if (!level_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
                 return false;
             }
@@ -112,13 +113,13 @@ module.exports = class extends Base {
                 return false;
             }
 
-            updateJson.name=name
+            updateJson.level_type_name=level_type_name
             updateJson.divide_ratio=divide_ratio
 
             updateJson.op_date=DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
-                id
+                level_type_id
             }).update(updateJson);
 
             logger.info(`修改${entityName}，数据库返回：${JSON.stringify(data)}`)

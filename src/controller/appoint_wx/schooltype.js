@@ -18,11 +18,11 @@ module.exports = class extends Base {
     async addAction() {
         try {
 
-            let name = this.post('name')
+            let school_type_name = this.post('school_type_name')
 
-            logger.info(`新增${entityName}参数 name:${name}`)
+            logger.info(`新增${entityName}参数 :${this.post()}`)
 
-            if (!name) {
+            if (!school_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
                 return false;
             }
@@ -30,7 +30,8 @@ module.exports = class extends Base {
             let op_date=DateUtil.getNowStr()
 
             let addJson={
-                name,
+                school_type_id:Util.uuid(),
+                school_type_name,
                 op_date
             }
 
@@ -55,18 +56,18 @@ module.exports = class extends Base {
     async deleteAction() {
         try {
 
-            let id = this.post('id')
+            let school_type_id = this.post('school_type_id')
 
-            logger.info(`删除${entityName}参数 id:${id}`)
+            logger.info(`删除${entityName}参数 :${this.post()}`)
 
-            if (!id) {
+            if (!school_type_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
 
 
             let data = await this.model(tableName).where({
-                id,
+                school_type_id,
             }).delete()
 
             logger.info(`删除${entityName}，数据库返回：${JSON.stringify(data)}`)
@@ -88,23 +89,23 @@ module.exports = class extends Base {
     async updateAction() {
         try {
 
-            let id = this.post('id')
-            let name = this.post('name')
+            let school_type_id = this.post('school_type_id')
+            let school_type_name = this.post('school_type_name')
 
-            logger.info(`修改${entityName}参数 id:${id}，name:${name}`)
+            logger.info(`修改${entityName}参数 :${this.post()}`)
 
             let updateJson={}
-            if (!name) {
+            if (!school_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
                 return false;
             }
 
-            updateJson.name=name
+            updateJson.school_type_name=school_type_name
 
             updateJson.op_date=DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
-                id
+                school_type_id
             }).update(updateJson);
 
             logger.info(`修改${entityName}，数据库返回：${JSON.stringify(data)}`)

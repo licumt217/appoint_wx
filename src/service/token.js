@@ -11,7 +11,7 @@ module.exports = class extends think.Service {
     }
 
     const result = await this.parse(token);
-    if (think.isEmpty(result) || result.userInfo.id <= 0) {
+    if (think.isEmpty(result) || result.userInfo.user_id <= 0) {
       return null;
     }
 

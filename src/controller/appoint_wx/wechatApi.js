@@ -74,7 +74,9 @@ module.exports = class extends Base {
 
                 let out_trade_no = data.out_trade_no;
 
-                let response = await orderService.getOrderByTradeNo(out_trade_no)
+                let response = await orderService.getOne({
+                    order_id:out_trade_no
+                })
 
 
                 if (response.isSuccessful()) {
@@ -87,7 +89,7 @@ module.exports = class extends Base {
                         logger.info("更改订单状态")
 
                         await this.model('order').where({
-                            id: order.id
+                            order_id: order.order_id
                         }).update({
                             state: 1
                         })
@@ -96,6 +98,7 @@ module.exports = class extends Base {
 
                         //在支付记录表添加一条支付记录
                         await this.model('pay_record').add({
+                            pay_record_id:Util.uuid(),
                             bank_type: data.bank_type,
                             cash_fee: Number(data.cash_fee) / 100,
                             openid: data.openid,
@@ -165,6 +168,7 @@ module.exports = class extends Base {
                 if(Util.isEmptyObject(record)){
                     //验证参数后，在退款记录表添加一条记录
                     let refund_record_id=await this.model('refund_record').add({
+                        refund_record_id:Util.uuid(),
                         out_refund_no:data.out_refund_no,
                         out_trade_no:data.out_trade_no,
                         refund_account:data.refund_account,
@@ -179,7 +183,7 @@ module.exports = class extends Base {
                         total_fee:Number(data.total_fee)/100,
                         transaction_id:data.transaction_id,
                     })
-                    logger.info(`添加退款记录成功，id:${refund_record_id}`)
+                    logger.info(`添加退款记录成功，refund_record_id:${refund_record_id}`)
                 }else{
                     logger.info(`退款记录已存在，直接返回成功`)
                 }
@@ -222,8 +226,7 @@ module.exports = class extends Base {
         let refund_fee = Number(this.post('refund_fee')) * 100
         let notify_url = this.post('notify_url')
 
-
-        let data = await WechatUtil.refund(out_trade_no, out_refund_no, total_fee, refund_fee, notify_url);
+        let data = await WechatUtil.refund(out_trade_no, total_fee, refund_fee);
 
         this.body = Response.success(data);
 
