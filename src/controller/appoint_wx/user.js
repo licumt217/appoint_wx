@@ -96,8 +96,9 @@ module.exports = class extends Base {
 
             let op_date=DateUtil.getNowStr()
 
+            let user_id=Util.uuid();
             let addJson={
-                user_id:Util.uuid(),
+                user_id,
                 name,
                 phone,
                 gender,
@@ -112,15 +113,13 @@ module.exports = class extends Base {
                 addJson.password=Constant.defaultPassword
             }
 
-            let userId = await this.model('user').add(addJson);
-
-            logger.info(`新增用户，数据库返回：${JSON.stringify(userId)}`)
+            await this.model('user').add(addJson);
 
             //新增咨询师，需要添加咨询师和流派、资历等的关系表
             if(role===Role.therapist){
                 await this.model('therapist_attach_relation').add({
                     therapist_attach_relation_id:Util.uuid(),
-                    therapist_id:userId,
+                    therapist_id:user_id,
                     school_type_id,
                     qualification_type_id,
                     manner_type_id,
@@ -129,7 +128,7 @@ module.exports = class extends Base {
                 });
             }
 
-            this.body = Response.success(userId);
+            this.body = Response.success(user_id);
 
         } catch (e) {
             logger.info(`新增用户异常 msg:${e}`);
