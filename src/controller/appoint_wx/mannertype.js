@@ -20,7 +20,7 @@ module.exports = class extends Base {
 
             let manner_type_name = this.post('manner_type_name')
 
-            logger.info(`新增${entityName}参数 :${this.post()}`)
+            logger.info(`新增${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!manner_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
@@ -58,7 +58,7 @@ module.exports = class extends Base {
 
             let manner_type_id = this.post('manner_type_id')
 
-            logger.info(`删除${entityName}参数 :${this.post()}`)
+            logger.info(`删除${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!manner_type_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
@@ -92,7 +92,7 @@ module.exports = class extends Base {
             let manner_type_id = this.post('manner_type_id')
             let manner_type_name = this.post('manner_type_name')
 
-            logger.info(`修改${entityName}参数 :${this.post()}`)
+            logger.info(`修改${entityName}参数 :${JSON.stringify(this.post())}`)
 
             let updateJson={}
             if (!manner_type_name) {

@@ -2,6 +2,7 @@ const Base = require('./base.js');
 
 const WechatUtil = require('../../util/WechatUtil')
 const WechatConfig = require('../../config/WechatConfig')
+const ORDER_STATE = require('../../config/ORDER_STATE')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const SignUtil = require('../../util/SignUtil')
@@ -74,52 +75,43 @@ module.exports = class extends Base {
 
                 let out_trade_no = data.out_trade_no;
 
-                let response = await orderService.getOne({
+                let order = await orderService.getOne({
                     order_id:out_trade_no
                 })
 
 
-                if (response.isSuccessful()) {
+                //只有订单状态是未支付时，将状态设置为已支付
+                if (order.state === 0) {
 
-                    let order = response.data;
+                    logger.info("更改订单状态")
 
-                    //只有订单状态是未支付时，将状态设置为已支付
-                    if (order.state === 0) {
+                    await this.model('order').where({
+                        order_id: order.order_id
+                    }).update({
+                        state: ORDER_STATE.PAYED
+                    })
 
-                        logger.info("更改订单状态")
+                    logger.info("添加支付记录")
 
-                        await this.model('order').where({
-                            order_id: order.order_id
-                        }).update({
-                            state: 1
-                        })
+                    //在支付记录表添加一条支付记录
+                    await this.model('pay_record').add({
+                        pay_record_id:Util.uuid(),
+                        bank_type: data.bank_type,
+                        cash_fee: Number(data.cash_fee) / 100,
+                        openid: data.openid,
+                        out_trade_no: data.out_trade_no,
+                        time_end: data.time_end,
+                        total_fee: Number(data.total_fee) / 100,
+                        transaction_id: data.transaction_id,
+                        mch_id: data.mch_id,
+                        is_subscribe: data.is_subscribe,
+                        appid: data.appid,
+                        trade_type: data.trade_type
+                    })
 
-                        logger.info("添加支付记录")
-
-                        //在支付记录表添加一条支付记录
-                        await this.model('pay_record').add({
-                            pay_record_id:Util.uuid(),
-                            bank_type: data.bank_type,
-                            cash_fee: Number(data.cash_fee) / 100,
-                            openid: data.openid,
-                            out_trade_no: data.out_trade_no,
-                            time_end: data.time_end,
-                            total_fee: Number(data.total_fee) / 100,
-                            transaction_id: data.transaction_id,
-                            mch_id: data.mch_id,
-                            is_subscribe: data.is_subscribe,
-                            appid: data.appid,
-                            trade_type: data.trade_type
-                        })
-
-                        this.body = returnData
-                    } else {
-                        logger.info("当前订单状态不需要更新")
-                        this.body = returnData
-                    }
-
+                    this.body = returnData
                 } else {
-                    logger.info(response.errorMsg)
+                    logger.info("当前订单状态不需要更新")
                     this.body = returnData
                 }
 

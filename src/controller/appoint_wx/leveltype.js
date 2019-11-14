@@ -21,7 +21,7 @@ module.exports = class extends Base {
             let level_type_name = this.post('level_type_name')
             let divide_ratio = this.post('divide_ratio')
 
-            logger.info(`新增${entityName}参数 :${this.post()}`)
+            logger.info(`新增${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!level_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
@@ -65,7 +65,7 @@ module.exports = class extends Base {
 
             let level_type_id = this.post('level_type_id')
 
-            logger.info(`删除${entityName}参数 :${this.post()}`)
+            logger.info(`删除${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!level_type_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
@@ -100,7 +100,7 @@ module.exports = class extends Base {
             let level_type_name = this.post('level_type_name')
             let divide_ratio = this.post('divide_ratio')
 
-            logger.info(`修改${entityName}参数 :${this.post()}`)
+            logger.info(`修改${entityName}参数 :${JSON.stringify(this.post())}`)
 
             let updateJson={}
             if (!level_type_name) {

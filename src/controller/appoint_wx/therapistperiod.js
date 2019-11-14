@@ -1,6 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
+const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const therapistperiodService = require('../../service/therapistperiod')
 const logger = think.logger;
@@ -68,7 +69,7 @@ module.exports = class extends Base {
             //TODO 改为软删除
             let therapist_period_id = this.post('therapist_period_id')
 
-            logger.info(`删除${entityName}参数 :${this.post()}`)
+            logger.info(`删除${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!therapist_period_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
@@ -110,7 +111,7 @@ module.exports = class extends Base {
                 period7 = this.post('period7'),
                 period8 = this.post('period8')
 
-            logger.info(`修改${entityName}参数 :${this.post()}`)
+            logger.info(`修改${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!therapist_id) {
                 this.body = Response.businessException(`${entityName}咨询师不能为空！`)
@@ -180,10 +181,11 @@ module.exports = class extends Base {
                 appoint_date = this.post('appoint_date')
 
 
-            logger.info(`获取${entityName}列表参数 ：${this.post()}`)
+            logger.info(`获取${entityName}列表参数 ：${JSON.stringify(this.post())}`)
 
             let data = await this.model(tableName).where({
                 therapist_id,
+                state:Util.ZERO,
                 appoint_date
             }).select();
 

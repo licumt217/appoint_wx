@@ -17,6 +17,50 @@ const logger = think.logger
 module.exports = class extends Base {
 
     /**
+     * 微信支付
+     * @returns {Promise<void>}
+     */
+    async payAction() {
+
+        try {
+
+            logger.info(`微信支付参数 ${JSON.stringify(this.post())}`);
+
+            let order_id = this.post('order_id')
+
+            if (!order_id) {
+                this.body = Response.businessException(`订单ID不能为空！`)
+                return false;
+            }
+
+
+            let order = await orderService.getOne({order_id});
+
+            let prepay_id = await WechatUtil.unifiedOrder(order.openid, order_id, order.amount, this.ip).catch(error=>{
+                this.body = Response.businessException(error);
+            })
+
+            logger.info(`prepay_id ${prepay_id}`);
+
+            await orderService.update({order_id},{prepay_id})
+
+            let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
+
+            logger.info(`微信支付接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
+
+            this.body = Response.success({
+                secuParam: paySign
+            });
+
+        } catch (e) {
+            logger.info(`微信支付接口异常 msg:${e}`);
+            this.body = Response.businessException(e.message);
+        }
+
+
+    }
+
+    /**
      * 微信支付统一下单接口
      * @returns {Promise<void>}
      */
@@ -49,7 +93,7 @@ module.exports = class extends Base {
             return false;
         }
 
-        if (!periodArray || periodArray.length===0) {
+        if (!periodArray || periodArray.length === 0) {
             this.body = Response.businessException(`咨询时段不能为空！`)
             return false;
         }
@@ -64,16 +108,12 @@ module.exports = class extends Base {
             return false;
         }
 
-        let state = ORDER_STATE.UN_PAYED
+        let state = ORDER_STATE.COMMIT
 
         let create_date = DateUtil.getNowStr()
 
         try {
 
-            let prepay_id = await WechatUtil.unifiedOrder(openid, order_id, Number(amount) * 100, this.ip)
-
-
-            logger.info(`微信支付统一下单接口订单存库参数 state:${state}， create_date:${create_date}， prepay_id:${prepay_id}`);
 
             //订单表存库
             await orderService.add({
@@ -82,56 +122,52 @@ module.exports = class extends Base {
                 therapist_id,
                 amount,
                 state,
-                prepay_id,
+                // prepay_id,
                 create_date,
-                trade_no,
                 consult_type_id,
                 manner_type_id
             })
 
             //将咨询师时间段存库
-            await therapistperiodService.add(therapist_id,appoint_date,periodArray,order_id)
+            await therapistperiodService.add(therapist_id, appoint_date, periodArray, order_id)
 
-            let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
+            // let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
-            logger.info(`微信支付统一下单接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
+            // logger.info(`微信支付统一下单接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
 
             //给咨询师发送模板消息，通知他审核
 
-            let url='http://www.baidu.com'
-            let top={
-                value:'你好，我是头部',
-                color:'red'
+            let url = 'http://www.baidu.com'
+            let top = {
+                value: '你好，我是头部',
+                color: 'red'
             }
-            let bottom={
-                value:'我是底部',
-                color:'pink'
+            let bottom = {
+                value: '我是底部',
+                color: 'pink'
             }
 
-            let weixin_user_obj=await this.model('weixin_user').where({
-                user_id:therapist_id
+            let weixin_user_obj = await this.model('weixin_user').where({
+                user_id: therapist_id
             }).find()
 
 
+            await pushService.sendTemplateMsg(weixin_user_obj.openid, 'appoint_audit', [{
+                value: '李强',
+            }, {
+                value: '18601965856'
 
-            await pushService.sendTemplateMsg(weixin_user_obj.openid,'appoint_audit',[{
-                value:'李强',
-            },{
-                value:'18601965856'
+            }, {
+                value: DateUtil.getNowStr()
 
-            },{
-                value:DateUtil.getNowStr()
+            }, {
+                value: '看病',
 
-            },{
-                value:'看病',
+            }, {
+                value: '备注'
+            }], url, top, bottom);
 
-            },{
-                value:'备注'
-            }],url,top,bottom);
-
-            this.body = Response.success({
-                secuParam: paySign
-            });
+            this.body = Response.success();
 
         } catch (e) {
             logger.info(`微信支付统一下单接口异常 msg:${e}`);
@@ -145,16 +181,18 @@ module.exports = class extends Base {
      * 获取c端用户的当前预约订单
      * @returns {Promise<void>}
      */
-    async getCurAppointAction(){
+    async getCurAppointAction() {
 
-        logger.info(`获取c端用户的当前预约订单参数 ${this.post()}`);
+        logger.info(`获取c端用户的当前预约订单参数 ${JSON.stringify(this.post())}`);
 
         let openid = this.post('openid')
 
         let data = await this.model('order').where({
-            openid
+            openid: ['=', openid],
+            'appoint_order.state': ['in', [ORDER_STATE.PAYED, ORDER_STATE.COMMIT,ORDER_STATE.AUDITED]],
+            'appoint_therapist_period.state': ['in', [Util.ZERO]]
         }).join([
-            ` appoint_therapist_period on appoint_order.therapist_id=appoint_therapist_period.therapist_id`,
+            ` appoint_therapist_period on appoint_order.order_id=appoint_therapist_period.order_id`,
             `left JOIN appoint_user ON appoint_user.user_id=appoint_therapist_period.therapist_id`,
         ]).find();
 
@@ -172,19 +210,98 @@ module.exports = class extends Base {
     }
 
     /**
+     * 获取预约详情
+     * @returns {Promise<void>}
+     */
+    async getAppointDetailAction() {
+
+        logger.info(`获取预约详情参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let order_id = this.post('order_id')
+
+            let data = await this.model('order')
+                .where({
+                    'appoint_order.order_id': ['=', order_id],
+                })
+                .join([
+                    ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`,
+                    `left JOIN appoint_therapist_period ON appoint_therapist_period.order_id=appoint_order.order_id`,
+                ]).field(
+                    `appoint_order.order_id,
+                    appoint_order.state,
+                    appoint_order.prepay_id,
+                    appoint_user.name,
+                    appoint_therapist_period.appoint_date,
+                    appoint_therapist_period.period1,
+                    appoint_therapist_period.period2,
+                    appoint_therapist_period.period3,
+                    appoint_therapist_period.period4,
+                    appoint_therapist_period.period5,
+                    appoint_therapist_period.period6,
+                    appoint_therapist_period.period7,
+                    appoint_therapist_period.period8`,
+                )
+                .find();
+
+
+            logger.info(`获取预约详情数据库返回 orders:${JSON.stringify(data)}`);
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取预约详情异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 获取历史预约记录
+     * @returns {Promise<void>}
+     */
+    async getAppointHistoryAction() {
+
+        logger.info(`获取历史预约记录参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let openid = this.post('openid')
+
+            let orders = await this.model('order').where({
+                openid: ['=', openid],
+                'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE,ORDER_STATE.UNFUNDED,ORDER_STATE.REJECTED]],
+            }).join([
+                ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`,
+                `left JOIN appoint_therapist_period ON appoint_therapist_period.order_id=appoint_order.order_id`,
+            ]).select();
+
+
+            logger.info(`获取历史预约记录数据库返回 orders:${JSON.stringify(orders)}`);
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`获取历史预约记录异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      * 获取当前用户的订单列表
      * @returns {Promise<void>}
      */
     async getOrderListAction() {
 
-        let openid = this.post('openid')
-
-        logger.info(`获取当前用户的订单列表参数 openid:${openid}`);
+        logger.info(`获取当前用户的订单列表参数 :${JSON.stringify(this.post())}`);
 
         try {
 
-            //订单表存库
-            let orders = await orderService.getList({openid})
+            let orders = await orderService.getList(this.post())
 
             logger.info(`获取当前用户的订单列表数据库返回 orders:${JSON.stringify(orders)}`);
 
@@ -206,7 +323,7 @@ module.exports = class extends Base {
 
         let order_id = this.post('order_id')
 
-        logger.info(`取消订单参数 ${this.post()}`);
+        logger.info(`取消订单参数 ${JSON.stringify(this.post())}`);
 
         try {
 
@@ -222,8 +339,8 @@ module.exports = class extends Base {
 
             //只有未支付和已支付状态的订单可以取消
 
-            if(!(order.state===ORDER_STATE.UN_PAYED || order.state===ORDER_STATE.PAYED)){
-                let msg=`订单状态是 ${order.state} ,不允许取消订单`
+            if (!(order.state === ORDER_STATE.COMMIT || order.state === ORDER_STATE.PAYED || order.state === ORDER_STATE.AUDITED)) {
+                let msg = `订单状态是 ${order.state} ,不允许取消订单`
                 logger.info(msg);
                 this.body = Response.businessException(msg);
             }
@@ -231,21 +348,21 @@ module.exports = class extends Base {
             //更新订单状态
             await orderService.update({
                 order_id
-            },{
+            }, {
                 state: ORDER_STATE.CANCELED,
                 cancel_date: DateUtil.getNowStr()
             })
 
             //将对应的咨询师时段占用释放掉
             await therapistperiodService.update({
-                order_id:order_id
-            },{
+                order_id: order_id
+            }, {
                 state: Util.ONE
             })
 
             //如果需要退款的话，进行退款操作。
-            if(order.state===ORDER_STATE.PAYED){
-                await WechatUtil.refund(order_id, order.amount,order.amount)
+            if (order.state === ORDER_STATE.PAYED) {
+                await WechatUtil.refund(order_id, order.amount, order.amount)
             }
 
             this.body = Response.success();

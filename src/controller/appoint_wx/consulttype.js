@@ -21,7 +21,7 @@ module.exports = class extends Base {
             let consult_type_name = this.post('consult_type_name')
             let remark = this.post('remark')
 
-            logger.info(`新增${entityName}参数 :${this.post()}`)
+            logger.info(`新增${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!consult_type_name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
@@ -60,7 +60,7 @@ module.exports = class extends Base {
 
             let consult_type_id = this.post('consult_type_id')
 
-            logger.info(`删除${entityName}参数 :${this.post()}`)
+            logger.info(`删除${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!consult_type_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
@@ -95,7 +95,7 @@ module.exports = class extends Base {
             let consult_type_name = this.post('consult_type_name')
             let remark = this.post('remark')
 
-            logger.info(`修改${entityName}参数 :${this.post()}`)
+            logger.info(`修改${entityName}参数 :${JSON.stringify(this.post())}`)
 
             let updateJson={}
             if (!consult_type_name) {

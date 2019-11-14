@@ -148,7 +148,7 @@ module.exports = class extends Base {
 
             let user_id = this.post('user_id')
 
-            logger.info(`删除用户参数 :${this.post()}`)
+            logger.info(`删除用户参数 :${JSON.stringify(this.post())}`)
 
             if (!user_id) {
                 this.body = Response.businessException(`用户ID不能为空！`)
@@ -187,7 +187,7 @@ module.exports = class extends Base {
             let email = this.post('email')
             let isEmergency = this.post('isEmergency')
 
-            logger.info(`修改用户信息参数 :${this.post()}`)
+            logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
 
             isEmergency=isEmergency||0
 
@@ -294,7 +294,7 @@ module.exports = class extends Base {
             let page = this.post('page')||Page.currentPage
             let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取用户列表参数 :${this.post()}`)
+            logger.info(`获取用户列表参数 :${JSON.stringify(this.post())}`)
 
             if (!role) {
                 this.body = Response.businessException(`用户类型不能为空！`)

@@ -363,6 +363,8 @@ let Util = {
 
         let body = "北大-心理咨询"
 
+        total_fee=Number(total_fee)*100
+
         let obj = {
             openid: openid,
             appid: WechatConfig.APP_ID,
@@ -382,7 +384,7 @@ let Util = {
 
         let xml = BaseUtil.obj2xml(obj)
 
-        console.log("统一下单参数：" + xml)
+        logger.info("统一下单参数：" + xml)
 
 
         return new Promise((async (resolve, reject) => {
@@ -393,23 +395,21 @@ let Util = {
                     form: xml
                 },
                 (error, response, body) => {
-                    if (error) {
-                        console.log(1)
-                        resolve({"error": "error"})
-                    } else {
-                        console.log(2, body)
-                        let json = BaseUtil.xml2JsonObj(body)
+                    logger.info(`下单接口微信返回 error:${error},response:${JSON.stringify(response)},body:${JSON.stringify(body)}`)
 
-                        console.log(json)
+                    if (error) {
+                        resolve(`微信下单接口错误：${error}`)
+                    } else {
+                        let json = BaseUtil.xml2JsonObj(body)
 
                         let return_code = json.return_code;
                         let result_code = json.result_code;
-                        let return_msg = json.return_msg;
+                        let err_code_des = json.err_code_des;
 
                         if (return_code === "SUCCESS" && result_code === "SUCCESS") {
                             resolve(json.prepay_id)
                         } else {
-                            reject(return_msg)
+                            reject(err_code_des)
                         }
 
 

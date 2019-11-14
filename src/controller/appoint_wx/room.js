@@ -65,7 +65,7 @@ module.exports = class extends Base {
 
             let room_id = this.post('room_id')
 
-            logger.info(`删除${entityName}参数 :${this.post()}`)
+            logger.info(`删除${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!room_id) {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
@@ -100,7 +100,7 @@ module.exports = class extends Base {
             let name = this.post('name')
             let position = this.post('position')
 
-            logger.info(`修改${entityName}参数 :${this.post()}`)
+            logger.info(`修改${entityName}参数 :${JSON.stringify(this.post())}`)
 
             if (!name) {
                 this.body = Response.businessException(`${entityName}名称不能为空！`)
