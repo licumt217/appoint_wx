@@ -1,5 +1,6 @@
 const j2xParser = require("fast-xml-parser").j2xParser;
 const x2jParser = require("fast-xml-parser");
+const WechatConfig = require("../config/WechatConfig");
 
 json2xmlParser = new j2xParser();
 const defaultOptions = {
@@ -62,9 +63,9 @@ let Util = {
 
         let obj = x2jParser.parse(xml);
 
-        if(obj.xml){
+        if (obj.xml) {
             return obj.xml;
-        }else{
+        } else {
             return obj.root;
         }
 
@@ -98,7 +99,7 @@ let Util = {
      * 是否空对象
      * @param obj
      */
-    isEmptyObject(obj){
+    isEmptyObject(obj) {
         return !obj || (JSON.stringify(obj) === "{}");
     },
     /**
@@ -106,19 +107,27 @@ let Util = {
      * @param p
      * @returns {boolean}
      */
-    isValidPhone(p){
+    isValidPhone(p) {
         let re = /^1\d{10}$/
         return re.test(p)
     },
+    getAuthUrl(url) {
+
+        if (url.indexOf("?") > -1) {
+            url = encodeURIComponent(url.split('?')[0]) +'?'+ url.split("?")[1]
+        } else {
+            url = encodeURIComponent(url)
+        }
 
 
-
+        return `https://open.weixin.qq.com/connect/oauth2/authorize?appId=${WechatConfig.APP_ID}&redirect_uri=${url}&response_type=code&scope=snsapi_base&state=about#wechat_redirect`
+    }
 
 
 }
 
-Util.ZERO=0;
-Util.ONE=1;
+Util.ZERO = 0;
+Util.ONE = 1;
 
 
 module.exports = Util;

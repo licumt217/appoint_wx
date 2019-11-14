@@ -20,8 +20,6 @@ let scheduleJob = null;
 
 let scheduleJobOfJsapiTicket = null;
 
-const Response = require('../config/response')
-
 const logger = think.logger
 
 let Util = {
@@ -34,8 +32,6 @@ let Util = {
 
         let token = null;
 
-        console.log(__dirname)
-
         //说明执行过此方法，直接文件中获取token
         if (scheduleJob) {
 
@@ -47,7 +43,7 @@ let Util = {
 
             fs.writeFileSync(path.join(__dirname, '../config/access_token'), token);
 
-            console.log("-------->access_token写入文件，然后每100分钟刷新token");
+            logger.info("-------->access_token写入文件，然后每100分钟刷新token");
 
             scheduleJob = schedule.scheduleJob('* 30 * * * *', async () => {
                 token = await Util.realGetAccessToken();
@@ -69,13 +65,10 @@ let Util = {
 
         return new Promise(((resolve, reject) => {
             request.get(`${WechatConfig.URL_OF_GET_ACCESS_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
-
+                logger.info(`微信获取token回信息 error:${error}， body:${body}， response:${response}`);
                 if (error) {
-                    console.log(error)
                     resolve(null)
                 } else {
-
-                    console.log("获取token接口返回：" + body)
 
                     resolve(JSON.parse(body).access_token)
                 }
@@ -103,7 +96,7 @@ let Util = {
 
             fs.writeFileSync(path.join(__dirname, '../config/jsapi_ticket'), jsapiTicket);
 
-            console.log("-------->jsapi_ticket写入文件，然后每100分钟刷新jsapi_ticket")
+            logger.info("-------->jsapi_ticket写入文件，然后每100分钟刷新jsapi_ticket")
 
             scheduleJobOfJsapiTicket = schedule.scheduleJob('* 40 * * * *', async () => {
                 jsapiTicket = await Util.realGetJsapiTicket();
@@ -129,7 +122,6 @@ let Util = {
             request.get(`${WechatConfig.URL_OF_GET_JSAPI_TICKET}?access_token=${ACCESS_TOKEN}&type=jsapi`, (error, response, body) => {
 
                 if (error) {
-                    console.log(error)
                     resolve(null)
                 } else {
 
@@ -197,11 +189,11 @@ let Util = {
 
             const url = `${WechatConfig.URL_OF_GET_OPENID}?appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}&code=${code}&grant_type=authorization_code`
 
-            think.logger.info(`根据code获取openid调用微信接口URL：${url}`);
+            logger.info(`根据code获取openid调用微信接口URL：${url}`);
 
             request.get(url, (error, response, body) => {
 
-                think.logger.info(`根据code获取openid返回信息 error:${error}， body:${body}， response:${response}`);
+                logger.info(`根据code获取openid返回信息 error:${error}， body:${body}， response:${response}`);
 
                 body = JSON.parse(body)
 
@@ -211,7 +203,7 @@ let Util = {
                     if (body.errcode) {
                         reject(body.errmsg)
                     } else {
-                        resolve(Response.success(body.openid))
+                        resolve(body.openid)
                     }
                 }
             })
@@ -231,74 +223,74 @@ let Util = {
      */
     sendTemplateMsg: (openId, templateName, dataArray, url, top, bottom) => {
 
-            let data = {}
+        let data = {}
 
-            if (top) {
-                data.first = {
-                    "value": top.value,
-                    "color": top.color || WechatConfig.DEFAULT_COLOR
-                }
+        if (top) {
+            data.first = {
+                "value": top.value,
+                "color": top.color || WechatConfig.DEFAULT_COLOR
+            }
+        }
+
+        if (bottom) {
+            data.remark = {
+                "value": bottom.value,
+                "color": bottom.color || WechatConfig.DEFAULT_COLOR
+            }
+        }
+
+        for (let i = 0; i < dataArray.length; i++) {
+
+            let obj = dataArray[i];
+
+            data[`keyword${i + 1}`] = {
+                "value": obj.value,
+                "color": obj.color || WechatConfig.DEFAULT_COLOR
             }
 
-            if (bottom) {
-                data.remark = {
-                    "value": bottom.value,
-                    "color": bottom.color || WechatConfig.DEFAULT_COLOR
-                }
-            }
+        }
 
-            for (let i = 0; i < dataArray.length; i++) {
-
-                let obj = dataArray[i];
-
-                data[`keyword${i + 1}`] = {
-                    "value": obj.value,
-                    "color": obj.color || WechatConfig.DEFAULT_COLOR
-                }
-
-            }
-
-            let form = {
-                "touser": openId,
-                "template_id": WechatTemplates[templateName],
-                "url": url || "",
-                "data": data
-            };
+        let form = {
+            "touser": openId,
+            "template_id": WechatTemplates[templateName],
+            "url": url || "",
+            "data": data
+        };
 
 
-            return new Promise((async (resolve, reject) => {
+        return new Promise((async (resolve, reject) => {
 
-                let ACCESS_TOKEN = await Util.getAccessToken();
+            let ACCESS_TOKEN = await Util.getAccessToken();
 
-                request.post({
-                        url: `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${ACCESS_TOKEN}`,
-                        form: JSON.stringify(form)
-                    }, (error, response, body) => {
+            request.post({
+                    url: `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${ACCESS_TOKEN}`,
+                    form: JSON.stringify(form)
+                }, (error, response, body) => {
 
-                        try{
-                            logger.info(`模板消息接口返回 error:${error}, response:${JSON.stringify(response)}, body:${body}`)
+                    try {
+                        logger.info(`模板消息接口返回 error:${error}, response:${JSON.stringify(response)}, body:${body}`)
 
-                            body=JSON.parse(body)
+                        body = JSON.parse(body)
 
-                            if (error) {
-                                reject(`发送模板消息错误 ${error}`)
+                        if (error) {
+                            reject(`发送模板消息错误 ${error}`)
+                        } else {
+
+                            let errcode = body.errcode
+                            let errmsg = body.errmsg
+
+                            if (errcode === 0) {
+                                resolve()
                             } else {
-
-                                let errcode=body.errcode
-                                let errmsg=body.errmsg
-
-                                if (errcode===0) {
-                                    resolve()
-                                } else {
-                                    reject(`发送模板消息接口异常 ${errmsg}`)
-                                }
+                                reject(`发送模板消息接口异常 ${errmsg}`)
                             }
-                        }catch (e) {
-                            reject(`发送模板消息接口异常 ${e}`)
                         }
+                    } catch (e) {
+                        reject(`发送模板消息接口异常 ${e}`)
                     }
-                )
-            }))
+                }
+            )
+        }))
     },
 
     /**
@@ -307,7 +299,6 @@ let Util = {
      * @returns {string}
      */
     getPaySign(obj) {
-        console.log(SignUtil.transObj2UrlKeyValueByAscii(obj) + `&key=${WechatConfig.KEY}`)
 
         return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj) + `&key=${WechatConfig.KEY}`).toUpperCase()
     },
@@ -337,11 +328,7 @@ let Util = {
 
             delete json.sign;
 
-            console.log('sign:' + sign)
-
             let calculatedSign = Util.getPaySign(json);
-
-            console.log('calculatedSign:' + calculatedSign)
 
             if (sign === calculatedSign) {
                 return true;
@@ -363,7 +350,7 @@ let Util = {
 
         let body = "北大-心理咨询"
 
-        total_fee=Number(total_fee)*100
+        total_fee = Number(total_fee) * 100
 
         let obj = {
             openid: openid,
@@ -538,14 +525,12 @@ let Util = {
                     form: xml,
                 },
                 (error, response, body) => {
-
+                    logger.info(`微信退款查询返回信息 error:${error}， body:${body}， response:${response}`);
                     if (error) {
                         resolve({"退款查询失败": error})
                     } else {
 
                         let json = BaseUtil.xml2JsonObj(body)
-
-                        console.log("退款查询接口返回信息：" + JSON.stringify(json))
 
                         //再次校验签名
                         if (Util.checkWechatMessageSignature(json)) {
@@ -662,20 +647,15 @@ let Util = {
 
         return new Promise((async (resolve, reject) => {
 
-            request.post(
-                {
+            request.post({
                     url: WechatConfig.URL_OF_ORDER_QUERY,
                     form: xml
-                },
-                (error, response, body) => {
+                }, (error, response, body) => {
+                logger.info(`微信查询订单返回信息 error:${error}， body:${body}， response:${response}`);
                     if (error) {
-                        console.log(1)
                         resolve({"error": "error"})
                     } else {
-                        console.log(2, body)
                         let json = BaseUtil.xml2JsonObj(body)
-
-                        console.log(json)
 
                         let return_code = json.return_code;
                         let result_code = json.result_code;
@@ -700,7 +680,7 @@ let Util = {
      */
     doMsg: (data) => {
 
-        console.log("接收到微信服务器普通消息：" + JSON.stringify(data))
+        logger.info("接收到微信服务器普通消息：" + JSON.stringify(data))
 
         // let json=BaseUtil.xml2JsonObj(xml)
 
@@ -711,31 +691,31 @@ let Util = {
         switch (msgType) {
 
             case MsgTypes.TEXT:
-                console.log("......文本消息：" + JSON.stringify(data))
+                logger.info("......文本消息：" + JSON.stringify(data))
                 break;
 
             case MsgTypes.EVENT:
 
-                console.log("......事件消息：")
+                logger.info("......事件消息：")
 
                 let eventType = data.Event[0]
 
                 switch (eventType) {
 
                     case EventTypes.SCAN:
-                        console.log("扫描带参数二维码事件。。")
+                        logger.info("扫描带参数二维码事件。。")
                         break;
                     case EventTypes.SUBSCRIBE:
-                        console.log("SUBSCRIBE。。")
+                        logger.info("SUBSCRIBE。。")
                         break;
                     case EventTypes.UNSUBSCRIBE:
-                        console.log("UNSUBSCRIBE。。")
+                        logger.info("UNSUBSCRIBE。。")
                         break;
                     case EventTypes.LOCATION:
-                        console.log("LOCATION。。")
+                        logger.info("LOCATION。。")
                         break;
                     case EventTypes.CLICK:
-                        console.log("CLICK。。")
+                        logger.info("CLICK。。")
                         break;
                 }
 
@@ -777,8 +757,8 @@ let Util = {
                     form: JSON.stringify(json)
                 },
                 (error, response, body) => {
+                    logger.info(`微信退款返回信息 error:${error}， body:${body}， response:${response}`);
                     if (error) {
-                        console.log(1)
                         resolve({"error": "error"})
                     } else {
                         resolve("")
@@ -815,9 +795,5 @@ let Util = {
     },
 
 }
-
-const mm = "+EkBcKs4rbi/rcj8YsNXp/Y53snuVh+e2z6AG0M/tzGzOU69P5RXEGfaPpEbB1rxVsDSllOv2ktcf4GArDjvP6IAvY/x8jpwObfiiulyblbCAOxIfDJb8Jy60Qp/axkdcoIA6vPKbKRIDISoMLR4kknOeifZTcyDWADaYVstIsIWlJm/1sbflB92WV5B90K0O3NZasrydIUqoPwiNo+JMG0K0SWatG1yWU5j7kjKxdQ7Ho6ibE01I/ODhtitEgzU4F5EwZFF5NH82lKOAGnRHVtCJmasO8C3Ufr3ODKImcEKCUlvjFC+ZncmcFKoMqktvVD8e9Bycu31hw9MSfI6CYsXJfiNsbYNloQ3368W2D4U6pRyXhCoSVtcYkRSENASrLYHiaOE44TVZyFWaHIDVdTsiKrgDuGAl34kqC28z9BFfIqCBVSD49hU9Wlvx7daVYxvxMbgyqht0i9LKhAH4DiDKNq1EHjUWb81r3mIVdDYqcW1GPXdM78zFr0w9R4jDvPRc5AQ2246HI4pl0NWDASDGvRMztHD1kPuQWuFn/ftonw6uLIhEV0tcBVjj6+PCXHwVfJHB3waJgmMGGdaJ2y5w0pwB1KLlLWGXK1LKgAT+qELZiP4NyKrTVnt8Q8cdEmV4lD0AOhOQn2++hoEQdwz2wh5C99VBNT8tw7ljhR/CXSs8BaF8xTzfwnlUeIEx7hW/BME6oG41t+P7U5yz4iREGOgroz3AlVSrMlglwb9AUf7gMCdiKGwWWaaZcuCPHOO4q4YlnY9BZasr+6kQvfvM5KNPF4gZ2irW30kX7+ahFRMxIUapGtRVq7v9jZt+6ePezfCUPbT7p5J6Io9PlDzivAVcw8oiRgSYRvmTdZw4EMwQGJ/zhrehkdUtGQaji8GfXmETZznukqCnvcHLzhyzfMieBLdfX3cHrZrXH1Kg/z0TvyXJt6ydMAJf5SUgUxq0d4Pm8GEbI6dyaKidcm1YzgioSJNgZGQ/gUMRRRnGE4V4uLvIDJR1A9mj5ErzaK+8A9Xnan1GCa+x+RtBw=="
-
-console.log(Util.decryptRefundNotifyParam(mm))
 
 module.exports = Util;

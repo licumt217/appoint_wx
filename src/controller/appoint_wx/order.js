@@ -36,13 +36,13 @@ module.exports = class extends Base {
 
             let order = await orderService.getOne({order_id});
 
-            let prepay_id = await WechatUtil.unifiedOrder(order.openid, order_id, order.amount, this.ip).catch(error=>{
+            let prepay_id = await WechatUtil.unifiedOrder(order.openid, order_id, order.amount, this.ip).catch(error => {
                 this.body = Response.businessException(error);
             })
 
             logger.info(`prepay_id ${prepay_id}`);
 
-            await orderService.update({order_id},{prepay_id})
+            await orderService.update({order_id}, {prepay_id})
 
             let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -58,6 +58,93 @@ module.exports = class extends Base {
         }
 
 
+    }
+
+    /**
+     * 咨询师接受预约
+     * @returns {Promise<void>}
+     */
+    async acceptAction() {
+        try {
+
+            logger.info(`咨询师接受预约参数 ${JSON.stringify(this.post())}`);
+
+            let order_id = this.post('order_id')
+
+            await orderService.update({order_id}, {state: ORDER_STATE.AUDITED})
+
+            //TODO 给用户推送让用户付款
+
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+
+            let order = await orderService.getOne({order_id})
+
+            await pushService.sendTemplateMsg(order.openid, url);
+
+
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`咨询师接受预约异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+    }
+
+    /**
+     * 咨询师拒绝预约
+     * @returns {Promise<void>}
+     */
+    async denyAction() {
+        try {
+
+            logger.info(`咨询师拒绝预约参数 ${JSON.stringify(this.post())}`);
+
+            let order_id = this.post('order_id')
+
+            await orderService.update({order_id}, {state: ORDER_STATE.REJECTED})
+
+            //TODO 给用户推送告知用户
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+
+            let order = await orderService.getOne({order_id})
+
+            await pushService.sendTemplateMsg(order.openid, url);
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`咨询师拒绝预约异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+    }
+
+    /**
+     * 咨询师确认完成
+     * @returns {Promise<void>}
+     */
+    async doneAction() {
+        try {
+
+            logger.info(`咨询师确认完成参数 ${JSON.stringify(this.post())}`);
+
+            let order_id = this.post('order_id')
+
+            await orderService.update({order_id}, {state: ORDER_STATE.DONE})
+
+            //TODO 给用户推送告知用户
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+
+            let order = await orderService.getOne({order_id})
+
+            await pushService.sendTemplateMsg(order.openid, url);
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`咨询师确认完成异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
     }
 
     /**
@@ -137,35 +224,15 @@ module.exports = class extends Base {
 
             //给咨询师发送模板消息，通知他审核
 
-            let url = 'http://www.baidu.com'
-            let top = {
-                value: '你好，我是头部',
-                color: 'red'
-            }
-            let bottom = {
-                value: '我是底部',
-                color: 'pink'
-            }
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/therapistAppointConfirmPush?order_id=${order_id}`)
 
             let weixin_user_obj = await this.model('weixin_user').where({
                 user_id: therapist_id
             }).find()
 
 
-            await pushService.sendTemplateMsg(weixin_user_obj.openid, 'appoint_audit', [{
-                value: '李强',
-            }, {
-                value: '18601965856'
-
-            }, {
-                value: DateUtil.getNowStr()
-
-            }, {
-                value: '看病',
-
-            }, {
-                value: '备注'
-            }], url, top, bottom);
+            //咨询师审核推送
+            await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
 
             this.body = Response.success();
 
@@ -189,7 +256,7 @@ module.exports = class extends Base {
 
         let data = await this.model('order').where({
             openid: ['=', openid],
-            'appoint_order.state': ['in', [ORDER_STATE.PAYED, ORDER_STATE.COMMIT,ORDER_STATE.AUDITED]],
+            'appoint_order.state': ['in', [ORDER_STATE.PAYED, ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
             'appoint_therapist_period.state': ['in', [Util.ZERO]]
         }).join([
             ` appoint_therapist_period on appoint_order.order_id=appoint_therapist_period.order_id`,
@@ -272,7 +339,7 @@ module.exports = class extends Base {
 
             let orders = await this.model('order').where({
                 openid: ['=', openid],
-                'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE,ORDER_STATE.UNFUNDED,ORDER_STATE.REJECTED]],
+                'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE, ORDER_STATE.UNFUNDED, ORDER_STATE.REJECTED]],
             }).join([
                 ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`,
                 `left JOIN appoint_therapist_period ON appoint_therapist_period.order_id=appoint_order.order_id`,
