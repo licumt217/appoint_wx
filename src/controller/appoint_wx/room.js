@@ -1,6 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
+const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 
@@ -144,7 +145,7 @@ module.exports = class extends Base {
             let page = this.post('page')||Page.currentPage
             let pageSize = this.post('pageSize')||Page.pageSize
 
-            logger.info(`获取${entityName}列表参数 page:${page}, pageSize:${pageSize}`)
+            logger.info(`获取${entityName}列表参数 :${JSON.stringify(this.post())}`)
 
             let data = await this.model(tableName).page(page,pageSize).countSelect();
 

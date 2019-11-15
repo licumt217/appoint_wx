@@ -1,6 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
+const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 
