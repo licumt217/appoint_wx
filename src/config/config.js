@@ -16,6 +16,7 @@ module.exports = {
         "wechatApi",
         "consulttype",
         "therapistperiod",
+        "complaint",
     ],
     divisionManager: [
         "login",
@@ -31,6 +32,7 @@ module.exports = {
         "wechatApi",
         "consulttype",
         "therapistperiod",
+        "complaint",
     ],
     admin: [
         "login",
@@ -46,6 +48,7 @@ module.exports = {
         "wechatApi",
         "consulttype",
         "therapistperiod",
+        "complaint",
     ],
     therapist: [
         "login",
@@ -61,6 +64,7 @@ module.exports = {
         "wechatApi",
         "consulttype",
         "therapistperiod",
+        "complaint",
     ],
     client: [
         "login",
@@ -76,5 +80,6 @@ module.exports = {
         "wechatApi",
         "consulttype",
         "therapistperiod",
+        "complaint",
     ]
 };

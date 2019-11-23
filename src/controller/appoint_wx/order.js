@@ -212,7 +212,8 @@ module.exports = class extends Base {
                 // prepay_id,
                 create_date,
                 consult_type_id,
-                manner_type_id
+                manner_type_id,
+                user_id:this.ctx.state.userInfo.user_id
             })
 
             //将咨询师时间段存库
@@ -429,7 +430,7 @@ module.exports = class extends Base {
 
             //如果需要退款的话，进行退款操作。
             if (order.state === ORDER_STATE.PAYED) {
-                await WechatUtil.refund(order_id, order.amount, order.amount)
+                await orderService.refund(order_id, order.amount, order.amount)
             }
 
             this.body = Response.success();
