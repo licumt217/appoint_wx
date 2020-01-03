@@ -163,14 +163,7 @@ module.exports = class extends Base {
     }
 
 
-    async find() {
 
-        let str="http://www.2e4w5.cn/shareDetail/20191130/11132852.html?unionId=O98nJo3r&cs=9ff388811a9f4698a5f580f5d0e12c28&taskId=11132852&userId=6704402&shareSource=shareTask&tf=singlemessage";
-
-        this.body = Response.success(str);
-
-
-    }
 
 
 
