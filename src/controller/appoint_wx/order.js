@@ -267,7 +267,7 @@ module.exports = class extends Base {
         try {
 
 
-            logger.info(`获取当前用户的订单列表数据库返回 :${data}`);
+            logger.info(`获取当前用户的订单列表数据库返回 :${JSON.stringify(data)}`);
 
             this.body = Response.success(data);
 
