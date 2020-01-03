@@ -41,9 +41,9 @@ exports.model = {
         prefix: 'appoint_',
         encoding: 'utf8',
         host: '47.92.74.29',
-        port: '3306',
+        port: '3307',
         user: 'root',
-        password: 'root',
+        password: 'y2pe2NF7',
         dateStrings: true
     }
 };

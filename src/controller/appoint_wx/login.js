@@ -92,6 +92,11 @@ module.exports = class extends Base {
             }).find();
 
             logger.info(`根据openid查询user_id数据库返回：${JSON.stringify(data)}`)
+            logger.info(`data:：${JSON.stringify(data)}`)
+            logger.info(Util.isEmptyObject(data))
+
+
+
 
             if (Util.isEmptyObject(data)) {
                 this.body = Response.success();
@@ -103,6 +108,15 @@ module.exports = class extends Base {
                 }).find();
 
                 logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
+
+                if(Util.isEmptyObject(data)){
+                    console.log(333333)
+                    this.body=Response.success();
+                    return;
+                }
+
+
+                console.log(44444444)
 
                 const TokenSerivce = this.service('token');
 
