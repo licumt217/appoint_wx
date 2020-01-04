@@ -61,12 +61,12 @@ module.exports = class extends Base {
                 return false;
             }
 
-            isEmergency=isEmergency||0;
+            isEmergency = isEmergency || 0;
 
             //新增咨询师，需要校验流派等
 
             let school_type_id, qualification_type_id, manner_type_id, level_type_id
-            if(role===Role.therapist){
+            if (role === Role.therapist) {
                 school_type_id = this.post('school_type_id')
                 qualification_type_id = this.post('qualification_type_id')
                 manner_type_id = this.post('manner_type_id')
@@ -94,10 +94,10 @@ module.exports = class extends Base {
 
             }
 
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
-            let user_id=Util.uuid();
-            let addJson={
+            let user_id = Util.uuid();
+            let addJson = {
                 user_id,
                 name,
                 phone,
@@ -109,17 +109,17 @@ module.exports = class extends Base {
                 isEmergency
             }
 
-            if(role!==Role.client){
-                addJson.password=Constant.defaultPassword
+            if (role !== Role.client) {
+                addJson.password = Constant.defaultPassword
             }
 
             await this.model('user').add(addJson);
 
             //新增咨询师，需要添加咨询师和流派、资历等的关系表
-            if(role===Role.therapist){
+            if (role === Role.therapist) {
                 await this.model('therapist_attach_relation').add({
-                    therapist_attach_relation_id:Util.uuid(),
-                    therapist_id:user_id,
+                    therapist_attach_relation_id: Util.uuid(),
+                    therapist_id: user_id,
                     school_type_id,
                     qualification_type_id,
                     manner_type_id,
@@ -171,6 +171,64 @@ module.exports = class extends Base {
 
     }
 
+
+    /**
+     * 修改密码
+     * @returns {Promise<any | Promise<any>>}
+     */
+    async updatePasswordAction() {
+        let user_id = this.ctx.state.userInfo.user_id
+        console.log(user_id)
+        let password = this.post("password")
+        let newPassword = this.post("newPassword")
+        let confirmPassword = this.post("confirmPassword")
+
+        logger.info(`修改密码参数 :${JSON.stringify(this.post())}`)
+
+        if (!user_id) {
+            this.body = Response.businessException(`用户ID不能为空！`)
+            return false;
+        }
+
+        if (!password) {
+            this.body = Response.businessException(`原始密码不能为空！`)
+            return false;
+        }
+
+        if (!newPassword) {
+            this.body = Response.businessException(`新密码不能为空！`)
+            return false;
+        }
+
+        if (!confirmPassword) {
+            this.body = Response.businessException(`确认新密码不能为空！`)
+            return false;
+        }
+
+        if (password === newPassword) {
+            this.body = Response.businessException(`新旧密码不能相同！`)
+            return false;
+        }
+
+        if (confirmPassword !== newPassword) {
+            this.body = Response.businessException(`新密码和确认密码不同！`)
+            return false;
+        }
+
+        password = md5(password)
+
+        const user = await this.model('user').where({user_id, password}).find()
+
+        if (Util.isEmptyObject(user)) {
+            this.body = Response.businessException(`原始密码错误！`)
+        } else {
+            await this.model('user').where({user_id}).update({password: md5(newPassword)});
+            return this.json()
+        }
+
+
+    }
+
     /**
      * 修改用户信息
      * @returns {Promise<boolean>}
@@ -188,41 +246,42 @@ module.exports = class extends Base {
 
             logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
 
-            isEmergency=isEmergency||0
+            isEmergency = isEmergency || 0
 
-            let updateJson={}
+            let updateJson = {}
             if (name) {
-                updateJson.name=name
+                updateJson.name = name
             }
 
             if (phone) {
-                updateJson.phone=phone
+                updateJson.phone = phone
             }
 
             if (gender) {
-                updateJson.gender=gender
+                updateJson.gender = gender
             }
 
             if (birthday) {
-                updateJson.birthday=birthday
+                updateJson.birthday = DateUtil.format(birthday)
             }
 
             if (email) {
-                updateJson.email=email
+                updateJson.email = email
             }
 
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
-            updateJson.op_date=op_date;
-            updateJson.isEmergency=isEmergency;
+            updateJson.op_date = op_date;
+            updateJson.isEmergency = isEmergency;
 
-            let userInfo=await this.model('user').where({
+            let userInfo = await this.model('user').where({
                 user_id
             }).find()
 
+
             //修改咨询师，需要添加咨询师和流派、资历等的关系表
             let school_type_id, qualification_type_id, manner_type_id, level_type_id
-            if(userInfo.role===Role.therapist){
+            if (userInfo.role === Role.therapist) {
                 school_type_id = this.post('school_type_id')
                 qualification_type_id = this.post('qualification_type_id')
                 manner_type_id = this.post('manner_type_id')
@@ -250,7 +309,6 @@ module.exports = class extends Base {
             }
 
 
-
             let data = await this.model('user').where({
                 user_id
             }).update(updateJson);
@@ -258,7 +316,7 @@ module.exports = class extends Base {
             logger.info(`修改用户信息，数据库返回：${JSON.stringify(data)}`)
 
             //修改咨询师和流派、资历等的关系表
-            if(userInfo.role===Role.therapist){
+            if (userInfo.role === Role.therapist) {
                 await this.model('therapist_attach_relation').where({
                     therapist_id: user_id
                 }).update({
@@ -290,8 +348,8 @@ module.exports = class extends Base {
             let role = this.post('role')
             let manner_type_id = this.post('manner_type_id')
             let isEmergency = this.post('isEmergency')
-            let page = this.post('page')||Page.currentPage
-            let pageSize = this.post('pageSize')||Page.pageSize
+            let page = this.post('page') || Page.currentPage
+            let pageSize = this.post('pageSize') || Page.pageSize
 
             logger.info(`获取用户列表参数 :${JSON.stringify(this.post())}`)
 
@@ -301,31 +359,31 @@ module.exports = class extends Base {
             }
 
             //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
-            let data=[]
-            if(role===Role.therapist){
+            let data = []
+            if (role === Role.therapist) {
 
-                let whereObj={
+                let whereObj = {
                     role
                 }
 
                 //添加紧急咨询条件
-                if(isEmergency===1){
-                    whereObj.isEmergency=isEmergency;
+                if (isEmergency === 1) {
+                    whereObj.isEmergency = isEmergency;
                 }
 
-                let joinStr=    'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
+                let joinStr = 'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
 
                 //咨询方式：线上、线下
-                if(manner_type_id){
-                    whereObj.manner_type_id=manner_type_id;
-                    joinStr+=` and appoint_therapist_attach_relation.manner_type_id=${manner_type_id}`
+                if (manner_type_id) {
+                    whereObj.manner_type_id = manner_type_id;
+                    joinStr += ` and appoint_therapist_attach_relation.manner_type_id=${manner_type_id}`
                 }
-                data = await this.model('user').where(whereObj).join(joinStr).page(page,pageSize).countSelect();
+                data = await this.model('user').where(whereObj).join(joinStr).page(page, pageSize).countSelect();
 
-            }else{
+            } else {
                 data = await this.model('user').where({
                     role
-                }).page(page,pageSize).countSelect();
+                }).page(page, pageSize).countSelect();
             }
 
 
@@ -364,7 +422,7 @@ module.exports = class extends Base {
                 return false;
             }
 
-            password=md5(password)
+            password = md5(password)
 
 
             let data = await this.model('user').where({
@@ -389,10 +447,10 @@ module.exports = class extends Base {
                 } else {
                     const TokenSerivce = this.service('token');
 
-                    const token = await TokenSerivce.create({userInfo:data});
+                    const token = await TokenSerivce.create({userInfo: data});
 
                     this.body = Response.success({
-                        userInfo:data,
+                        userInfo: data,
                         token
                     });
                 }
@@ -405,9 +463,6 @@ module.exports = class extends Base {
 
 
     }
-
-
-
 
 
     /**
@@ -461,7 +516,7 @@ module.exports = class extends Base {
             let op_date = DateUtil.getNowStr()
 
             let user_id = await this.model('user').add({
-                user_id:Util.uuid(),
+                user_id: Util.uuid(),
                 openid,
                 phone,
                 identification_no,
@@ -475,7 +530,7 @@ module.exports = class extends Base {
             logger.info(`用户注册数据库返回：user_id:${user_id}`)
 
             await this.model('weixin_user').add({
-                weixin_user_id:Util.uuid(),
+                weixin_user_id: Util.uuid(),
                 openid,
                 user_id,
                 op_date

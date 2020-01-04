@@ -35,6 +35,7 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
+        "station",
     ],
     admin: [
         "login",
@@ -52,6 +53,7 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
+        "divisionAdminRelation",
     ],
     therapist: [
         "login",
