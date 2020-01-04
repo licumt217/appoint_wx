@@ -17,6 +17,7 @@ module.exports = {
         "consulttype",
         "therapistperiod",
         "complaint",
+        "division",
     ],
     divisionManager: [
         "login",
@@ -33,6 +34,7 @@ module.exports = {
         "consulttype",
         "therapistperiod",
         "complaint",
+        "division",
     ],
     admin: [
         "login",
@@ -49,6 +51,7 @@ module.exports = {
         "consulttype",
         "therapistperiod",
         "complaint",
+        "division",
     ],
     therapist: [
         "login",
@@ -65,6 +68,7 @@ module.exports = {
         "consulttype",
         "therapistperiod",
         "complaint",
+        "division",
     ],
     client: [
         "login",
@@ -81,5 +85,6 @@ module.exports = {
         "consulttype",
         "therapistperiod",
         "complaint",
+        "division",
     ]
 };
