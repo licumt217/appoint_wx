@@ -96,8 +96,6 @@ module.exports = class extends Base {
             logger.info(Util.isEmptyObject(data))
 
 
-
-
             if (Util.isEmptyObject(data)) {
                 this.body = Response.success();
             } else {
@@ -109,9 +107,9 @@ module.exports = class extends Base {
 
                 logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
 
-                if(Util.isEmptyObject(data)){
+                if (Util.isEmptyObject(data)) {
                     console.log(333333)
-                    this.body=Response.success();
+                    this.body = Response.success();
                     return;
                 }
 
@@ -191,10 +189,10 @@ module.exports = class extends Base {
 
             let op_date = DateUtil.getNowStr()
 
-            if(Util.isEmptyObject(userInfo)){
+            if (Util.isEmptyObject(userInfo)) {
 
                 let user_id = await this.model('user').add({
-                    user_id:Util.uuid(),
+                    user_id: Util.uuid(),
                     openid,
                     phone,
                     identification_no,
@@ -215,9 +213,9 @@ module.exports = class extends Base {
             }
 
             await this.model('weixin_user').add({
-                weixin_user_id:Util.uuid(),
+                weixin_user_id: Util.uuid(),
                 openid,
-                user_id:userInfo.user_id,
+                user_id: userInfo.user_id,
                 op_date
             })
 
@@ -232,6 +230,89 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`用户注册，同时将userId和openid绑定异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+
+    /**
+     * pc端咨询注册
+     * @returns {Promise<boolean>}
+     */
+    async registerAction() {
+        try {
+
+            let phone = this.post('phone'),
+                identification_no = this.post('identification_no'),
+                gender = this.post('gender'),
+                email = this.post('email'),
+                password = this.post('password'),
+                name = this.post('name'),
+                birthday = this.post('birthday');
+
+            logger.info(`pc端咨询注册参数 ${JSON.stringify(this.post())}`);
+
+            if (!phone) {
+                this.body = Response.businessException(`手机号不能为空！`)
+                return false;
+            }
+
+            if (!identification_no) {
+                this.body = Response.businessException(`身份证号不能为空！`)
+                return false;
+            }
+
+            if (!password) {
+                this.body = Response.businessException(`密码不能为空！`)
+                return false;
+            }
+
+            if (!gender) {
+                this.body = Response.businessException(`性别不能为空！`)
+                return false;
+            }
+
+            if (!email) {
+                this.body = Response.businessException(`电子邮件不能为空！`)
+                return false;
+            }
+
+            if (!birthday) {
+                this.body = Response.businessException(`出生日期不能为空！`)
+                return false;
+            }
+
+            //根据手机号获取用户。如果用户已存在，则提醒用户
+            let userInfo = await this.model('user').where({
+                phone
+            }).find();
+
+            let op_date = DateUtil.getNowStr()
+
+            if (Util.isEmptyObject(userInfo)) {
+
+                await this.model('user').add({
+                    user_id: Util.uuid(),
+                    phone,
+                    identification_no,
+                    gender,
+                    email,
+                    birthday: DateUtil.format(birthday, 'date'),
+                    name,
+                    op_date,
+                    password: md5(password),
+                    role: Role.therapist
+                })
+                this.body = Response.success()
+
+            } else {
+                this.body = Response.businessException(`用户已存在！`)
+            }
+
+        } catch (e) {
+            logger.info(`pc端咨询注册异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

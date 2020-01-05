@@ -18,6 +18,7 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
+        "therapist"
     ],
     divisionManager: [
         "login",
@@ -36,6 +37,7 @@ module.exports = {
         "complaint",
         "division",
         "station",
+        "therapist"
     ],
     admin: [
         "login",
