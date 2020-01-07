@@ -142,6 +142,40 @@ module.exports = class extends Base {
     }
 
     /**
+     * 房间启用停用
+     * @returns {Promise<boolean>}
+     */
+    async onOffAction() {
+        try {
+
+            let room_id = this.post('room_id')
+            let state = this.post('state')
+
+            logger.info(`房间启用停用参数 :${JSON.stringify(this.post())}`)
+
+
+            let op_date=DateUtil.getNowStr();
+
+            let data = await this.model(tableName).where({
+                room_id
+            }).update({
+                op_date,
+                state:state===0?1:0,
+            })
+
+            logger.info(`房间启用停用，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`房间启用停用异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      * 只查询对应工作室下边的房间列表
      * @returns {Promise<boolean>}
      */
