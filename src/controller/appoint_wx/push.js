@@ -32,6 +32,7 @@ module.exports = class extends Base {
 
             this.body=Response.success();
         }catch (e) {
+            //TODO 后期加限制，咨询师只有关联了微信端后，用户才能选择此咨询师
             logger.info(`发送模板消息接口异常 msg:${e}`);
             this.body = Response.businessException(e);
         }

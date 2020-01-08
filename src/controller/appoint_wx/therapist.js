@@ -179,5 +179,111 @@ module.exports = class extends Base {
     }
 
 
+    /**
+     * 获取咨询师可用时段设置
+     * @returns {Promise<void>}
+     */
+    async getUseablePeriodSetAction() {
+        try {
+
+            let therapist_id = this.post('therapist_id')
+
+
+
+            if (!therapist_id) {
+                this.body = Response.businessException(`咨询师ID不能为空！`)
+                return false;
+            }
+
+            let data = await this.model('therapist_period_set').where({
+                therapist_id
+            }).find();
+
+
+            logger.info(`获取咨询师可用时段设置，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取咨询师可用时段设置异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 更新咨询师可用时段设置
+     * @returns {Promise<void>}
+     */
+    async updateUseablePeriodSetAction() {
+        try {
+
+            let period=this.post('period')
+            let therapist_id=this.ctx.state.userInfo.user_id
+
+            if (!period) {
+                this.body = Response.businessException(`时段设置不能为空！`)
+                return false;
+            }
+
+            logger.info(`更新咨询师可用时段设置参数 :${JSON.stringify(this.post())}`)
+
+            let data = await this.model('therapist_period_set').where({
+                therapist_id
+            }).update({
+                period
+            })
+
+
+            logger.info(`更新咨询师可用时段设置，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`更新咨询师可用时段设置异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 新增咨询师可用时段设置
+     * @returns {Promise<void>}
+     */
+    async addUseablePeriodSetAction(therapist_id) {
+        try {
+
+            if (!therapist_id) {
+                this.body = Response.businessException(`咨询师ID不能为空！`)
+                return false;
+            }
+
+            let period='8,9,10,11,13,14,15,16'
+
+            logger.info(`新增咨询师可用时段设置参数 :${therapist_id}`)
+
+            let data = await this.model('room_period_set').add({
+                therapist_id,
+                period,
+                op_date:DateUtil.getNowStr(),
+                therapist_period_set_id:Util.uuid()
+            });
+
+
+            logger.info(`新增咨询师可用时段设置，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`新增咨询师可用时段设置异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+
 
 };

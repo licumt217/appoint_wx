@@ -73,6 +73,7 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
+        "therapist",
     ],
     client: [
         "login",
@@ -90,5 +91,6 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
+        "therapist",
     ]
 };

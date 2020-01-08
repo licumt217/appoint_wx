@@ -17,7 +17,16 @@ module.exports = class extends think.Controller {
 
         const currentController = this.ctx.controller.split('/')[1]
 
-        if (currentController !== 'login' && currentController !== 'wechatApi' && currentController !== 'wechatExecute') {
+        console.log('===> currentController:'+currentController)
+
+        if (currentController !== 'login' &&
+            currentController !== 'wechatApi' &&
+            currentController !== 'mannertype' &&
+            currentController !== 'schooltype' &&
+            currentController !== 'qualificationtype' &&
+            currentController !== 'leveltype' &&
+            currentController !== 'wechatExecute'
+        ) {
 
             if (!userInfo) {
 

@@ -6,7 +6,7 @@ const Role = require('../../config/Role')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;
-
+const therapistService = require('../../service/therapist')
 
 module.exports = class extends Base {
 
@@ -284,6 +284,36 @@ module.exports = class extends Base {
                 return false;
             }
 
+
+            let school_type_id, qualification_type_id, manner_type_id, level_type_id
+                school_type_id = this.post('school_type_id')
+                qualification_type_id = this.post('qualification_type_id')
+                manner_type_id = this.post('manner_type_id')
+                level_type_id = this.post('level_type_id')
+
+                if (!school_type_id) {
+                    this.body = Response.businessException(`流派类型不能为空！`)
+                    return false;
+                }
+
+                if (!qualification_type_id) {
+                    this.body = Response.businessException(`资历类型不能为空！`)
+                    return false;
+                }
+
+                if (!manner_type_id) {
+                    this.body = Response.businessException(`咨询方式类型不能为空！`)
+                    return false;
+                }
+
+                if (!level_type_id) {
+                    this.body = Response.businessException(`等级类型不能为空！`)
+                    return false;
+                }
+
+
+
+
             //根据手机号获取用户。如果用户已存在，则提醒用户
             let userInfo = await this.model('user').where({
                 phone
@@ -293,8 +323,10 @@ module.exports = class extends Base {
 
             if (Util.isEmptyObject(userInfo)) {
 
+                let user_id = Util.uuid()
+
                 await this.model('user').add({
-                    user_id: Util.uuid(),
+                    user_id,
                     phone,
                     identification_no,
                     gender,
@@ -305,6 +337,21 @@ module.exports = class extends Base {
                     password: md5(password),
                     role: Role.therapist
                 })
+
+                await this.model('therapist_attach_relation').add({
+                    therapist_attach_relation_id: Util.uuid(),
+                    therapist_id: user_id,
+                    school_type_id,
+                    qualification_type_id,
+                    manner_type_id,
+                    level_type_id,
+                    op_date
+                });
+
+                //如果是咨询师的话，初始化可用时段设置
+                await therapistService.add(user_id)
+
+
                 this.body = Response.success()
 
             } else {

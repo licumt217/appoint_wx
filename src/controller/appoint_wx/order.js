@@ -302,14 +302,7 @@ module.exports = class extends Base {
                     appoint_order.prepay_id,
                     appoint_user.name,
                     appoint_therapist_period.appoint_date,
-                    appoint_therapist_period.period1,
-                    appoint_therapist_period.period2,
-                    appoint_therapist_period.period3,
-                    appoint_therapist_period.period4,
-                    appoint_therapist_period.period5,
-                    appoint_therapist_period.period6,
-                    appoint_therapist_period.period7,
-                    appoint_therapist_period.period8`,
+                    appoint_therapist_period.period`,
                 )
                 .find();
 

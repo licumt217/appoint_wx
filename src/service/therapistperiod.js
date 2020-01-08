@@ -21,12 +21,9 @@ module.exports = {
                 therapist_id,
                 appoint_date,
                 order_id,
-                op_date
+                op_date,
+                period:periodArray.join(',')
             }
-
-            periodArray.forEach((item) => {
-                addJson[item] = 1;
-            })
 
             let data = await think.model(tableName).add(addJson).catch(e=>{
                 throw new Error(e)
