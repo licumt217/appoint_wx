@@ -91,6 +91,36 @@ module.exports =  {
 
     },
 
+    /**
+     *
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getOrderListByTherapistId(therapist_id,page,pageSize){
+
+        try{
+
+            let ORDER=think.model(tableName)
+            ORDER._pk='order_id'
+            let data = await ORDER.where({
+                therapist_id
+            }).page(page, pageSize).countSelect().catch(e=>{
+                throw new Error(e)
+            });
+
+            logger.info(`根据条件查询${entityName}列表：${JSON.stringify(data)}`)
+
+            return data;
+
+        }catch (e) {
+            let msg=`根据条件查询${entityName}列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+
+    },
+
     async update(whereObj,updateObj) {
 
         try {

@@ -377,6 +377,35 @@ module.exports = class extends Base {
     }
 
     /**
+     * 获取咨询师对应的订单列表
+     * @returns {Promise<void>}
+     */
+    async getOrderListByTherapistIdAction() {
+
+        let therapist_id=this.post('therapist_id')
+
+        let page = this.post('page') || Page.currentPage
+        let pageSize = this.post('pageSize') || Page.pageSize
+
+        logger.info(`获取咨询师对应的订单列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await orderService.getOrderListByTherapistId(therapist_id,page,pageSize)
+
+            logger.info(`获取咨询师对应的订单列表参数数据库返回 orders:${JSON.stringify(orders)}`);
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`获取咨询师对应的订单列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      * 取消订单
      * @returns {Promise<void>}
      */
