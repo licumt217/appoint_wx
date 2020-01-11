@@ -27,9 +27,8 @@ module.exports = class extends Base {
             let birthday = this.post('birthday')
             let email = this.post('email')
             let role = this.post('role')
-            let isEmergency = this.post('isEmergency')
 
-            logger.info(`新增用户参数 name:${name}， phone:${phone}， gender:${gender}， birthday:${birthday}， email:${email}， role:${role}, isEmergency:${isEmergency},`)
+            logger.info(`新增用户参数 :${JSON.stringify(this.post())}`)
 
             if (!name) {
                 this.body = Response.businessException(`姓名不能为空！`)
@@ -60,8 +59,6 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`用户类型不能为空！`)
                 return false;
             }
-
-            isEmergency = isEmergency || 0;
 
             //新增咨询师，需要校验流派等
 
@@ -106,7 +103,6 @@ module.exports = class extends Base {
                 email,
                 op_date,
                 role,
-                isEmergency
             }
 
             if (role !== Role.client) {
@@ -124,7 +120,8 @@ module.exports = class extends Base {
                     qualification_type_id,
                     manner_type_id,
                     level_type_id,
-                    op_date
+                    op_date,
+                    emergency:Constant.EMERGENCY.DISABLE
                 });
             }
 
@@ -242,11 +239,8 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
-            let isEmergency = this.post('isEmergency')
 
             logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
-
-            isEmergency = isEmergency || 0
 
             let updateJson = {}
             if (name) {
@@ -272,7 +266,6 @@ module.exports = class extends Base {
             let op_date = DateUtil.getNowStr()
 
             updateJson.op_date = op_date;
-            updateJson.isEmergency = isEmergency;
 
             let userInfo = await this.model('user').where({
                 user_id
@@ -347,7 +340,6 @@ module.exports = class extends Base {
 
             let role = this.post('role')
             let manner_type_id = this.post('manner_type_id')
-            let isEmergency = this.post('isEmergency')
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
 
@@ -366,11 +358,6 @@ module.exports = class extends Base {
                     role
                 }
 
-                //添加紧急咨询条件
-                if (isEmergency === 1) {
-                    whereObj.isEmergency = isEmergency;
-                }
-
                 let joinStr = 'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
 
                 //咨询方式：线上、线下
@@ -384,6 +371,47 @@ module.exports = class extends Base {
                 data = await this.model('user').where({
                     role
                 }).page(page, pageSize).countSelect();
+            }
+
+
+            logger.info(`获取用户列表，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取用户列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 获取当前登录用户信息
+     * @returns {Promise<boolean>}
+     */
+    async getByIdAction() {
+        try {
+
+            let user_id = this.ctx.state.userInfo.user_id;
+            let role = this.ctx.state.userInfo.role;
+
+            //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
+            let data = []
+            if (role === Role.therapist) {
+
+                let whereObj = {
+                    role
+                }
+
+                let joinStr = 'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
+
+                data = await this.model('user').where(whereObj).join(joinStr).find();
+
+            } else {
+                data = await this.model('user').where({
+                    user_id
+                }).find();
             }
 
 

@@ -74,6 +74,8 @@ module.exports = {
         "complaint",
         "division",
         "therapist",
+        "therapistFeeSet",
+        "therapistAttachRelation",
     ],
     client: [
         "login",

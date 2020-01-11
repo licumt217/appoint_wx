@@ -103,7 +103,6 @@ module.exports = class extends Base {
             let birthday = this.post('birthday')
             let email = this.post('email')
             let role = this.post('role')
-            let isEmergency = this.post('isEmergency')
             let station_id = this.post('station_id')
 
             logger.info(`新增案例管理员参数 ${JSON.stringify(this.post())}`)
@@ -143,8 +142,6 @@ module.exports = class extends Base {
                 return false;
             }
 
-            isEmergency=isEmergency||0;
-
             let op_date=DateUtil.getNowStr()
 
             let user_id=Util.uuid();
@@ -157,7 +154,6 @@ module.exports = class extends Base {
                 email,
                 op_date,
                 role,
-                isEmergency
             }
 
             addJson.password=Constant.defaultPassword
