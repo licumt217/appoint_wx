@@ -7,7 +7,8 @@ module.exports={
     /**
      * 商户平台秘钥key
      */
-    KEY:"xinhangtuadmin007xinhangtuadmin0",
+    KEY:"klmxue202ad35ei93xnmqb3148ypc247",
+    // KEY:"xinhangtuadmin007xinhangtuadmin0",
 
     /**
      * 接口调用token

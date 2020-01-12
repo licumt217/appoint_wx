@@ -354,8 +354,12 @@ let Util = {
 
         let obj = {
             openid: openid,
-            appid: WechatConfig.APP_ID,
-            mch_id: WechatConfig.MCH_ID,
+            // appid: 'wxa1e7e6bd5d401ffe',
+            appid: 'wxb4a0f8c89361efe2',
+            mch_id: '1579957691',
+            // mch_id: '1545814681',
+            // sub_mch_id: '1545814681',
+            sub_mch_id: '1534109761',
             nonce_str: BaseUtil.uuid(),
             body: body,
             out_trade_no: out_trade_no,//商户订单号
