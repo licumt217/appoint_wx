@@ -351,15 +351,13 @@ let Util = {
         let body = "北大-心理咨询"
 
         total_fee = Number(total_fee) * 100
-
         let obj = {
             openid: openid,
             // appid: 'wxa1e7e6bd5d401ffe',
             appid: 'wxb4a0f8c89361efe2',
-            mch_id: '1579957691',
+            mch_id: '1573357691',
             // mch_id: '1545814681',
-            // sub_mch_id: '1545814681',
-            sub_mch_id: '1534109761',
+            sub_mch_id: '1574047531',
             nonce_str: BaseUtil.uuid(),
             body: body,
             out_trade_no: out_trade_no,//商户订单号
