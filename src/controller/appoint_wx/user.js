@@ -271,55 +271,11 @@ module.exports = class extends Base {
                 user_id
             }).find()
 
-
-            //修改咨询师，需要添加咨询师和流派、资历等的关系表
-            let school_type_id, qualification_type_id, manner_type_id, level_type_id
-            if (userInfo.role === Role.therapist) {
-                school_type_id = this.post('school_type_id')
-                qualification_type_id = this.post('qualification_type_id')
-                manner_type_id = this.post('manner_type_id')
-                level_type_id = this.post('level_type_id')
-
-                if (!school_type_id) {
-                    this.body = Response.businessException(`流派类型不能为空！`)
-                    return false;
-                }
-
-                if (!qualification_type_id) {
-                    this.body = Response.businessException(`资历类型不能为空！`)
-                    return false;
-                }
-
-                if (!manner_type_id) {
-                    this.body = Response.businessException(`咨询方式类型不能为空！`)
-                    return false;
-                }
-
-                if (!level_type_id) {
-                    this.body = Response.businessException(`等级类型不能为空！`)
-                    return false;
-                }
-            }
-
-
             let data = await this.model('user').where({
                 user_id
             }).update(updateJson);
 
             logger.info(`修改用户信息，数据库返回：${JSON.stringify(data)}`)
-
-            //修改咨询师和流派、资历等的关系表
-            if (userInfo.role === Role.therapist) {
-                await this.model('therapist_attach_relation').where({
-                    therapist_id: user_id
-                }).update({
-                    school_type_id,
-                    qualification_type_id,
-                    manner_type_id,
-                    level_type_id,
-                    op_date
-                });
-            }
 
             this.body = Response.success(data);
 
@@ -401,7 +357,7 @@ module.exports = class extends Base {
             if (role === Role.therapist) {
 
                 let whereObj = {
-                    role
+                    user_id
                 }
 
                 let joinStr = 'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'

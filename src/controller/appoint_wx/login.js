@@ -238,6 +238,102 @@ module.exports = class extends Base {
 
 
     /**
+     * PC端已注册的咨询师在微信端登录，和微信号建立绑定关系
+     * @returns {Promise<void>}
+     */
+    async bindAction() {
+        try {
+
+            let openid = this.post('openid'),
+                phone = this.post('phone'),
+                password = this.post('password')
+
+            logger.info(`PC端已注册的咨询师在微信端登录，和微信号建立绑定关系参数 ${JSON.stringify(this.post())}`);
+
+            if (!openid) {
+                this.body = Response.businessException(`openid不能为空！`)
+                return false;
+            }
+
+            if (!phone) {
+                this.body = Response.businessException(`手机号不能为空！`)
+                return false;
+            }
+
+
+            if (!password) {
+                this.body = Response.businessException(`密码不能为空！`)
+                return false;
+            }
+
+            //根据手机号获取用户。如果用户已存在，则绑定和openid的关联
+            let userInfo = await this.model('user').where({
+                phone,
+                password:md5(password)
+            }).find();
+
+            let op_date = DateUtil.getNowStr()
+
+            if (Util.isEmptyObject(userInfo)) {
+
+                this.body = Response.businessException(`用户不存在或密码不正确！`);
+
+            }else{
+                await this.model('weixin_user').add({
+                    weixin_user_id: Util.uuid(),
+                    openid,
+                    user_id: userInfo.user_id,
+                    op_date
+                })
+
+                const TokenSerivce = this.service('token');
+
+                const token = await TokenSerivce.create({userInfo: userInfo});
+
+                this.body = Response.success({
+                    userInfo: userInfo,
+                    token
+                });
+            }
+
+
+
+        } catch (e) {
+            logger.info(`PC端已注册的咨询师在微信端登录，和微信号建立绑定关系异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+
+    /**
+     * c端用户微信和用户id解绑
+     * @returns {Promise<boolean>}
+     */
+    async unbindAction() {
+        try {
+
+            let user_id=this.ctx.state.userInfo.user_id
+
+            logger.info(`c端用户微信和用户id解绑参数 ${JSON.stringify(this.post())}`);
+
+            await this.model('weixin_user').delete({
+                user_id
+            })
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`c端用户微信和用户id解绑异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+
+    /**
      * pc端咨询注册
      * @returns {Promise<boolean>}
      */
@@ -284,36 +380,6 @@ module.exports = class extends Base {
                 return false;
             }
 
-
-            let school_type_id, qualification_type_id, manner_type_id, level_type_id
-                school_type_id = this.post('school_type_id')
-                qualification_type_id = this.post('qualification_type_id')
-                manner_type_id = this.post('manner_type_id')
-                level_type_id = this.post('level_type_id')
-
-                if (!school_type_id) {
-                    this.body = Response.businessException(`流派类型不能为空！`)
-                    return false;
-                }
-
-                if (!qualification_type_id) {
-                    this.body = Response.businessException(`资历类型不能为空！`)
-                    return false;
-                }
-
-                if (!manner_type_id) {
-                    this.body = Response.businessException(`咨询方式类型不能为空！`)
-                    return false;
-                }
-
-                if (!level_type_id) {
-                    this.body = Response.businessException(`等级类型不能为空！`)
-                    return false;
-                }
-
-
-
-
             //根据手机号获取用户。如果用户已存在，则提醒用户
             let userInfo = await this.model('user').where({
                 phone
@@ -338,18 +404,8 @@ module.exports = class extends Base {
                     role: Role.therapist
                 })
 
-                await this.model('therapist_attach_relation').add({
-                    therapist_attach_relation_id: Util.uuid(),
-                    therapist_id: user_id,
-                    school_type_id,
-                    qualification_type_id,
-                    manner_type_id,
-                    level_type_id,
-                    op_date
-                });
-
                 //如果是咨询师的话，初始化可用时段设置
-                await therapistService.add(user_id)
+                await therapistService.initPeriodSet(user_id)
 
 
                 this.body = Response.success()

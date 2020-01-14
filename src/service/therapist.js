@@ -8,8 +8,12 @@ const tableName = 'therapist'
 
 module.exports = {
 
-
-    async add(therapist_id) {
+    /**
+     * 初始化咨询师可用时段设置
+     * @param therapist_id
+     * @returns {Promise<T>}
+     */
+    async initPeriodSet(therapist_id) {
 
         try {
             let period='8,9,10,11,13,14,15,16'
