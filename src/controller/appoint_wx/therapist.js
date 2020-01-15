@@ -18,6 +18,41 @@ module.exports = class extends Base {
 
 
     /**
+     * 根据咨询师id获取咨询师详情
+     * @returns {Promise<boolean>}
+     */
+    async getByIdAction() {
+        try {
+
+            let therapist_id=this.post('therapist_id')
+
+            logger.info(`根据咨询师id获取咨询师详情参数 :${JSON.stringify(this.post())}`)
+
+            if(!therapist_id){
+                this.body=Response.businessException('咨询师ID不能为空！')
+                return;
+            }
+
+            let whereObj = {
+                user_id:therapist_id
+            }
+
+            let joinStr = 'appoint_therapist_attach_relation on appoint_user.user_id=appoint_therapist_attach_relation.therapist_id'
+
+            let data = await this.model('user').where(whereObj).join(joinStr).find();
+
+            this.body=Response.success(data)
+
+        } catch (e) {
+            logger.info(`根据咨询师id获取咨询师详情异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+
+    /**
      * 根据当前登录用户角色获取咨询师列表
      * @returns {Promise<boolean>}
      */

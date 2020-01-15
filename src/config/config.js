@@ -18,7 +18,8 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
-        "therapist"
+        "therapist",
+        "emergencyContack"
     ],
     divisionManager: [
         "login",
@@ -37,7 +38,8 @@ module.exports = {
         "complaint",
         "division",
         "station",
-        "therapist"
+        "therapist",
+        "emergencyContack"
     ],
     admin: [
         "login",
@@ -56,6 +58,7 @@ module.exports = {
         "complaint",
         "division",
         "divisionAdminRelation",
+        "emergencyContack",
     ],
     therapist: [
         "login",
@@ -76,6 +79,7 @@ module.exports = {
         "therapist",
         "therapistFeeSet",
         "therapistAttachRelation",
+        "emergencyContack",
     ],
     client: [
         "login",
@@ -94,5 +98,6 @@ module.exports = {
         "complaint",
         "division",
         "therapist",
+        "emergencyContack",
     ]
 };
