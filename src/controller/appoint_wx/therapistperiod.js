@@ -6,8 +6,8 @@ const DateUtil = require('../../util/DateUtil')
 const therapistperiodService = require('../../service/therapistperiod')
 const logger = think.logger;
 
-const entityName='咨询师可用时间段'
-const tableName='therapist_period'
+const entityName = '咨询师可用时间段'
+const tableName = 'therapist_period'
 
 
 module.exports = class extends Base {
@@ -21,7 +21,7 @@ module.exports = class extends Base {
         try {
 
             let therapist_id = this.post('therapist_id'),
-             appoint_date = this.post('appoint_date'),
+                appoint_date = this.post('appoint_date'),
                 periodArray = this.post('periodArray')
 
             logger.info(`新增${entityName}参数 therapist_id:${therapist_id}, appoint_date:${appoint_date}, periodArray:${JSON.stringify(periodArray)}`)
@@ -36,16 +36,16 @@ module.exports = class extends Base {
                 return false;
             }
 
-            if (!periodArray || periodArray.length===0) {
+            if (!periodArray || periodArray.length === 0) {
                 this.body = Response.businessException(`${entityName}咨询时段不能为空！`)
                 return false;
             }
 
-            let response =therapistperiodService.add(therapist_id,appoint_date,periodArray)
+            let response = therapistperiodService.add(therapist_id, appoint_date, periodArray)
 
-            if(response.isSuccessful()){
+            if (response.isSuccessful()) {
                 this.body = response;
-            }else{
+            } else {
                 logger.info(`新增${entityName}异常 msg:${response.errorMsg}`);
                 this.body = Response.businessException(response.errorMsg);
             }
@@ -123,35 +123,35 @@ module.exports = class extends Base {
                 return false;
             }
 
-            let updateJson={}
-            if(period1 || period1===0){
-                updateJson.period1=period1;
+            let updateJson = {}
+            if (period1 || period1 === 0) {
+                updateJson.period1 = period1;
             }
-            if(period2 || period2===0){
-                updateJson.period2=period2
+            if (period2 || period2 === 0) {
+                updateJson.period2 = period2
             }
-            if(period3 || period3===0){
-                updateJson.period3=period3
+            if (period3 || period3 === 0) {
+                updateJson.period3 = period3
             }
-            if(period4 || period4===0){
-                updateJson.period4=period4
+            if (period4 || period4 === 0) {
+                updateJson.period4 = period4
             }
-            if(period5 || period5===0){
-                updateJson.period5=period5
+            if (period5 || period5 === 0) {
+                updateJson.period5 = period5
             }
-            if(period6 || period6===0){
-                updateJson.period6=period6
+            if (period6 || period6 === 0) {
+                updateJson.period6 = period6
             }
-            if(period7 || period7===0){
-                updateJson.period7=period7
+            if (period7 || period7 === 0) {
+                updateJson.period7 = period7
             }
-            if(period8 || period8===0){
-                updateJson.period8=period8
+            if (period8 || period8 === 0) {
+                updateJson.period8 = period8
             }
 
-            updateJson.op_date=DateUtil.getNowStr();
+            updateJson.op_date = DateUtil.getNowStr();
 
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
             let data = await this.model(tableName).where({
                 therapist_id,
@@ -185,7 +185,7 @@ module.exports = class extends Base {
 
             let data = await this.model(tableName).where({
                 therapist_id,
-                state:Util.ZERO,
+                state: Util.ZERO,
                 appoint_date
             }).select();
 
@@ -201,7 +201,41 @@ module.exports = class extends Base {
 
     }
 
+    /**
+     * 列表,根据给定日期的月份查询当月的
+     * @returns {Promise<boolean>}
+     */
+    async listByMonthAction() {
+        try {
+            let therapist_id = this.post('therapist_id'),
+                appoint_date = this.post('appoint_date');
 
+            let begin_date = Util.getFirstDayOfGivenDate(new Date(appoint_date))
+            let end_date = Util.getLastDayOfGivenDate(new Date(appoint_date))
+
+            logger.info('begin:', begin_date)
+            logger.info('end_date:', end_date)
+
+
+            logger.info(`获取${entityName}列表参数 ：${JSON.stringify(this.post())}`)
+
+            let data = await this.model(tableName).where({
+                therapist_id,
+                // state: Util.ZERO,//TODO 此处0是默认值，1代表已取消了这条时段预约
+                appoint_date: ['between', DateUtil.format(begin_date), DateUtil.format(end_date)]
+            }).select();
+
+            logger.info(`获取${entityName}列表，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取${entityName}列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
 
 
 };

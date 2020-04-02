@@ -108,17 +108,16 @@ module.exports = class extends Base {
                 logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
 
                 if (Util.isEmptyObject(data)) {
-                    console.log(333333)
                     this.body = Response.success();
                     return;
                 }
 
 
-                console.log(44444444)
-
                 const TokenSerivce = this.service('token');
 
                 const token = await TokenSerivce.create({userInfo: data});
+
+                logger.info(`当前登录用户token:${token}`)
 
                 this.body = Response.success({
                     userInfo: data,

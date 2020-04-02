@@ -121,7 +121,26 @@ let Util = {
 
 
         return `https://open.weixin.qq.com/connect/oauth2/authorize?appId=${WechatConfig.APP_ID}&redirect_uri=${url}&response_type=code&scope=snsapi_base&state=about#wechat_redirect`
-    }
+    },
+
+    getFirstDayOfGivenDate(date){
+
+        console.log(date)
+
+        let date2=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+        date2.setHours(date2.getHours()+8)
+        date2.setDate(1);
+        return date2;
+    },
+    getLastDayOfGivenDate(date){
+        let currentMonth=date.getMonth();
+        let nextMonth=++currentMonth;
+        let nextMonthFirstDay=new Date(date.getFullYear(),nextMonth,1);
+        nextMonthFirstDay.setHours(nextMonthFirstDay.getHours()+8)
+        let oneDay=1000*60*60*24;
+        return new Date(nextMonthFirstDay-oneDay);
+    },
+
 
 
 }
