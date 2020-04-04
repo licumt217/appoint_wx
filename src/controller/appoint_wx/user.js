@@ -296,6 +296,9 @@ module.exports = class extends Base {
 
             let role = this.post('role')
             let manner_type_id = this.post('manner_type_id')
+            let qualification_type_id = this.post('qualification_type_id')
+            let school_type_id = this.post('school_type_id')
+            let gender = this.post('gender')
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
 
@@ -321,6 +324,22 @@ module.exports = class extends Base {
                     whereObj.manner_type_id = manner_type_id;
                     joinStr += ` and appoint_therapist_attach_relation.manner_type_id=${manner_type_id}`
                 }
+
+                if (school_type_id) {
+                    whereObj.school_type_id = school_type_id;
+                    joinStr += ` and appoint_therapist_attach_relation.school_type_id=${school_type_id}`
+                }
+
+                if (qualification_type_id) {
+                    whereObj.qualification_type_id = qualification_type_id;
+                    joinStr += ` and appoint_therapist_attach_relation.qualification_type_id=${qualification_type_id}`
+                }
+
+                if (gender) {
+                    whereObj.gender = gender;
+                }
+
+
                 data = await this.model('user').where(whereObj).join(joinStr).page(page, pageSize).countSelect();
 
             } else {

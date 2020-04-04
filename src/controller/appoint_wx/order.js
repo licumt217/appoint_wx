@@ -3,6 +3,7 @@ const Base = require('./base.js');
 const request = require('request');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
+const Page = require('../../config/Page')
 const WechatUtil = require('../../util/WechatUtil')
 const ORDER_STATE = require('../../config/ORDER_STATE')
 const DateUtil = require('../../util/DateUtil')
@@ -185,15 +186,15 @@ module.exports = class extends Base {
             return false;
         }
 
-        if (!consult_type_id) {
-            this.body = Response.businessException(`咨询类型不能为空！`)
-            return false;
-        }
-
-        if (!manner_type_id) {
-            this.body = Response.businessException(`咨询方式不能为空！`)
-            return false;
-        }
+        // if (!consult_type_id) {
+        //     this.body = Response.businessException(`咨询类型不能为空！`)
+        //     return false;
+        // }
+        //
+        // if (!manner_type_id) {
+        //     this.body = Response.businessException(`咨询方式不能为空！`)
+        //     return false;
+        // }
 
         let state = ORDER_STATE.COMMIT
 
@@ -331,13 +332,16 @@ module.exports = class extends Base {
 
             let openid = this.post('openid')
 
+            let page = this.post('page') || Page.currentPage
+
+            let pageSize = this.post('pageSize') || Page.pageSize
+
             let orders = await this.model('order').where({
                 openid: ['=', openid],
-                'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE, ORDER_STATE.UNFUNDED, ORDER_STATE.REJECTED]],
+                // 'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE, ORDER_STATE.UNFUNDED, ORDER_STATE.REJECTED]],
             }).join([
-                ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`,
-                `left JOIN appoint_therapist_period ON appoint_therapist_period.order_id=appoint_order.order_id`,
-            ]).select();
+                ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`
+            ]).page(page, pageSize).countSelect();
 
 
             logger.info(`获取历史预约记录数据库返回 orders:${JSON.stringify(orders)}`);
