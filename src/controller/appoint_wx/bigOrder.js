@@ -11,6 +11,7 @@ const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
 const therapistperiodService = require('../../service/therapistperiod')
 const orderService = require('../../service/order')
+const bigOrderService = require('../../service/bigOrder')
 const pushService = require('../../service/push')
 
 const logger = think.logger
@@ -149,14 +150,14 @@ module.exports = class extends Base {
     }
 
     /**
-     * 微信支付统一下单接口
-     * @returns {Promise<void>}
+     * 用户下大订单
+     * @returns {Promise<boolean>}
      */
     async unifiedOrderAction() {
 
         let openid = this.post('openid')
         let therapist_id = this.post('therapist_id')
-        let order_id = Util.uuid()
+        let big_order_id = Util.uuid()
         let amount = this.post('amount');
 
         let appoint_date = this.post('appoint_date')
@@ -164,7 +165,7 @@ module.exports = class extends Base {
         let consult_type_id = this.post('consult_type_id')
         let manner_type_id = this.post('manner_type_id')
 
-        logger.info(`微信支付统一下单接口参数 ${JSON.stringify(this.post())}`);
+        logger.info(`用户下大订单接口参数 ${JSON.stringify(this.post())}`);
 
         if (!openid) {
             this.body = Response.businessException(`openid不能为空！`)
@@ -204,21 +205,15 @@ module.exports = class extends Base {
 
 
             //订单表存库
-            await orderService.add({
-                order_id,
+            await bigOrderService.add({
+                big_order_id,
                 openid,
                 therapist_id,
-                amount,
-                state,
-                // prepay_id,
                 create_date,
-                consult_type_id,
-                manner_type_id,
-                user_id:this.ctx.state.userInfo.user_id
             })
 
             //将咨询师时间段存库
-            await therapistperiodService.add(therapist_id, appoint_date, periodArray, order_id)
+            await therapistperiodService.add(therapist_id, appoint_date, periodArray, big_order_id)
 
             // let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -226,7 +221,7 @@ module.exports = class extends Base {
 
             //给咨询师发送模板消息，通知他审核
 
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointDetail?order_id=${order_id}`)
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointDetail?order_id=${big_order_id}`)
 
             let weixin_user_obj = await this.model('weixin_user').where({
                 user_id: therapist_id

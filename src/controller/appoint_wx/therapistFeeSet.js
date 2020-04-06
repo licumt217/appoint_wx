@@ -120,12 +120,20 @@ module.exports = class extends Base {
      */
     async addAction() {
         try {
-
+            logger.info(`新增咨询师收费设置参数 :${JSON.stringify(this.post())}`)
 
             let fee= this.post('fee')
+            let fee_type= this.post('fee_type')
             let therapist_id= this.post('therapist_id')
+
+
+            if (!fee_type && fee_type!==0) {
+                this.body = Response.businessException(`收费方式不能为空！`)
+                return false;
+            }
+
             if (!fee) {
-                this.body = Response.businessException(`收费设置不能为空！`)
+                this.body = Response.businessException(`每个时段费用不能为空！`)
                 return false;
             }
 
@@ -134,14 +142,15 @@ module.exports = class extends Base {
                 return false;
             }
 
-            logger.info(`新增咨询师收费设置参数 :${therapist_id}`)
+
 
             let data = await this.model(tableName).add({
                 therapist_fee_set_id:Util.uuid(),
                 therapist_id,
                 op_date:DateUtil.getNowStr(),
                 op_user_id:this.ctx.state.userInfo.user_id,
-                fee
+                fee,
+                fee_type
             });
 
 
@@ -163,27 +172,34 @@ module.exports = class extends Base {
      */
     async updateAction() {
         try {
-
+            logger.info(`修改咨询师收费设置参数 :${JSON.stringify(this.post())}`)
 
             let fee= this.post('fee')
+            let fee_type= this.post('fee_type')
             let therapist_fee_set_id= this.post('therapist_fee_set_id')
             if (!therapist_fee_set_id) {
                 this.body = Response.businessException(`收费设置ID不能为空！`)
                 return false;
             }
 
-            if (!fee) {
-                this.body = Response.businessException(`收费设置不能为空！`)
+            if (!fee_type && fee_type!==0) {
+                this.body = Response.businessException(`收费方式不能为空！`)
                 return false;
             }
 
-            logger.info(`修改咨询师收费设置参数 :${JSON.stringify(this.post())}`)
+            if (!fee) {
+                this.body = Response.businessException(`每个时段费用不能为空！`)
+                return false;
+            }
+
+
 
             let data = await this.model(tableName).where({
                 therapist_fee_set_id
             }).update({
                 op_user_id:this.ctx.state.userInfo.user_id,
                 fee,
+                fee_type,
                 op_date:DateUtil.getNowStr(),
                 state:0
             })
