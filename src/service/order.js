@@ -40,6 +40,36 @@ module.exports =  {
     },
 
     /**
+     *批量新增
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async addMany(orders){
+
+        try{
+
+
+
+
+
+            let data = await think.model(tableName).addMany(orders).catch(e=>{
+                throw new Error(e)
+            });;
+
+            logger.info(`批量新增${entityName}数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        }catch (e) {
+            let msg=`批量新增${entityName}接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+
+    },
+
+    /**
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */

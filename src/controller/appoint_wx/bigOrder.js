@@ -11,7 +11,7 @@ const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
 const therapistperiodService = require('../../service/therapistperiod')
 const orderService = require('../../service/order')
-const bigOrderService = require('../../service/bigOrder')
+const bigOrderService =  require('../../service/bigOrder');
 const pushService = require('../../service/push')
 
 const logger = think.logger
@@ -71,17 +71,23 @@ module.exports = class extends Base {
 
             logger.info(`咨询师接受预约参数 ${JSON.stringify(this.post())}`);
 
-            let order_id = this.post('order_id')
+            let big_order_id = this.post('big_order_id')
 
-            await orderService.update({order_id}, {state: ORDER_STATE.AUDITED})
+            await bigOrderService.accept(big_order_id)
 
-            //TODO 给用户推送让用户付款
+            //TODO 给用户推送让用户付款，如果是咨询前支付的话
 
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+            /**
+             *
 
-            let order = await orderService.getOne({order_id})
+             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/bigOrderDetail?big_order_id=${big_order_id}`)
 
-            await pushService.sendTemplateMsg(order.openid, url);
+             let order = await bigOrderService.getById(big_order_id)
+
+             await pushService.sendTemplateMsg(order.openid, url);
+
+             *
+             */
 
 
 
@@ -102,16 +108,25 @@ module.exports = class extends Base {
 
             logger.info(`咨询师拒绝预约参数 ${JSON.stringify(this.post())}`);
 
-            let order_id = this.post('order_id')
+            let big_order_id = this.post('big_order_id')
 
-            await orderService.update({order_id}, {state: ORDER_STATE.REJECTED})
+            await bigOrderService.deny(big_order_id)
 
-            //TODO 给用户推送告知用户
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+            //TODO 给用户推送，通知用户
 
-            let order = await orderService.getOne({order_id})
+            /**
+             *
 
-            await pushService.sendTemplateMsg(order.openid, url);
+             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/bigOrderDetail?big_order_id=${big_order_id}`)
+
+             let order = await bigOrderService.getById(big_order_id)
+
+             await pushService.sendTemplateMsg(order.openid, url);
+
+             *
+             */
+
+
 
             this.body = Response.success();
 
@@ -162,10 +177,13 @@ module.exports = class extends Base {
 
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
+        let weeks = this.post('weeks')
         let consult_type_id = this.post('consult_type_id')
         let manner_type_id = this.post('manner_type_id')
 
-        logger.info(`用户下大订单接口参数 ${JSON.stringify(this.post())}`);
+        let user_id=this.ctx.state.userInfo.user_id
+
+        logger.info(`用户下大订单接口参数1111 ${JSON.stringify(this.post())}`);
 
         if (!openid) {
             this.body = Response.businessException(`openid不能为空！`)
@@ -197,23 +215,10 @@ module.exports = class extends Base {
         //     return false;
         // }
 
-        let state = ORDER_STATE.COMMIT
-
-        let create_date = DateUtil.getNowStr()
-
         try {
 
 
-            //订单表存库
-            await bigOrderService.add({
-                big_order_id,
-                openid,
-                therapist_id,
-                create_date,
-            })
-
-            //将咨询师时间段存库
-            await therapistperiodService.add(therapist_id, appoint_date, periodArray, big_order_id)
+            await bigOrderService.addWithRelations(openid,therapist_id,appoint_date,periodArray,weeks,amount,user_id);
 
             // let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -221,7 +226,7 @@ module.exports = class extends Base {
 
             //给咨询师发送模板消息，通知他审核
 
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointDetail?order_id=${big_order_id}`)
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/bigOrderDetail?big_order_id=${big_order_id}`)
 
             let weixin_user_obj = await this.model('weixin_user').where({
                 user_id: therapist_id
@@ -229,7 +234,7 @@ module.exports = class extends Base {
 
 
             //咨询师审核推送
-            await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
+            // await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
 
             this.body = Response.success();
 
@@ -274,47 +279,29 @@ module.exports = class extends Base {
     }
 
     /**
-     * 获取预约详情
+     * 获取大订单详情
      * @returns {Promise<void>}
      */
-    async getAppointDetailAction() {
+    async getDetailAction() {
 
-        logger.info(`获取预约详情参数 :${JSON.stringify(this.post())}`);
+        logger.info(`获取大订单详情参数 :${JSON.stringify(this.post())}`);
 
         try {
 
-            let order_id = this.post('order_id')
+            let big_order_id = this.post('big_order_id')
 
-            if (!order_id) {
+            if (!big_order_id) {
                 this.body = Response.businessException(`订单ID不能为空！`)
                 return false;
             }
 
 
-            let data = await this.model('order')
-                .where({
-                    'appoint_order.order_id': ['=', order_id],
-                })
-                .join([
-                    ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`,
-                    `left JOIN appoint_therapist_period ON appoint_therapist_period.order_id=appoint_order.order_id`,
-                ]).field(
-                    `appoint_order.order_id,
-                    appoint_order.state,
-                    appoint_order.prepay_id,
-                    appoint_user.name,
-                    appoint_therapist_period.appoint_date,
-                    appoint_therapist_period.period`,
-                )
-                .find();
-
-
-            logger.info(`获取预约详情数据库返回 orders:${JSON.stringify(data)}`);
+            let data = await bigOrderService.getById(big_order_id)
 
             this.body = Response.success(data);
 
         } catch (e) {
-            logger.info(`获取预约详情异常 msg:${e}`);
+            logger.info(`获取大订单详情异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 
