@@ -4,21 +4,22 @@ const DateUtil = require('../util/DateUtil')
 const WechatUtil = require('../util/WechatUtil')
 const ORDER_STATE = require('../config/ORDER_STATE')
 const PERIOD_STATE = require('../config/PERIOD_STATE')
-const logger =think.logger
-const entityName = '大订单'
-const tableName = 'big_order'
+const logger = think.logger
+const entityName = '预约'
+const tableName = 'appointment'
 
-module.exports =  {
+module.exports = {
 
 
     /**
-     *新增大订单
+     *新增预约
+     * 首先同步新增一条订单
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async addWithRelations(openid,therapist_id,appoint_date,period,weeks,amount,user_id){
+    async addWithRelations(openid, therapist_id, appoint_date, period, isMulti, amount, user_id) {
 
 
-        let big_order_id=Util.uuid();
+        let appointment_id = Util.uuid();
 
         let create_date = DateUtil.getNowStr()
 
@@ -26,97 +27,72 @@ module.exports =  {
 
         let state = ORDER_STATE.COMMIT
 
-        period=period.join(',')
+        period = period.join(',')
 
-        let orders=[],therapistPeriods=[];
-
-        let big_order={
-            big_order_id,
+        let appointment = {
+            appointment_id,
             openid,
             therapist_id,
             create_date,
             appoint_date,
             op_date,
             period,
-            weeks,
+            isMulti,
             user_id
         }
 
 
-
-
-        for(let i=0;i<weeks;i++){
-            let order_id=Util.uuid()
-            let tempAppointDate=DateUtil.getDayOfNextWeeks(appoint_date,i);
-            orders.push({
-                big_order_id,
-                order_id,
-                openid,
-                therapist_id,
-                amount,
-                state,
-                create_date,
-                op_date,
-                user_id,
-                appoint_date:tempAppointDate
-            })
-
-            therapistPeriods.push({
-                therapist_id,
-                appoint_date:tempAppointDate,
-                period,
-                order_id,
-                op_date,
-                therapist_period_id:Util.uuid(),
-            })
-
+        let order_id = Util.uuid()
+        let order = {
+            order_id,
+            appointment_id,
+            openid,
+            therapist_id,
+            amount,
+            state,
+            create_date,
+            op_date,
+            user_id,
+            appoint_date
         }
 
 
-        try{
+        try {
 
 
             //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
-            let model=think.model(tableName);
-            let big_order_return = await model.transaction(async () => {
+            let model = think.model(tableName);
+            let appointment_return = await model.transaction(async () => {
 
-                let data = await model.add(big_order).catch(e=>{
+                let data = await model.add(appointment).catch(e => {
                     throw new Error(e)
                 })
 
                 // 通过 db 方法让 user_cate 模型复用当前模型的数据库连接
                 const orderCate = think.model('order').db(model.db());
 
-                let order_data = await orderCate.addMany(orders).catch(e=>{
-                    throw new Error(e)
-                });
-
-                const periodCate = think.model('therapist_period').db(model.db());
-
-                let period_data = await periodCate.addMany(therapistPeriods).catch(e=>{
+                let order_data = await orderCate.add(order).catch(e => {
                     throw new Error(e)
                 });
 
                 logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
-                logger.info(`新增关联小订单数据库返回：${JSON.stringify(order_data)}`)
-                logger.info(`新增关联咨询师时段数据库返回：${JSON.stringify(period_data)}`)
+                logger.info(`新增关联订单数据库返回：${JSON.stringify(order_data)}`)
 
                 return data;
             })
 
 
-            logger.info(`新增${entityName}数据库返回：${JSON.stringify(big_order_return)}`)
+            logger.info(`新增${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
 
-            return big_order_return;
+            return appointment_return;
 
-        }catch (e) {
-            let msg=`新增${entityName}接口异常 msg:${e}`
-            let returnMsg=`新增订单接口异常`
+        } catch (e) {
+            let msg = `新增${entityName}接口异常 msg:${e}`
+            let returnMsg = `新增订单接口异常`
             logger.info(msg);
             throw new Error(returnMsg)
         }
-
 
 
     },
@@ -125,28 +101,28 @@ module.exports =  {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async add(obj){
+    async add(obj) {
 
-        try{
+        try {
 
             let op_date = DateUtil.getNowStr()
 
-            obj.op_date=op_date
+            obj.op_date = op_date
 
-            let data = await think.model(tableName).add(obj).catch(e=>{
+            let data = await think.model(tableName).add(obj).catch(e => {
                 throw new Error(e)
-            });;
+            });
+            ;
 
             logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
 
             return data;
 
-        }catch (e) {
-            let msg=`新增${entityName}接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `新增${entityName}接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
-
 
 
     },
@@ -155,40 +131,35 @@ module.exports =  {
      *根据ID获取大订单详情
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getById(big_order_id){
+    async getById(appointment_id) {
 
-        try{
+        try {
 
             let data = await think.model(tableName).where({
-                big_order_id
+                appointment_id
             }).join([
-                ` appoint_user as therapist on therapist.user_id=appoint_big_order.therapist_id`,
-                ` appoint_user as userInfo on userInfo.user_id=appoint_big_order.user_id`,
-                ` appoint_therapist_fee_set as fee_set on fee_set.therapist_id=appoint_big_order.therapist_id`,
+                ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_user as userInfo on userInfo.user_id=appoint_appointment.user_id`,
+                ` appoint_therapist_fee_set as fee_set on fee_set.therapist_id=appoint_appointment.therapist_id`,
             ]).field(
-                `appoint_big_order.*,
+                `appoint_appointment.*,
                     therapist.name as therapist_name,
                     fee_set.fee_type,
                     userInfo.name as user_name `,
-            ).find().catch(e=>{
+            ).find().catch(e => {
                 throw new Error(e)
             })
-
-
-
-
 
 
             logger.info(`根据ID获取大订单详情数据库返回：${JSON.stringify(data)}`)
 
             return data;
 
-        }catch (e) {
-            let msg=`根据ID获取大订单详情接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据ID获取大订单详情接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
-
 
 
     },
@@ -197,11 +168,11 @@ module.exports =  {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getOne(whereObj){
+    async getOne(whereObj) {
 
-        try{
+        try {
 
-            let data = await think.model(tableName).where(whereObj).find().catch(e=>{
+            let data = await think.model(tableName).where(whereObj).find().catch(e => {
                 throw new Error(e)
             });
 
@@ -209,12 +180,11 @@ module.exports =  {
 
             return data;
 
-        }catch (e) {
-            let msg=`根据条件查询单个${entityName}接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据条件查询单个${entityName}接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
-
 
 
     },
@@ -223,11 +193,11 @@ module.exports =  {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getList(whereObj){
+    async getList(whereObj) {
 
-        try{
+        try {
 
-            let data = await think.model(tableName).where(whereObj).select().catch(e=>{
+            let data = await think.model(tableName).where(whereObj).select().catch(e => {
                 throw new Error(e)
             });
 
@@ -235,12 +205,39 @@ module.exports =  {
 
             return data;
 
-        }catch (e) {
-            let msg=`根据条件查询${entityName}列表接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据条件查询${entityName}列表接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
 
+
+    },
+
+    /**
+     *获取生效中的预约列表
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getListOfUsing(therapist_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                therapist_id,
+                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+            }).select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `获取生效中的预约列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
 
 
     },
@@ -249,15 +246,15 @@ module.exports =  {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getOrderListByTherapistId(therapist_id,page,pageSize){
+    async getOrderListByTherapistId(therapist_id, page, pageSize) {
 
-        try{
+        try {
 
-            let ORDER=think.model(tableName)
-            ORDER._pk='order_id'
+            let ORDER = think.model(tableName)
+            ORDER._pk = 'order_id'
             let data = await ORDER.where({
                 therapist_id
-            }).page(page, pageSize).countSelect().catch(e=>{
+            }).page(page, pageSize).countSelect().catch(e => {
                 throw new Error(e)
             });
 
@@ -265,35 +262,34 @@ module.exports =  {
 
             return data;
 
-        }catch (e) {
-            let msg=`根据条件查询${entityName}列表接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据条件查询${entityName}列表接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
 
 
-
     },
 
-    async accept(big_order_id) {
+    async accept(appointment_id) {
 
 
-        let op_date =  DateUtil.getNowStr()
+        let op_date = DateUtil.getNowStr()
 
-        try{
+        try {
 
 
             //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
-            let model=think.model(tableName);
-            let big_order_return = await model.transaction(async () => {
+            let model = think.model(tableName);
+            let appointment_return = await model.transaction(async () => {
 
                 let data = await model.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:ORDER_STATE.AUDITED,
+                    state: ORDER_STATE.AUDITED,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 })
 
@@ -301,22 +297,22 @@ module.exports =  {
                 const orderCate = think.model('order').db(model.db());
 
                 let order_data = await orderCate.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:ORDER_STATE.AUDITED,
+                    state: ORDER_STATE.AUDITED,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 });
 
                 const periodCate = think.model('therapist_period').db(model.db());
 
                 let period_data = await periodCate.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:PERIOD_STATE.YES,
+                    state: PERIOD_STATE.YES,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 });
 
@@ -328,13 +324,13 @@ module.exports =  {
             })
 
 
-            logger.info(`同意${entityName}数据库返回：${JSON.stringify(big_order_return)}`)
+            logger.info(`同意${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
 
-            return big_order_return;
+            return appointment_return;
 
-        }catch (e) {
-            let msg=`同意${entityName}接口异常 msg:${e}`
-            let returnMsg=`同意订单接口异常`
+        } catch (e) {
+            let msg = `同意${entityName}接口异常 msg:${e}`
+            let returnMsg = `同意订单接口异常`
             logger.info(msg);
             throw new Error(returnMsg)
         }
@@ -342,25 +338,25 @@ module.exports =  {
 
     },
 
-    async deny(big_order_id) {
+    async deny(appointment_id) {
 
 
-        let op_date =  DateUtil.getNowStr()
+        let op_date = DateUtil.getNowStr()
 
-        try{
+        try {
 
 
             //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
-            let model=think.model(tableName);
-            let big_order_return = await model.transaction(async () => {
+            let model = think.model(tableName);
+            let appointment_return = await model.transaction(async () => {
 
                 let data = await model.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:ORDER_STATE.REJECTED,
+                    state: ORDER_STATE.REJECTED,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 })
 
@@ -368,22 +364,22 @@ module.exports =  {
                 const orderCate = think.model('order').db(model.db());
 
                 let order_data = await orderCate.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:ORDER_STATE.REJECTED,
+                    state: ORDER_STATE.REJECTED,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 });
 
                 const periodCate = think.model('therapist_period').db(model.db());
 
                 let period_data = await periodCate.where({
-                    big_order_id
+                    appointment_id
                 }).update({
-                    state:PERIOD_STATE.NO,
+                    state: PERIOD_STATE.NO,
                     op_date
-                }).catch(e=>{
+                }).catch(e => {
                     throw new Error(e)
                 });
 
@@ -395,13 +391,13 @@ module.exports =  {
             })
 
 
-            logger.info(`拒绝${entityName}数据库返回：${JSON.stringify(big_order_return)}`)
+            logger.info(`拒绝${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
 
-            return big_order_return;
+            return appointment_return;
 
-        }catch (e) {
-            let msg=`拒绝${entityName}接口异常 msg:${e}`
-            let returnMsg=`拒绝订单接口异常`
+        } catch (e) {
+            let msg = `拒绝${entityName}接口异常 msg:${e}`
+            let returnMsg = `拒绝订单接口异常`
             logger.info(msg);
             throw new Error(returnMsg)
         }
@@ -409,14 +405,14 @@ module.exports =  {
 
     },
 
-    async update(whereObj,updateObj) {
+    async update(whereObj, updateObj) {
 
         try {
             let op_date = DateUtil.getNowStr()
 
-            updateObj.op_date=op_date
+            updateObj.op_date = op_date
 
-            let data = await think.model(tableName).where(whereObj).update(updateObj).catch(e=>{
+            let data = await think.model(tableName).where(whereObj).update(updateObj).catch(e => {
                 throw new Error(e)
             });
 
@@ -424,7 +420,7 @@ module.exports =  {
 
             return data
         } catch (e) {
-            let msg=`更新${entityName}异常 msg:${e}`
+            let msg = `更新${entityName}异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
@@ -435,12 +431,12 @@ module.exports =  {
 
         try {
 
-            await WechatUtil.refund(order_id, total_amount, refund_amount).catch((e)=>{
+            await WechatUtil.refund(order_id, total_amount, refund_amount).catch((e) => {
                 throw new Error(e)
             })
 
         } catch (e) {
-            let msg=`退款接口异常 msg:${e}`
+            let msg = `退款接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }

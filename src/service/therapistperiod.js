@@ -11,7 +11,7 @@ module.exports = {
 
     async add(therapist_id,
               appoint_date,
-              periodArray,big_order_id) {
+              periodArray,appointment_id) {
 
         try {
             let op_date = DateUtil.getNowStr()
@@ -20,7 +20,7 @@ module.exports = {
                 therapist_period_id:Util.uuid(),
                 therapist_id,
                 appoint_date,
-                big_order_id,
+                appointment_id,
                 op_date,
                 period:periodArray.join(',')
             }
@@ -51,7 +51,7 @@ module.exports = {
 
             // therapist_id,
             //     appoint_date,
-            //     periodArray,big_order_id
+            //     periodArray,appointment_id
 
             let orders=[]
             let op_date = DateUtil.getNowStr()
@@ -69,7 +69,7 @@ module.exports = {
             //     therapist_period_id:Util.uuid(),
             //     therapist_id,
             //     appoint_date,
-            //     big_order_id,
+            //     appointment_id,
             //     op_date,
             //     period:periodArray.join(',')
             // }

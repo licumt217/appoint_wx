@@ -190,9 +190,43 @@ module.exports = class extends Base {
             let user_id=this.ctx.state.userInfo.user_id;
             let station_id=await stationService.getStationIdByCaseManagerId(user_id)
 
+            console.log(user_id,station_id)
+
             let data = await this.model(tableName).where({
                 station_id
             }).page(page,pageSize).countSelect();
+
+
+            logger.info(`只查询对应工作室下边的房间列表，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`只查询对应工作室下边的房间列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 只查询对应工作室下边的房间列表
+     * @returns {Promise<boolean>}
+     */
+    async listNoPageAction() {
+        try {
+
+            logger.info(`只查询对应工作室下边的房间列表参数 :${JSON.stringify(this.post())}`)
+
+            //只查询对应工作室下边的
+            let user_id=this.ctx.state.userInfo.user_id;
+            let station_id=await stationService.getStationIdByCaseManagerId(user_id)
+
+            console.log(user_id,station_id)
+
+            let data = await this.model(tableName).where({
+                // station_id
+            }).select();
 
 
             logger.info(`只查询对应工作室下边的房间列表，数据库返回：${JSON.stringify(data)}`)
