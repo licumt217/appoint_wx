@@ -1,5 +1,5 @@
 const moment=require('moment')
-
+const logger = think.logger
 let DateUtil = {
 
     /**
@@ -51,6 +51,19 @@ let DateUtil = {
         let returnStr= moment(date).format(formatStr)
 
         return returnStr;
+    },
+
+    /**
+     * 获取给定日期是周几
+     * @param date
+     * @returns {number}
+     */
+    getWeekOfDate(date){
+        if(typeof date==='string'){
+            date=new Date(date);
+        }
+
+        return date.getDay();
     }
 
 

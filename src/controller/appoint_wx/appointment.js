@@ -143,8 +143,30 @@ module.exports = class extends Base {
             logger.info(`咨询师接受预约参数 ${JSON.stringify(this.post())}`);
 
             let appointment_id = this.post('appointment_id')
+            let assign_room_type = this.post('assign_room_type')
+            let room_id = this.post('room_id')
 
-            await appointmentService.accept(appointment_id)
+            if (!appointment_id) {
+                this.body = Response.businessException(`预约ID不能为空！`)
+                return false;
+            }
+
+            //判断是否可分配有效房间
+            if(assign_room_type===0){//自动分配
+                room_id=await appointmentService.autoAssignRoomId(appointment_id);
+
+                if (!room_id) {
+                    this.body = Response.businessException(`无可用房间！`)
+                    return false;
+                }
+            }else{
+                if (!room_id) {
+                    this.body = Response.businessException(`房间ID不能为空！`)
+                    return false;
+                }
+            }
+
+            await appointmentService.accept(appointment_id,room_id)
 
             //TODO 给用户推送让用户付款，如果是咨询前支付的话
 
@@ -240,23 +262,47 @@ module.exports = class extends Base {
 
 
     /**
-     *获取生效中的预约列表
+     *根据咨询师ID获取生效中的预约列表
      * @returns {Promise<void>}
      */
-    async getListOfUsingAction() {
+    async getListOfUsingByTherapistIdAction() {
 
         let therapist_id=this.post('therapist_id')
 
-        logger.info(`获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
+        logger.info(`根据咨询师ID获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
 
         try {
 
-            let orders = await appointmentService.getListOfUsing(therapist_id)
+            let orders = await appointmentService.getListOfUsingByTherapistId(therapist_id)
 
             this.body = Response.success(orders);
 
         } catch (e) {
-            logger.info(`获取生效中的预约列表异常 msg:${e}`);
+            logger.info(`根据咨询师ID获取生效中的预约列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     *根据工作室ID获取生效中的预约列表
+     * @returns {Promise<void>}
+     */
+    async getListOfUsingByStationIdAction() {
+
+        let station_id=this.post('station_id')
+
+        logger.info(`根据工作室ID获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await appointmentService.getListOfUsingByStationId(station_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`根据工作室ID获取生效中的预约列表异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

@@ -7,6 +7,8 @@ const PERIOD_STATE = require('../config/PERIOD_STATE')
 const logger = think.logger
 const entityName = '预约'
 const tableName = 'appointment'
+const roomPeriodSetService =  require('./roomPeriodSet');
+const roomService =  require('./room');
 
 module.exports = {
 
@@ -127,6 +129,156 @@ module.exports = {
 
     },
 
+
+    isRoomPeriodsContainsAppointPeriods(appointment,allAvailablePeriodArray){
+
+        let periods=appointment.period.split(',')
+
+        let flag=true;
+        for(let i=0;i<periods.length;i++){
+            if(!allAvailablePeriodArray.includes(periods[i])){
+                flag=false;
+                break;
+            }
+        }
+        return flag;
+    },
+
+    /**
+     * 看给定日期能否预约房间
+     * @param date
+     * @param usedPeriodArray 已经长期预约的时段，此时不可用
+     * @returns {[]}
+     */
+    canAppointRoom(appointment, singleMap, usedPeriodArray,allAvailablePeriodArray) {
+
+        let periodDateMap = {}
+
+        let dateWeek = DateUtil.getWeekOfDate(appointment.appoint_date)
+
+        for (let date2 in singleMap) {
+            date2=new Date(date2)
+            let w = DateUtil.getWeekOfDate(date2)
+
+
+            let period2 = singleMap[date2]
+            if (w === dateWeek) {
+                period2.forEach(item => {
+                    if (periodDateMap[item]) {
+                        if (periodDateMap[item].getTime() < date2.getTime()) {
+                            periodDateMap[item] = date2;
+                        }
+                    } else {
+                        periodDateMap[item] = date2;
+                    }
+                })
+            }
+        }
+
+        let appoint_periods=appointment.period.split(',');
+        let flag=true;
+        for(let m=0;m<appoint_periods.length;m++){
+            let the_period=appoint_periods[m];
+
+            if(usedPeriodArray && usedPeriodArray.includes(the_period)){
+                flag=false;
+                break;
+            }
+
+            if(periodDateMap[the_period] && new Date(appointment.appoint_date).getTime() < periodDateMap[the_period].getTime()){
+                flag=false;
+                break;
+            }
+
+        }
+
+        return flag && this.isRoomPeriodsContainsAppointPeriods(appointment,allAvailablePeriodArray);
+
+
+    },
+
+    /**
+     *咨询师同意预约时，自动分配对应工作室的房间
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async autoAssignRoomId(appointment_id) {
+
+
+
+
+        try {
+
+            let appointment=await this.getById(appointment_id);
+
+            let allAvailablePeriodArray=await roomPeriodSetService.getByStationId(appointment.station_id);
+            allAvailablePeriodArray=allAvailablePeriodArray.period.split(',')
+
+            let allRoomList=await roomService.getListByStationIdNoPage(appointment.station_id)
+
+            let data=await this.getListOfUsingByStationId(appointment.station_id)
+
+            let roomList=[];
+
+            //说明没有别人占用的，所有都可以预约
+            if (data.length === 0 && this.isRoomPeriodsContainsAppointPeriods(appointment,allAvailablePeriodArray)) {
+                roomList=allRoomList;
+            } else {
+
+                let weekMap = {}
+                let singleMap = {}
+                data.forEach(item => {
+
+                    let date = new Date(item.appoint_date)
+
+                    let week = DateUtil.getWeekOfDate(date)
+
+
+                    let periodArray = item.period.split(',')
+
+                    //持续的预约
+                    if (item.ismulti === 1) {
+                        if (weekMap[week]) {
+                            weekMap[week] = weekMap[week].concat(periodArray);
+                        } else {
+                            weekMap[week] = periodArray
+                        }
+                    } else {//单次预约
+                        if (singleMap[date]) {
+                            singleMap[date].concat(periodArray);
+                        } else {
+                            singleMap[date] = periodArray
+                        }
+                    }
+                })
+
+
+                allRoomList.forEach((item, index) => {
+
+                    let week = DateUtil.getWeekOfDate(appointment.appoint_date);
+
+                    if(this.canAppointRoom(appointment,singleMap,weekMap[week],allAvailablePeriodArray)){
+                        roomList.push(item);
+                    }
+
+                })
+
+            }
+
+            if(roomList.length>0){
+                return roomList[0].room_id;
+            }else{
+                return null;
+            }
+
+        } catch (e) {
+            let msg = `咨询师同意预约时，自动分配对应工作室的房间接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
     /**
      *根据ID获取大订单详情
      * @returns {Promise<{isSuccess, errorMsg}>}
@@ -215,10 +367,10 @@ module.exports = {
     },
 
     /**
-     *获取生效中的预约列表
+     *根据咨询师ID获取生效中的预约列表
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getListOfUsing(therapist_id) {
+    async getListOfUsingByTherapistId(therapist_id) {
 
         try {
 
@@ -229,12 +381,40 @@ module.exports = {
                 throw new Error(e)
             });
 
-            logger.info(`获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
+            logger.info(`根据咨询师ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
 
             return data;
 
         } catch (e) {
-            let msg = `获取生效中的预约列表接口异常 msg:${e}`
+            let msg = `根据咨询师ID获取生效中的预约列表异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+    /**
+     * 根据工作室ID获取生效中的预约列表
+     * @param station_id
+     * @returns {Promise<T>}
+     */
+    async getListOfUsingByStationId(station_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                station_id,
+                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+            }).select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据工作室ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据工作室ID获取生效中的预约列表接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
@@ -271,7 +451,8 @@ module.exports = {
 
     },
 
-    async accept(appointment_id) {
+    async accept(appointment_id,room_id) {
+
 
 
         let op_date = DateUtil.getNowStr()
@@ -288,7 +469,8 @@ module.exports = {
                     appointment_id
                 }).update({
                     state: ORDER_STATE.AUDITED,
-                    op_date
+                    op_date,
+                    room_id
                 }).catch(e => {
                     throw new Error(e)
                 })

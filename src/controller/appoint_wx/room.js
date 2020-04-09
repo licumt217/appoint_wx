@@ -5,6 +5,8 @@ const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 const stationService = require('../../service/station')
+const stationTherapistRelationService = require('../../service/stationTherapistRelation')
+const roomService = require('../../service/room')
 const entityName='房间'
 const tableName='room'
 
@@ -210,31 +212,37 @@ module.exports = class extends Base {
     }
 
     /**
-     * 只查询对应工作室下边的房间列表
+     * 查询咨询师所在工作室的房间列表
      * @returns {Promise<boolean>}
      */
-    async listNoPageAction() {
+    async listByTherapistNoPageAction() {
         try {
 
-            logger.info(`只查询对应工作室下边的房间列表参数 :${JSON.stringify(this.post())}`)
+            logger.info(`查询咨询师所在工作室的房间列表参数 :${JSON.stringify(this.post())}`)
 
             //只查询对应工作室下边的
             let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationService.getStationIdByCaseManagerId(user_id)
+            let therapist_id=this.post('therapist_id')
+
+            if (!therapist_id) {
+                this.body = Response.businessException(`咨询师ID不能为空！`)
+                return false;
+            }
+
+
+            let station_id=await stationTherapistRelationService.getStationIdByTherapistId(therapist_id)
 
             console.log(user_id,station_id)
 
-            let data = await this.model(tableName).where({
-                // station_id
-            }).select();
+            let data = await roomService.getListByStationIdNoPage(station_id)
 
 
-            logger.info(`只查询对应工作室下边的房间列表，数据库返回：${JSON.stringify(data)}`)
+            logger.info(`查询咨询师所在工作室的房间列表，数据库返回：${JSON.stringify(data)}`)
 
             this.body = Response.success(data);
 
         } catch (e) {
-            logger.info(`只查询对应工作室下边的房间列表异常 msg:${e}`);
+            logger.info(`查询咨询师所在工作室的房间列表异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 
