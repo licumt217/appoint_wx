@@ -9,6 +9,7 @@ const logger = think.logger;
 
 const entityName='工作室'
 const tableName='station'
+const userService = require('../../service/user')
 
 
 module.exports = class extends Base {
@@ -141,6 +142,14 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`工作室ID不能为空！`)
                 return false;
             }
+
+            let user=await userService.getByPhone(phone);
+
+            if(!Util.isEmptyObject(user)){
+                this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
+                return false;
+            }
+
 
             let op_date=DateUtil.getNowStr()
 

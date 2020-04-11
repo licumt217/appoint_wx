@@ -10,7 +10,7 @@ const DateUtil = require('../../util/DateUtil')
 const stationService = require('../../service/station')
 const md5 = require('md5')
 const logger = think.logger;
-
+const stationTherapistRelationService = require('../../service/stationTherapistRelation')
 
 module.exports = class extends Base {
 
@@ -140,6 +140,17 @@ module.exports = class extends Base {
                     return false;
                 }
             }
+
+            let obj=await stationTherapistRelationService.getOne({
+                station_id,
+                therapist_id
+            })
+
+            if(!Util.isEmptyObject(obj)){
+                this.body = Response.businessException(`已关联！`)
+                return false;
+            }
+
 
 
 

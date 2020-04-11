@@ -8,6 +8,7 @@ const Role = require('../../config/Role')
 const Constant = require('../../config/Constant')
 const entityName='分部和分部管理员关系'
 const tableName='division_admin_relation'
+const userService = require('../../service/user')
 
 
 module.exports = class extends Base {
@@ -60,6 +61,12 @@ module.exports = class extends Base {
                 return false;
             }
 
+            let user=await userService.getByPhone(phone);
+
+            if(!Util.isEmptyObject(user)){
+                this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
+                return false;
+            }
 
             let op_date=DateUtil.getNowStr()
 
