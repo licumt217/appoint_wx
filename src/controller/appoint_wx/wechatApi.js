@@ -29,7 +29,7 @@ module.exports = class extends Base {
      */
     async getOpenidAction() {
 
-        let code = this.get('code')
+        let code = this.post('code')
 
         logger.info(`根据code获取openid参数 :${JSON.stringify(this.post())}`);
 

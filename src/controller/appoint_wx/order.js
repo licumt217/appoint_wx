@@ -427,6 +427,11 @@ module.exports = class extends Base {
 
         try {
 
+            if (!order_id) {
+                this.body = Response.businessException('订单ID不能为空');
+                return;
+            }
+
 
             let order = await orderService.getOne({order_id})
 

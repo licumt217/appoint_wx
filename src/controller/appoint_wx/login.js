@@ -81,7 +81,7 @@ module.exports = class extends Base {
      */
     async getUserByOpenidAction() {
 
-        let openid = this.get('openid')
+        let openid = this.post('openid')
 
         logger.info(`根据openid获取对应的c端用户信息参数 openid:${openid}`);
 
