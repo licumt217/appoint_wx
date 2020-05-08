@@ -9,6 +9,7 @@ const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;
+const userService = require('../../service/user')
 
 
 module.exports = class extends Base {
@@ -515,6 +516,15 @@ module.exports = class extends Base {
         }
 
         try {
+
+            //已存在的手机号不允许注册
+
+            let existUser=await userService.getByPhone(phone);
+
+            if(!Util.isEmptyObject(existUser)){
+                this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
+                return false;
+            }
 
             let op_date = DateUtil.getNowStr()
 

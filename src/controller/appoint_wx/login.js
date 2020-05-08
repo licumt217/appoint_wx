@@ -7,7 +7,7 @@ const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;
 const therapistService = require('../../service/therapist')
-
+const userService = require('../../service/user')
 module.exports = class extends Base {
 
     /**
@@ -181,40 +181,44 @@ module.exports = class extends Base {
                 return false;
             }
 
-            //根据手机号获取用户。如果用户已存在，则绑定和openid的关联
-            let userInfo = await this.model('user').where({
-                phone
-            }).find();
+            //手机号已存在时不允许注册
+            //已存在的手机号不允许注册
+
+            let existUser=await userService.getByPhone(phone);
+
+            if(!Util.isEmptyObject(existUser)){
+                this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
+                return false;
+            }
+
 
             let op_date = DateUtil.getNowStr()
 
-            if (Util.isEmptyObject(userInfo)) {
+            let user_id=Util.uuid();
 
-                let user_id = await this.model('user').add({
-                    user_id: Util.uuid(),
-                    openid,
-                    phone,
-                    identification_no,
-                    gender,
-                    email,
-                    birthday: DateUtil.format(birthday, 'date'),
-                    name,
-                    op_date,
-                    role: Role.client
-                })
+            await this.model('user').add({
+                user_id,
+                openid,
+                phone,
+                identification_no,
+                gender,
+                email,
+                birthday: DateUtil.format(birthday, 'date'),
+                name,
+                op_date,
+                role: Role.client
+            })
 
-                userInfo = await this.model('user').where({
-                    user_id
-                }).find()
+            let userInfo = await this.model('user').where({
+                user_id
+            }).find()
 
-                logger.info(`用户注册数据库返回：user_id:${user_id}`)
-
-            }
+            logger.info(`用户注册数据库返回：user_id:${user_id}`)
 
             await this.model('weixin_user').add({
                 weixin_user_id: Util.uuid(),
                 openid,
-                user_id: userInfo.user_id,
+                user_id,
                 op_date
             })
 

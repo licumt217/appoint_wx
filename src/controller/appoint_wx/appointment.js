@@ -47,7 +47,7 @@ module.exports = class extends Base {
         }
 
         if (!therapist_id) {
-            this.body = Response.businessException(`咨询师不能为空！`)
+            this.body = Response.businessException(`咨询师ID不能为空！`)
             return false;
         }
 
@@ -303,6 +303,30 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`根据工作室ID获取生效中的预约列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     *根据用户id获取预约列表
+     * @returns {Promise<void>}
+     */
+    async getListByUserIdAction() {
+
+        let user_id=this.ctx.state.userInfo.user_id
+
+        logger.info(`根据用户id获取预约列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await appointmentService.getListByUserId(user_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`根据用户id获取预约列表异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 
