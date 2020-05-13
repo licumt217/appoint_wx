@@ -104,6 +104,7 @@ module.exports = class extends Base {
                 email,
                 op_date,
                 role,
+                identification_no
             }
 
             if (role !== Role.client) {

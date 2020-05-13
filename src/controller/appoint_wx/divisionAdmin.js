@@ -26,7 +26,7 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
-            let role = this.post('role')
+            let role = Role.divisionManager;
             let division_id = this.post('division_id')
 
             logger.info(`新增分部管理员参数 ${JSON.stringify(this.post())}`)
@@ -56,10 +56,11 @@ module.exports = class extends Base {
                 return false;
             }
 
-            if (!role) {
-                this.body = Response.businessException(`用户类型不能为空！`)
+            if (!division_id) {
+                this.body = Response.businessException(`分部ID不能为空！`)
                 return false;
             }
+
 
             let user=await userService.getByPhone(phone);
 

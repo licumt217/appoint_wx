@@ -21,7 +21,9 @@ module.exports = {
         "therapist",
         "emergencyContack",
         "appointment",
-        "roomPeriodSet"
+        "roomPeriodSet",
+        "station",
+        "stationCasemanagerRelation"
     ],
     divisionManager: [
         "login",
@@ -43,7 +45,9 @@ module.exports = {
         "therapist",
         "emergencyContack",
         "appointment",
-        "roomPeriodSet"
+        "roomPeriodSet",
+        "stationCasemanagerRelation",
+        "stationTherapistRelation"
     ],
     admin: [
         "login",
@@ -61,10 +65,12 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
-        "divisionAdminRelation",
+        "divisionAdmin",
         "emergencyContack",
         "appointment",
-        "roomPeriodSet"
+        "roomPeriodSet",
+        "station",
+        "stationCasemanagerRelation"
     ],
     therapist: [
         "login",
@@ -87,7 +93,8 @@ module.exports = {
         "therapistAttachRelation",
         "emergencyContack",
         "appointment",
-        "roomPeriodSet"
+        "roomPeriodSet",
+        "stationCasemanagerRelation"
     ],
     client: [
         "login",
@@ -108,6 +115,7 @@ module.exports = {
         "therapist",
         "emergencyContack",
         "appointment",
-        "roomPeriodSet"
+        "roomPeriodSet",
+        "stationCasemanagerRelation"
     ]
 };
