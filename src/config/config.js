@@ -2,7 +2,7 @@
 module.exports = {
     port: 8350,
     workers: 1,
-    caseManager: [
+    admin: [
         "login",
         "leveltype",
         "mannertype",
@@ -18,12 +18,13 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
-        "therapist",
+        "divisionAdmin",
         "emergencyContack",
         "appointment",
         "roomPeriodSet",
         "station",
-        "stationCasemanagerRelation"
+        "stationCasemanagerRelation",
+        "ethicsnotice"
     ],
     divisionManager: [
         "login",
@@ -49,7 +50,7 @@ module.exports = {
         "stationCasemanagerRelation",
         "stationTherapistRelation"
     ],
-    admin: [
+    caseManager: [
         "login",
         "leveltype",
         "mannertype",
@@ -65,7 +66,7 @@ module.exports = {
         "therapistperiod",
         "complaint",
         "division",
-        "divisionAdmin",
+        "therapist",
         "emergencyContack",
         "appointment",
         "roomPeriodSet",

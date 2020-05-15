@@ -6,6 +6,7 @@ const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 const stationService = require('../../service/station')
 const stationTherapistRelationService = require('../../service/stationTherapistRelation')
+const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const roomService = require('../../service/room')
 const entityName='房间'
 const tableName='room'
@@ -190,7 +191,7 @@ module.exports = class extends Base {
 
             //只查询对应工作室下边的
             let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationService.getStationIdByCaseManagerId(user_id)
+            let station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
 
             console.log(user_id,station_id)
 
