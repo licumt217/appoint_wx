@@ -241,6 +241,7 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
+            let identification_no = this.post('identification_no')||''
 
             logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
 
@@ -264,6 +265,8 @@ module.exports = class extends Base {
             if (email) {
                 updateJson.email = email
             }
+
+            updateJson.identification_no=identification_no;
 
             let op_date = DateUtil.getNowStr()
 
