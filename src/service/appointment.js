@@ -8,6 +8,7 @@ const logger = think.logger
 const entityName = '预约'
 const tableName = 'appointment'
 const roomPeriodSetService =  require('./roomPeriodSet');
+const stationTherapistRelationService =  require('./stationTherapistRelation');
 const roomService =  require('./room');
 
 module.exports = {
@@ -18,11 +19,12 @@ module.exports = {
      * 首先同步新增一条订单
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async addWithRelations(openid, therapist_id, appoint_date, period, isMulti, amount, user_id) {
+    async addWithRelations(appointment_id,openid, therapist_id, appoint_date, period, isMulti, amount, user_id) {
 
 
-        let appointment_id = Util.uuid();
 
+
+        let station_id=await stationTherapistRelationService.getStationIdByTherapistId(therapist_id);
         let create_date = DateUtil.getNowStr()
 
         let op_date = create_date
@@ -40,7 +42,9 @@ module.exports = {
             op_date,
             period,
             isMulti,
-            user_id
+            user_id,
+            amount,
+            station_id
         }
 
 
@@ -280,7 +284,7 @@ module.exports = {
     },
 
     /**
-     *根据ID获取大订单详情
+     *获取预约详情
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
     async getById(appointment_id) {
@@ -517,31 +521,31 @@ module.exports = {
                 })
 
                 // 通过 db 方法让 user_cate 模型复用当前模型的数据库连接
-                const orderCate = think.model('order').db(model.db());
+                // const orderCate = think.model('order').db(model.db());
+                //
+                // let order_data = await orderCate.where({
+                //     appointment_id
+                // }).update({
+                //     state: ORDER_STATE.AUDITED,
+                //     op_date
+                // }).catch(e => {
+                //     throw new Error(e)
+                // });
 
-                let order_data = await orderCate.where({
-                    appointment_id
-                }).update({
-                    state: ORDER_STATE.AUDITED,
-                    op_date
-                }).catch(e => {
-                    throw new Error(e)
-                });
-
-                const periodCate = think.model('therapist_period').db(model.db());
-
-                let period_data = await periodCate.where({
-                    appointment_id
-                }).update({
-                    state: PERIOD_STATE.YES,
-                    op_date
-                }).catch(e => {
-                    throw new Error(e)
-                });
+                // const periodCate = think.model('therapist_period').db(model.db());
+                //
+                // let period_data = await periodCate.where({
+                //     appointment_id
+                // }).update({
+                //     state: PERIOD_STATE.YES,
+                //     op_date
+                // }).catch(e => {
+                //     throw new Error(e)
+                // });
 
                 logger.info(`同意${entityName}数据库返回：${JSON.stringify(data)}`)
-                logger.info(`同意关联小订单数据库返回：${JSON.stringify(order_data)}`)
-                logger.info(`同意关联咨询师时段数据库返回：${JSON.stringify(period_data)}`)
+                // logger.info(`同意关联小订单数据库返回：${JSON.stringify(order_data)}`)
+                // logger.info(`同意关联咨询师时段数据库返回：${JSON.stringify(period_data)}`)
 
                 return data;
             })

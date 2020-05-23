@@ -101,6 +101,7 @@ module.exports = class extends Base {
             } else {
                 const user_id = data.user_id;
 
+
                 data = await this.model('user').where({
                     user_id
                 }).find();
@@ -270,10 +271,12 @@ module.exports = class extends Base {
             }
 
             //根据手机号获取用户。如果用户已存在，则绑定和openid的关联
+            let joinStr = 'appoint_station_therapist_relation on appoint_user.user_id=appoint_station_therapist_relation.therapist_id'
+
             let userInfo = await this.model('user').where({
                 phone,
                 password:md5(password)
-            }).find();
+            }).join(joinStr).find();
 
             let op_date = DateUtil.getNowStr()
 

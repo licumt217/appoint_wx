@@ -18,6 +18,41 @@ const logger = think.logger
 module.exports = class extends Base {
 
     /**
+     * 根据预约id获取订单记录
+     * @returns {Promise<void>}
+     */
+    async getListByAppointmentIdAction() {
+
+        logger.info(`根据预约id获取订单记录参数 ${JSON.stringify(this.post())}`);
+
+        let appointment_id = this.post('appointment_id')
+
+        if (!appointment_id) {
+            this.body = Response.businessException(`预约ID不能为空！`)
+            return false;
+        }
+
+        let data = await this.model('order').where({
+            'appoint_appointment.appointment_id':appointment_id
+        }).join([
+            ` appoint_user as therapist on therapist.user_id=appoint_order.therapist_id`,
+            ` appoint_appointment on appoint_appointment.appointment_id=appoint_order.appointment_id`
+        ]).select()
+
+        try {
+
+
+            logger.info(`根据预约id获取订单记录数据库返回 :${JSON.stringify(data)}`);
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`根据预约id获取订单记录异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+    }
+
+    /**
      * 微信支付
      * @returns {Promise<void>}
      */
@@ -61,64 +96,6 @@ module.exports = class extends Base {
 
     }
 
-    /**
-     * 咨询师接受预约
-     * @returns {Promise<void>}
-     */
-    async acceptAction() {
-        try {
-
-            logger.info(`咨询师接受预约参数 ${JSON.stringify(this.post())}`);
-
-            let order_id = this.post('order_id')
-
-            await orderService.update({order_id}, {state: ORDER_STATE.AUDITED})
-
-            //TODO 给用户推送让用户付款
-
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
-
-            let order = await orderService.getOne({order_id})
-
-            await pushService.sendTemplateMsg(order.openid, url);
-
-
-
-            this.body = Response.success();
-
-        } catch (e) {
-            logger.info(`咨询师接受预约异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-    }
-
-    /**
-     * 咨询师拒绝预约
-     * @returns {Promise<void>}
-     */
-    async denyAction() {
-        try {
-
-            logger.info(`咨询师拒绝预约参数 ${JSON.stringify(this.post())}`);
-
-            let order_id = this.post('order_id')
-
-            await orderService.update({order_id}, {state: ORDER_STATE.REJECTED})
-
-            //TODO 给用户推送告知用户
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
-
-            let order = await orderService.getOne({order_id})
-
-            await pushService.sendTemplateMsg(order.openid, url);
-
-            this.body = Response.success();
-
-        } catch (e) {
-            logger.info(`咨询师拒绝预约异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-    }
 
     /**
      * 咨询师确认完成
@@ -204,18 +181,18 @@ module.exports = class extends Base {
 
 
             //订单表存库
-            await orderService.add({
-                order_id,
-                openid,
-                therapist_id,
-                amount,
-                state,
-                // prepay_id,
-                create_date,
-                consult_type_id,
-                manner_type_id,
-                user_id:this.ctx.state.userInfo.user_id
-            })
+            // await orderService.add({
+            //     order_id,
+            //     openid,
+            //     therapist_id,
+            //     amount,
+            //     state,
+            //     // prepay_id,
+            //     create_date,
+            //     consult_type_id,
+            //     manner_type_id,
+            //     user_id:this.ctx.state.userInfo.user_id
+            // })
 
             //将咨询师时间段存库
             await therapistperiodService.add(therapist_id, appoint_date, periodArray, order_id)
@@ -246,37 +223,7 @@ module.exports = class extends Base {
 
     }
 
-    /**
-     * 获取c端用户的当前预约订单
-     * @returns {Promise<void>}
-     */
-    async getCurAppointAction() {
 
-        logger.info(`获取c端用户的当前预约订单参数 ${JSON.stringify(this.post())}`);
-
-        let openid = this.post('openid')
-
-        let data = await this.model('order').where({
-            openid: ['=', openid],
-            'appoint_order.state': ['in', [ORDER_STATE.PAYED, ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
-            'appoint_therapist_period.state': ['in', [Util.ZERO]]
-        }).join([
-            ` appoint_therapist_period on appoint_order.order_id=appoint_therapist_period.order_id`,
-            `left JOIN appoint_user ON appoint_user.user_id=appoint_therapist_period.therapist_id`,
-        ]).find();
-
-        try {
-
-
-            logger.info(`获取当前用户的订单列表数据库返回 :${JSON.stringify(data)}`);
-
-            this.body = Response.success(data);
-
-        } catch (e) {
-            logger.info(`获取c端用户的当前预约订单异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-    }
 
     /**
      * 获取预约详情

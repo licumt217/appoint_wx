@@ -4,7 +4,7 @@ module.exports = class extends think.Model {
     }
     get relation() {
         return {
-            therapist: think.Model.HAS_ONE
+            // therapist: think.Model.HAS_ONE
         };
     }
 };

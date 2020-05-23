@@ -260,7 +260,7 @@ module.exports = class extends Base {
 
             //只查询对应工作室下边的
             let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationService.getStationIdByCaseManagerId(user_id)
+            let station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
 
             let data = await this.model('room_period_set').where({
                 station_id

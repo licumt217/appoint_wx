@@ -74,7 +74,7 @@ module.exports = class extends Base {
         try {
 
 
-            await appointmentService.addWithRelations(openid,therapist_id,appoint_date,periodArray,isMulti,amount,user_id);
+            let appointment_data=await appointmentService.addWithRelations(appointment_id,openid,therapist_id,appoint_date,periodArray,isMulti,amount,user_id);
 
             // let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -90,7 +90,7 @@ module.exports = class extends Base {
 
 
             //咨询师审核推送
-            // await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
+            await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
 
             this.body = Response.success();
 
@@ -134,7 +134,7 @@ module.exports = class extends Base {
 
 
     /**
-     * 咨询师接受预约
+     * 咨询师接受预约。接受预约后生成一条订单。
      * @returns {Promise<void>}
      */
     async acceptAction() {
@@ -167,6 +167,9 @@ module.exports = class extends Base {
             }
 
             await appointmentService.accept(appointment_id,room_id)
+
+            //接受预约后生成一条订单
+            await orderService.add(appointment_id)
 
             //TODO 给用户推送让用户付款，如果是咨询前支付的话
 
@@ -313,7 +316,7 @@ module.exports = class extends Base {
      *根据用户id获取预约列表
      * @returns {Promise<void>}
      */
-    async getListByUserIdAction() {
+    async getListOfUsingByUserIdAction() {
 
         let user_id=this.ctx.state.userInfo.user_id
 
