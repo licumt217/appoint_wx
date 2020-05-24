@@ -33,11 +33,15 @@ module.exports = class extends Base {
         }
 
         let data = await this.model('order').where({
-            'appoint_appointment.appointment_id':appointment_id
+            'appoint_appointment.appointment_id': appointment_id
         }).join([
             ` appoint_user as therapist on therapist.user_id=appoint_order.therapist_id`,
             ` appoint_appointment on appoint_appointment.appointment_id=appoint_order.appointment_id`
-        ]).select()
+        ]).field(
+            `appoint_order.*,
+            appoint_appointment.period,
+            therapist.name as therapist_name `,
+        ).select()
 
         try {
 
@@ -74,11 +78,14 @@ module.exports = class extends Base {
 
             let prepay_id = await WechatUtil.unifiedOrder(order.openid, order_id, order.amount, this.ip).catch(error => {
                 this.body = Response.businessException(error);
+                return false;
             })
 
             logger.info(`prepay_id ${prepay_id}`);
 
-            await orderService.update({order_id}, {prepay_id})
+            await orderService.update({order_id}, {
+                prepay_id,
+            })
 
             let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
 
@@ -224,7 +231,6 @@ module.exports = class extends Base {
     }
 
 
-
     /**
      * 获取预约详情
      * @returns {Promise<void>}
@@ -339,7 +345,7 @@ module.exports = class extends Base {
      */
     async getOrderListByTherapistIdAction() {
 
-        let therapist_id=this.post('therapist_id')
+        let therapist_id = this.post('therapist_id')
 
         let page = this.post('page') || Page.currentPage
         let pageSize = this.post('pageSize') || Page.pageSize
@@ -348,7 +354,7 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await orderService.getOrderListByTherapistId(therapist_id,page,pageSize)
+            let orders = await orderService.getOrderListByTherapistId(therapist_id, page, pageSize)
 
             logger.info(`获取咨询师对应的订单列表参数数据库返回 orders:${JSON.stringify(orders)}`);
 

@@ -104,6 +104,37 @@ module.exports = {
     },
 
     /**
+     *取消预约
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async cancel(appointment_id) {
+
+        try {
+
+
+            let data = await think.model(tableName).where({
+                appointment_id
+            }).update({
+                state:ORDER_STATE.CANCELED
+            }).catch(e => {
+                throw new Error(e)
+            });
+            ;
+
+            logger.info(`取消预约数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `取消预约接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */

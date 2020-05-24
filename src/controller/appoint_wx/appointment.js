@@ -102,6 +102,43 @@ module.exports = class extends Base {
 
     }
 
+
+    /**
+     * 取消预约
+     * @returns {Promise<boolean>}
+     */
+    async cancelAction() {
+
+        let appointment_id = this.post('appointment_id')
+
+        logger.info(`取消预约参数： ${JSON.stringify(this.post())}`);
+
+        if (!appointment_id) {
+            this.body = Response.businessException(`预约ID不能为空！`)
+            return false;
+        }
+
+        const appointment=await appointmentService.getById(appointment_id);
+
+        if(appointment.state!==ORDER_STATE.COMMIT){
+            this.body = Response.businessException(`当前预约状态不可取消！`)
+            return false;
+        }
+
+        try {
+
+
+            await appointmentService.cancel(appointment_id);
+
+            this.body = Response.success();
+
+        } catch (e) {
+            this.body = Response.businessException(e.message);
+        }
+
+
+    }
+
     /**
      * 获取详情
      * @returns {Promise<void>}
