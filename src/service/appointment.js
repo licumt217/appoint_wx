@@ -428,6 +428,44 @@ module.exports = {
 
 
     },
+
+    /**
+     *根据用户id获取历史预约记录
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getHistoryByUserId(user_id) {
+
+        try {
+
+
+
+
+            let data = await think.model(tableName).where({
+                'appoint_appointment.user_id':user_id,
+                'appoint_appointment.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.REJECTED,ORDER_STATE.DONE,ORDER_STATE.EXPIRED]],
+            }).join([
+                ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
+            ]).field(
+                `appoint_appointment.*,
+                room.name as room_name,
+                    therapist.name as therapist_name`,
+            ).order('create_date desc ').select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据用户id获取历史预约记录数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据用户id获取历史预约记录异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
     /**
      *根据用户ID获取生效中的预约列表
      * @returns {Promise<{isSuccess, errorMsg}>}
@@ -444,11 +482,12 @@ module.exports = {
                 'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
-                // ` appoint_therapist_fee_set as fee_set on fee_set.therapist_id=appoint_appointment.therapist_id`,
+                ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
             ]).field(
                 `appoint_appointment.*,
+                room.name as room_name,
                     therapist.name as therapist_name`,
-            ).select().catch(e => {
+            ).order('create_date desc ').select().catch(e => {
                 throw new Error(e)
             });
 

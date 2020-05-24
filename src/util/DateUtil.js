@@ -64,6 +64,17 @@ let DateUtil = {
         }
 
         return date.getDay();
+    },
+
+    /**
+     * 给定日期加减对应天数
+     * @param date
+     * @param days
+     * @returns {*}
+     */
+    addDays(date,days){
+        date.setDate(date.getDate()+days);
+        return date;
     }
 
 

@@ -27,11 +27,24 @@ module.exports = {
                 throw new Error(`只有审核通过的预约才能生成订单！`)
             }
 
+            //添加此条订单具体的预约日期
+            let orderList=await this.getList({
+                appointment_id
+            });
+            let order_date=null;
+            if(orderList && orderList.length>0){//最新订单的预约日期加一周
+                let newestOrder=orderList[0]
+                order_date=DateUtil.addDays(new Date(newestOrder.order_date),7);
+            }else{
+                order_date=DateUtil.addDays(new Date(appointment.appoint_date),7);
+            }
+
 
             let op_date = DateUtil.getNowStr()
 
             let obj={
                 op_date,
+                order_date:DateUtil.format(order_date),
                 order_id:Util.uuid(),
                 openid:appointment.openid,
                 therapist_id:appointment.therapist_id,
