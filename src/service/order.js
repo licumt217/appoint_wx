@@ -48,6 +48,7 @@ module.exports = {
                 order_id:Util.uuid(),
                 openid:appointment.openid,
                 therapist_id:appointment.therapist_id,
+                user_id:appointment.user_id,
                 amount:appointment.amount,
                 state:ORDER_STATE.COMMIT,
                 create_date:op_date,
@@ -130,7 +131,9 @@ module.exports = {
 
         try {
 
-            let data = await think.model(tableName).where(whereObj).select().catch(e => {
+            let data = await think.model(tableName).where(whereObj).join([
+                ` appoint_appointment on appoint_order.appointment_id=appoint_appointment.appointment_id`
+            ]).select().catch(e => {
                 throw new Error(e)
             });
 
@@ -140,6 +143,34 @@ module.exports = {
 
         } catch (e) {
             let msg = `根据条件查询${entityName}列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
+     *根据预约id获取此预约对应的所有未完结的订单。未完结订单包括：已下单、已审核、已支付
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getUnDoneListByAppointmentId(appointment_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                appointment_id,
+                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED,ORDER_STATE.PAYED]],
+            }).select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据预约id获取此预约对应的所有未完结的订单，数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据预约id获取此预约对应的所有未完结的订单接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }

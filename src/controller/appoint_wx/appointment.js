@@ -270,26 +270,35 @@ module.exports = class extends Base {
     }
 
     /**
-     * 咨询师确认完成
-     * @returns {Promise<void>}
+     * 咨询师能否主动完成预约（结束）
+     * 当前预约对应的所有订单必须都是最终状态：已拒绝、已取消、已过期、已完结。
      */
     async doneAction() {
         try {
 
             logger.info(`咨询师确认完成参数 ${JSON.stringify(this.post())}`);
 
-            let order_id = this.post('order_id')
+            let appointment_id = this.post('appointment_id')
 
-            await orderService.update({order_id}, {state: ORDER_STATE.DONE})
+            let orderList=await orderService.getUnDoneListByAppointmentId(appointment_id);
 
-            //TODO 给用户推送告知用户
-            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+            if(orderList && orderList.length>0){
+                this.body = Response.businessException(`当前预约有不是最终状态的订单，不能完成！`)
+                return false;
+            }else{
+                appointmentService.done(appointment_id)
 
-            let order = await orderService.getOne({order_id})
+                //TODO 给用户推送告知用户
+                // let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
+                //
+                // let order = await orderService.getOne({order_id})
+                //
+                // await pushService.sendTemplateMsg(order.openid, url);
 
-            await pushService.sendTemplateMsg(order.openid, url);
+                this.body = Response.success();
+            }
 
-            this.body = Response.success();
+
 
         } catch (e) {
             logger.info(`咨询师确认完成异常 msg:${e}`);
@@ -361,7 +370,7 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getListByUserId(user_id)
+            let orders = await appointmentService.getListOfUsingByUserId(user_id)
 
             this.body = Response.success(orders);
 
@@ -391,6 +400,30 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`根据用户id获取预约历史异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     *根据咨询师id获取预约历史
+     * @returns {Promise<void>}
+     */
+    async getHistoryByTherapistIdAction() {
+
+        let therapist_id=this.ctx.state.userInfo.user_id
+
+        logger.info(`根据咨询师id获取预约历史参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await appointmentService.getHistoryByTherapistId(therapist_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`根据咨询师id获取预约历史异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

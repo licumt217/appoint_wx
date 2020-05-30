@@ -84,10 +84,6 @@ module.exports = class extends Base {
                 station_id
             }).getField('therapist_id')
 
-            console.log(33)
-            console.log(therapist_idList)
-            console.log(therapist_idList.length)
-
 
             if(!therapist_idList || therapist_idList.length===0){
                 this.body = Response.success({

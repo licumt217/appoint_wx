@@ -75,6 +75,16 @@ let DateUtil = {
     addDays(date,days){
         date.setDate(date.getDate()+days);
         return date;
+    },
+
+    /**
+     * date1是否早于date2
+     * @param date1
+     * @param date2
+     * @returns {boolean}
+     */
+    before(date1,date2){
+        return date1.getTime()<date2.getTime();
     }
 
 
