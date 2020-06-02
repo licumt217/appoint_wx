@@ -7,7 +7,7 @@ const ORDER_STATE = require('../config/ORDER_STATE')
 const FEE_TYPE = require('../config/FEE_TYPE')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
-const job='30 * * * * *';
+const job='* * 0 * * *';
 
 
 const  scheduleCronstyle = async ()=>{

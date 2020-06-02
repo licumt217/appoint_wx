@@ -8,6 +8,7 @@ const md5 = require('md5')
 const logger = think.logger;
 const therapistService = require('../../service/therapist')
 const userService = require('../../service/user')
+const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 module.exports = class extends Base {
 
     /**
@@ -59,8 +60,15 @@ module.exports = class extends Base {
 
                     const token = await TokenSerivce.create({userInfo: data});
 
+                    let station = {}
+
+                    if (data.role === Role.caseManager) {
+                        station = await stationCasemanagerRelationService.getStationInfoByCasemanagerId(data.user_id)
+                        logger.info(JSON.stringify(station))
+                    }
+
                     this.body = Response.success({
-                        userInfo: data,
+                        userInfo: Object.assign(data, station),
                         token
                     });
                 }

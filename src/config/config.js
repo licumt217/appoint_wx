@@ -72,7 +72,8 @@ module.exports = {
         "appointment",
         "roomPeriodSet",
         "station",
-        "stationCasemanagerRelation"
+        "stationCasemanagerRelation",
+        "stationTherapistRelation"
     ],
     therapist: [
         "login",

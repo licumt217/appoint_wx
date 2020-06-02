@@ -157,6 +157,55 @@ module.exports = class extends Base {
 
     }
 
+    /**
+     * 获取当前工作室没有关联的咨询师列表
+     * @returns {Promise<boolean>}
+     */
+    async getNotRelatedTherapistAction() {
+        try {
+
+            let page = this.post('page') || Page.currentPage
+            let pageSize = this.post('pageSize') || Page.pageSize
+            let station_id = this.post('station_id')
+
+            logger.info(`获取当前工作室没有关联的咨询师列表参数 :${JSON.stringify(this.post())}`)
+
+            if (!station_id) {
+                this.body = Response.businessException(`工作室ID不能为空！`)
+                return false;
+            }
+
+
+            let idArray=await this.model(tableName).where({
+                station_id
+            }).getField('therapist_id');
+
+            let whereObj={
+                'appoint_user.role': Role.therapist
+            }
+            if(idArray && idArray.length>0){
+                whereObj['appoint_user.user_id']=['NOTIN',idArray]
+            }
+
+            let data = await this.model('user').where(whereObj).page(page,pageSize).countSelect().catch(e => {
+                logger.info(`获取当前工作室没有关联的咨询师列表异常 msg:${e}`);
+                this.body = Response.systemException(e);
+                return false;
+            })
+
+
+            logger.info(`获取当前工作室没有关联的咨询师列表，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`获取当前工作室没有关联的咨询师列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
 
 
 

@@ -12,6 +12,7 @@ const logger = think.logger;
 const userService = require('../../service/user')
 
 
+
 module.exports = class extends Base {
 
 
@@ -123,7 +124,7 @@ module.exports = class extends Base {
                     manner_type_id,
                     level_type_id,
                     op_date,
-                    emergency:Constant.EMERGENCY.DISABLE
+                    emergency: Constant.EMERGENCY.DISABLE
                 });
             }
 
@@ -241,7 +242,7 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
-            let identification_no = this.post('identification_no')||''
+            let identification_no = this.post('identification_no') || ''
 
             logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
 
@@ -266,7 +267,7 @@ module.exports = class extends Base {
                 updateJson.email = email
             }
 
-            updateJson.identification_no=identification_no;
+            updateJson.identification_no = identification_no;
 
             let op_date = DateUtil.getNowStr()
 
@@ -408,70 +409,6 @@ module.exports = class extends Base {
     }
 
 
-    /**
-     * pc端用户登录
-     * @returns {Promise<void>}
-     */
-    async loginAction() {
-        try {
-
-            let phone = this.post('phone')
-            let password = this.post('password')
-
-            logger.info(`pc端用户登录参数 phone:${phone}， password:${password}`)
-
-            if (!phone) {
-                this.body = Response.businessException(`手机号不能为空！`)
-                return false;
-            }
-
-            if (!password) {
-                this.body = Response.businessException(`密码不能为空！`)
-                return false;
-            }
-
-            password = md5(password)
-
-
-            let data = await this.model('user').where({
-                phone
-            }).find();
-
-            logger.info(`pc端用户登录根据手机号查询，数据库返回：${JSON.stringify(data)}`)
-
-            if (Util.isEmptyObject(data)) {
-                this.body = Response.businessException(`手机号不存在！`);
-            } else {
-
-                data = await this.model('user').where({
-                    phone,
-                    password
-                }).find();
-
-                logger.info(`pc端用户登录根据手机号和密码查询，数据库返回：${JSON.stringify(data)}`)
-
-                if (Util.isEmptyObject(data)) {
-                    this.body = Response.businessException(`密码不正确！`);
-                } else {
-                    const TokenSerivce = this.service('token');
-
-                    const token = await TokenSerivce.create({userInfo: data});
-
-                    this.body = Response.success({
-                        userInfo: data,
-                        token
-                    });
-                }
-            }
-
-        } catch (e) {
-            logger.info(`pc端用户登录异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-
-
-    }
-
 
     /**
      * 用户注册，同时将userId和openid绑定
@@ -523,9 +460,9 @@ module.exports = class extends Base {
 
             //已存在的手机号不允许注册
 
-            let existUser=await userService.getByPhone(phone);
+            let existUser = await userService.getByPhone(phone);
 
-            if(!Util.isEmptyObject(existUser)){
+            if (!Util.isEmptyObject(existUser)) {
                 this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
                 return false;
             }
