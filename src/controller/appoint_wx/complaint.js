@@ -8,10 +8,11 @@ const Complaint_STATE = require('../../config/Complaint_STATE')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const orderService = require('../../service/order')
+const blacklistService = require('../../service/blacklist')
 const logger = think.logger;
 
-const entityName='投诉'
-const tableName='complaint'
+const entityName = '投诉'
+const tableName = 'complaint'
 
 
 module.exports = class extends Base {
@@ -39,23 +40,23 @@ module.exports = class extends Base {
                 return false;
             }
 
-            let complaint_date=DateUtil.getNowStr()
+            let complaint_date = DateUtil.getNowStr()
 
-            let order= await orderService.getOne({order_id})
+            let order = await orderService.getOne({order_id})
 
-            let userInfo=this.ctx.state.userInfo
+            let userInfo = this.ctx.state.userInfo
 
             console.log(userInfo)
 
-            let addJson={
-                complaint_id:Util.uuid(),
+            let addJson = {
+                complaint_id: Util.uuid(),
                 content,
                 complaint_date,
                 order_id,
-                op_date:complaint_date,
-                type:userInfo.role===Role.therapist?COMPLAINT_TYPE.THERAPIST_USER:COMPLAINT_TYPE.USER_THERAPIST,
-                user_id:order.user_id,
-                therapist_id:order.therapist_id,
+                op_date: complaint_date,
+                type: userInfo.role === Role.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
+                user_id: order.user_id,
+                therapist_id: order.therapist_id,
             }
 
             let data = await this.model(tableName).add(addJson);
@@ -121,7 +122,7 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
             let data = await this.model(tableName).where({
                 complaint_id,
@@ -157,12 +158,12 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`${entityName}ID不能为空！`)
                 return false;
             }
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
             let data = await this.model(tableName).where({
                 complaint_id,
             }).update({
-                state:Complaint_STATE.REJECTED,
+                state: Complaint_STATE.REJECTED,
                 op_date
             })
 
@@ -178,6 +179,50 @@ module.exports = class extends Base {
 
     }
 
+    /**
+     * 添加黑名单
+     * @returns {Promise<boolean>}
+     */
+    async addBlacklistAction() {
+        try {
+
+            let complaint_id = this.post('complaint_id')
+            let user_id = this.post('user_id')
+
+            logger.info(`添加黑名单参数 :${JSON.stringify(this.post())}`)
+
+            if (!complaint_id) {
+                this.body = Response.businessException(`投诉id不能为空！`)
+                return false;
+            }
+
+            if (!user_id) {
+                this.body = Response.businessException(`用户id不能为空！`)
+                return false;
+            }
+
+            let op_date = DateUtil.getNowStr()
+
+            let op_user_id = this.ctx.state.userInfo.user_id
+
+            let data = await this.model(tableName).where({
+                complaint_id,
+            }).update({
+                state: Complaint_STATE.ADD_BLACKLIST,
+                op_date
+            })
+
+            await blacklistService.add(user_id,op_user_id);
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`添加黑名单异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
 
 
     /**
@@ -192,32 +237,32 @@ module.exports = class extends Base {
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
 
-            let startDate=this.post('startDate')
-            let endDate=this.post('endDate')
-            let userName=this.post('userName')
-            let therapistName=this.post('therapistName')
+            let startDate = this.post('startDate')
+            let endDate = this.post('endDate')
+            let userName = this.post('userName')
+            let therapistName = this.post('therapistName')
 
-            let dateWhere={}
+            let dateWhere = {}
 
-            if(startDate && endDate){
-                dateWhere={
-                    'complaint_date':['between',[startDate,endDate]]
+            if (startDate && endDate) {
+                dateWhere = {
+                    'complaint_date': ['between', [startDate, endDate]]
                 }
-            }else if(startDate && !endDate){
-                dateWhere={
-                    'complaint_date':['>',startDate]
+            } else if (startDate && !endDate) {
+                dateWhere = {
+                    'complaint_date': ['>', startDate]
                 }
-            }else if(!startDate && endDate){
-                dateWhere={
-                    'complaint_date':['<',endDate]
+            } else if (!startDate && endDate) {
+                dateWhere = {
+                    'complaint_date': ['<', endDate]
                 }
             }
 
             let data = await this.model(tableName).where(Object.assign({
-                'type':COMPLAINT_TYPE.USER_THERAPIST,
-                'user.name':['like',`%${userName||''}%`],
-                'therapist.name':['like',`%${therapistName||''}%`],
-            },dateWhere)).join({
+                'type': COMPLAINT_TYPE.USER_THERAPIST,
+                'user.name': ['like', `%${userName || ''}%`],
+                'therapist.name': ['like', `%${therapistName || ''}%`],
+            }, dateWhere)).join({
                 table: 'user',
                 join: 'inner',
                 as: 'user',
@@ -229,7 +274,7 @@ module.exports = class extends Base {
                 on: ['therapist_id', 'user_id']
             }).field(`appoint_complaint.*,user.*,
             therapist.name as therapist_name,
-            therapist.phone as therapist_phone`).page(page,pageSize).countSelect();
+            therapist.phone as therapist_phone`).page(page, pageSize).countSelect();
 
             logger.info(`查询用户投诉咨询师列表数据库返回：${JSON.stringify(data)}`)
 

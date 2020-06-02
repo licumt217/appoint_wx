@@ -24,7 +24,8 @@ module.exports = {
         "roomPeriodSet",
         "station",
         "stationCasemanagerRelation",
-        "ethicsnotice"
+        "ethicsnotice",
+        "blacklist",
     ],
     divisionManager: [
         "login",
