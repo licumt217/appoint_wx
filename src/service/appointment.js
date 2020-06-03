@@ -461,6 +461,39 @@ module.exports = {
 
 
     },
+    /**
+     *根据房间ID获取生效中的预约列表
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getListOfUsingByRoomId(room_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                'appoint_appointment.room_id': room_id,
+                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+            }).join([
+                ` appoint_room as room on room.room_id=appoint_appointment.room_id`
+            ]).field(
+                `appoint_appointment.*,
+                room.name as room_name`,
+            ).order('create_date desc ').select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据房间ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据房间ID获取生效中的预约列表异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
     /**
      *根据用户id获取历史预约记录

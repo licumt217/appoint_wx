@@ -335,6 +335,30 @@ module.exports = class extends Base {
     }
 
     /**
+     *根据房间ID获取生效中的预约列表
+     * @returns {Promise<void>}
+     */
+    async getListOfUsingByRoomIdAction() {
+
+        let room_id=this.post('room_id')
+
+        logger.info(`根据房间ID获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await appointmentService.getListOfUsingByRoomId(room_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`根据房间ID获取生效中的预约列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      *根据工作室ID获取生效中的预约列表
      * @returns {Promise<void>}
      */
