@@ -8,8 +8,10 @@ const stationService = require('../../service/station')
 const stationTherapistRelationService = require('../../service/stationTherapistRelation')
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const roomService = require('../../service/room')
-const entityName='房间'
-const tableName='room'
+const appointmentService = require('../../service/appointment')
+const ROOM_STATE = require('../../config/ROOM_STATE')
+const entityName = '房间'
+const tableName = 'room'
 
 
 module.exports = class extends Base {
@@ -38,18 +40,18 @@ module.exports = class extends Base {
             }
 
             //只查询对应工作室下边的
-            let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationService.getStationIdByCaseManagerId(user_id)
+            let user_id = this.ctx.state.userInfo.user_id;
+            let station_id = await stationService.getStationIdByCaseManagerId(user_id)
 
-            let op_date=DateUtil.getNowStr()
+            let op_date = DateUtil.getNowStr()
 
-            let addJson={
-                room_id:Util.uuid(),
+            let addJson = {
+                room_id: Util.uuid(),
                 name,
                 position,
                 op_date,
                 station_id,
-                op_user_id:user_id
+                op_user_id: user_id
             }
 
             let data = await this.model(tableName).add(addJson);
@@ -122,7 +124,7 @@ module.exports = class extends Base {
                 return false;
             }
 
-            let op_date=DateUtil.getNowStr();
+            let op_date = DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
                 room_id
@@ -156,14 +158,22 @@ module.exports = class extends Base {
 
             logger.info(`房间启用停用参数 :${JSON.stringify(this.post())}`)
 
+            //停用的话，需要判断此方便有没有进行中的预约，有的话不能停用
 
-            let op_date=DateUtil.getNowStr();
+            let appointments = await appointmentService.getListOfUsingByRoomId(room_id)
+
+            if(appointments && appointments.length>0){
+                this.body = Response.businessException(`当前房间有进行中的预约，不能停用！`)
+                return false;
+            }
+
+            let op_date = DateUtil.getNowStr();
 
             let data = await this.model(tableName).where({
                 room_id
             }).update({
                 op_date,
-                state:state===0?1:0,
+                state: state === ROOM_STATE.ON ? ROOM_STATE.OFF : ROOM_STATE.ON,
             })
 
             logger.info(`房间启用停用，数据库返回：${JSON.stringify(data)}`)
@@ -185,19 +195,19 @@ module.exports = class extends Base {
     async listAction() {
         try {
 
-            let page = this.post('page')||Page.currentPage
-            let pageSize = this.post('pageSize')||Page.pageSize
+            let page = this.post('page') || Page.currentPage
+            let pageSize = this.post('pageSize') || Page.pageSize
             logger.info(`只查询对应工作室下边的房间列表参数 :${JSON.stringify(this.post())}`)
 
             //只查询对应工作室下边的
-            let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
+            let user_id = this.ctx.state.userInfo.user_id;
+            let station_id = await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
 
-            console.log(user_id,station_id)
+            console.log(user_id, station_id)
 
             let data = await this.model(tableName).where({
                 station_id
-            }).page(page,pageSize).countSelect();
+            }).page(page, pageSize).countSelect();
 
 
             logger.info(`只查询对应工作室下边的房间列表，数据库返回：${JSON.stringify(data)}`)
@@ -222,8 +232,8 @@ module.exports = class extends Base {
             logger.info(`查询咨询师所在工作室的房间列表参数 :${JSON.stringify(this.post())}`)
 
             //只查询对应工作室下边的
-            let user_id=this.ctx.state.userInfo.user_id;
-            let therapist_id=this.post('therapist_id')
+            let user_id = this.ctx.state.userInfo.user_id;
+            let therapist_id = this.post('therapist_id')
 
             if (!therapist_id) {
                 this.body = Response.businessException(`咨询师ID不能为空！`)
@@ -231,9 +241,9 @@ module.exports = class extends Base {
             }
 
 
-            let station_id=await stationTherapistRelationService.getStationIdByTherapistId(therapist_id)
+            let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id)
 
-            console.log(user_id,station_id)
+            console.log(user_id, station_id)
 
             let data = await roomService.getListByStationIdNoPage(station_id)
 
@@ -259,8 +269,8 @@ module.exports = class extends Base {
         try {
 
             //只查询对应工作室下边的
-            let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
+            let user_id = this.ctx.state.userInfo.user_id;
+            let station_id = await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
 
             let data = await this.model('room_period_set').where({
                 station_id
@@ -286,17 +296,17 @@ module.exports = class extends Base {
     async updateUseablePeriodSetAction() {
         try {
 
-            let period=this.post('period')
+            let period = this.post('period')
 
             logger.info(`更新房间可用时段设置参数 :${JSON.stringify(this.post())}`)
 
-            if(!period){
-                this.body=Response.businessException('时段设置不能为空！')
+            if (!period) {
+                this.body = Response.businessException('时段设置不能为空！')
                 return;
             }
 
-            let user_id=this.ctx.state.userInfo.user_id;
-            let station_id=await stationService.getStationIdByCaseManagerId(user_id);
+            let user_id = this.ctx.state.userInfo.user_id;
+            let station_id = await stationService.getStationIdByCaseManagerId(user_id);
 
             let data = await this.model('room_period_set').where({
                 station_id
@@ -316,17 +326,6 @@ module.exports = class extends Base {
 
 
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
 };
