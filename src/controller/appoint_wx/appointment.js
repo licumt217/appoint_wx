@@ -188,6 +188,14 @@ module.exports = class extends Base {
                 return false;
             }
 
+            //只有状态是已提交的预约才合法
+
+            let appointment=await appointmentService.getById(appointment_id)
+            if(appointment.state!==ORDER_STATE.COMMIT){
+                this.body = Response.businessException(`预约状态不合法！`)
+                return false;
+            }
+
             //判断是否可分配有效房间
             if(assign_room_type===0){//自动分配
                 room_id=await appointmentService.autoAssignRoomId(appointment_id);
@@ -242,6 +250,14 @@ module.exports = class extends Base {
             logger.info(`咨询师拒绝预约参数 ${JSON.stringify(this.post())}`);
 
             let appointment_id = this.post('appointment_id')
+
+            //只有状态是已提交的预约才合法
+
+            let appointment=await appointmentService.getById(appointment_id)
+            if(appointment.state!==ORDER_STATE.COMMIT){
+                this.body = Response.businessException(`预约状态不合法！`)
+                return false;
+            }
 
             await appointmentService.deny(appointment_id)
 

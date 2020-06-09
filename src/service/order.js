@@ -29,14 +29,14 @@ module.exports = {
 
             //添加此条订单具体的预约日期
             let orderList = await this.getList({
-                appointment_id
+                'appoint_order.appointment_id':appointment_id
             });
             let order_date = null;
             if (orderList && orderList.length > 0) {//最新订单的预约日期加一周
                 let newestOrder = orderList[0]
                 order_date = DateUtil.addDays(new Date(newestOrder.order_date), 7);
             } else {
-                order_date = DateUtil.addDays(new Date(appointment.appoint_date), 7);
+                order_date = DateUtil.addDays(new Date(appointment.appoint_date), 0);
             }
 
 
@@ -241,9 +241,9 @@ module.exports = {
             }).sum('amount')
 
             let data={
-                allAmount,
-                monthAmount,
-                weekAmount
+                allAmount:allAmount||0,
+                monthAmount:monthAmount||0,
+                weekAmount:weekAmount||0
             }
 
             logger.info(`查询咨询师收益汇总数据库返回：${JSON.stringify(data)}`)
