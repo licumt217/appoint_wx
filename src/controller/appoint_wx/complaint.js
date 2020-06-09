@@ -4,8 +4,8 @@ const Response = require('../../config/response')
 const Role = require('../../config/Role')
 const COMPLAINT_TYPE = require('../../config/COMPLAINT_TYPE')
 const Complaint_STATE = require('../../config/Complaint_STATE')
-
 const Util = require('../../util/Util')
+const Page = require('../../config/Page')
 const DateUtil = require('../../util/DateUtil')
 const orderService = require('../../service/order')
 const blacklistService = require('../../service/blacklist')
@@ -345,6 +345,38 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`查询咨询师投诉用户列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+    }
+
+    /**
+     * 根据咨询师ID查询咨询师投诉用户列表
+     * @returns {Promise<boolean>}
+     */
+    async getTherapistComplaintsByTIdAction() {
+        try {
+
+            logger.info(`根据咨询师ID查询咨询师投诉用户列表参数: ${JSON.stringify(this.post())}`)
+            let page = this.post('page') || Page.currentPage
+            let pageSize = this.post('pageSize') || Page.pageSize
+            let therapist_id = this.post('therapist_id')
+
+            let data = await this.model(tableName).where({
+                'type': COMPLAINT_TYPE.THERAPIST_USER,
+                'therapist_id': therapist_id,
+            }).join({
+                table: 'user',
+                as: 'user',
+                on: ['user_id', 'user_id']
+            }).field(`appoint_complaint.*,user.*`).page(page, pageSize).countSelect();
+
+            logger.info(`根据咨询师ID查询咨询师投诉用户列表数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`根据咨询师ID查询咨询师投诉用户列表异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

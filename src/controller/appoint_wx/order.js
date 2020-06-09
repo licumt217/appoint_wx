@@ -369,6 +369,57 @@ module.exports = class extends Base {
     }
 
     /**
+     * 查询咨询师收益列表
+     * @returns {Promise<void>}
+     */
+    async getDoneOrderListByTherapistIdAction() {
+
+        let therapist_id = this.post('therapist_id')
+
+        let page = this.post('page') || Page.currentPage
+        let pageSize = this.post('pageSize') || Page.pageSize
+
+        logger.info(`查询咨询师收益列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await orderService.getDoneOrderListByTherapistId(therapist_id, page, pageSize)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`查询咨询师收益列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 查询咨询师收益汇总
+     * @returns {Promise<void>}
+     */
+    async getRevenueSumByTherapistIdAction() {
+
+        let therapist_id = this.post('therapist_id')
+
+        logger.info(`查询咨询师收益汇总参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await orderService.getRevenueSumByTherapistId(therapist_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`查询咨询师收益汇总异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      * 取消订单
      * @returns {Promise<void>}
      */

@@ -603,6 +603,40 @@ module.exports = {
     },
 
     /**
+     *根据咨询师ID获取生效中的预约列表
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getListOfUsingByTherapistId(therapist_id) {
+
+        try {
+
+
+            let data = await think.model(tableName).where({
+                'appoint_appointment.therapist_id': therapist_id,
+                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+            }).join([
+                ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+            ]).field(
+                `appoint_appointment.*,
+                    therapist.name as therapist_name`,
+            ).order('create_date desc ').select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据咨询师ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据咨询师ID获取生效中的预约列表异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
      * 根据工作室ID获取生效中的预约列表
      * @param station_id
      * @returns {Promise<T>}

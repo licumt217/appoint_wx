@@ -1,4 +1,4 @@
-const moment=require('moment')
+const moment = require('moment')
 const logger = think.logger
 let DateUtil = {
 
@@ -7,48 +7,76 @@ let DateUtil = {
      * @param p
      * @returns {string}
      */
-    getNowStr(type){
+    getNowStr(type) {
 
-        let formatStr="";
-        if(type==='date'){
-            formatStr="YYYY-MM-DD"
-        }else if(type==='time'){
-            formatStr="HH:mm:ss"
-        }else{
-            formatStr="YYYY-MM-DD HH:mm:ss"
+        let formatStr = "";
+        if (type === 'date') {
+            formatStr = "YYYY-MM-DD"
+        } else if (type === 'time') {
+            formatStr = "HH:mm:ss"
+        } else {
+            formatStr = "YYYY-MM-DD HH:mm:ss"
         }
 
-        let nowDateStr= moment(new Date()).format(formatStr)
+        let nowDateStr = moment(new Date()).format(formatStr)
 
         return nowDateStr;
     },
+    /**
+     * 返回本周的周一的日期字符串
+     * @param date
+     * @param weeks
+     */
+    getFirstDayStrOfCurrentWeek() {
+        let nowDate = new Date();
+        let day = nowDate.getDay();
+        let date = nowDate.getDate();
+        day = day === 0 ? 6 : day - 1;//处理周日
+        date = date - day;
+        nowDate.setDate(date);
+
+        return DateUtil.format(nowDate, 'date') + " 00:00:00"
+    },
+
+    /**
+     * 返回本月一号的日期字符串
+     * @param date
+     * @param weeks
+     */
+    getFirstDayStrOfCurrentMonth() {
+        let nowDate = new Date();
+        nowDate.setDate(1);
+        return DateUtil.format(nowDate, 'date') + " 00:00:00"
+    },
+
     /**
      * 返回给定日期几周后的日期
      * @param date
      * @param weeks
      */
-    getDayOfNextWeeks(date,weeks){
-        let date2=new Date(date);
-        let days=date2.getDate();
-        date2.setDate(days+weeks*7);
+    getDateOfNextWeeks(date, weeks) {
+        let date2 = new Date(date);
+        let days = date2.getDate();
+        date2.setDate(days + weeks * 7);
         console.log(this.format(date2))
-        return this.format(date2,'date')
+        return this.format(date2, 'date')
     },
+
     /**
      * 格式化给定日期
      * @param type
      */
-    format(date,type){
-        let formatStr="";
-        if(type==='date'){
-            formatStr="YYYY-MM-DD"
-        }else if(type==='time'){
-            formatStr="HH:mm:ss"
-        }else{
-            formatStr="YYYY-MM-DD HH:mm:ss"
+    format(date, type) {
+        let formatStr = "";
+        if (type === 'date') {
+            formatStr = "YYYY-MM-DD"
+        } else if (type === 'time') {
+            formatStr = "HH:mm:ss"
+        } else {
+            formatStr = "YYYY-MM-DD HH:mm:ss"
         }
 
-        let returnStr= moment(date).format(formatStr)
+        let returnStr = moment(date).format(formatStr)
 
         return returnStr;
     },
@@ -58,9 +86,9 @@ let DateUtil = {
      * @param date
      * @returns {number}
      */
-    getWeekOfDate(date){
-        if(typeof date==='string'){
-            date=new Date(date);
+    getWeekOfDate(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
         }
 
         return date.getDay();
@@ -72,8 +100,8 @@ let DateUtil = {
      * @param days
      * @returns {*}
      */
-    addDays(date,days){
-        date.setDate(date.getDate()+days);
+    addDays(date, days) {
+        date.setDate(date.getDate() + days);
         return date;
     },
 
@@ -83,12 +111,9 @@ let DateUtil = {
      * @param date2
      * @returns {boolean}
      */
-    before(date1,date2){
-        return date1.getTime()<date2.getTime();
+    before(date1, date2) {
+        return date1.getTime() < date2.getTime();
     }
-
-
-
 
 
 }

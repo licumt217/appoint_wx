@@ -21,37 +21,37 @@ module.exports = {
 
         try {
 
-            const appointment=await appointmentService.getById(appointment_id);
+            const appointment = await appointmentService.getById(appointment_id);
 
-            if(appointment.state!==ORDER_STATE.AUDITED){
+            if (appointment.state !== ORDER_STATE.AUDITED) {
                 throw new Error(`只有审核通过的预约才能生成订单！`)
             }
 
             //添加此条订单具体的预约日期
-            let orderList=await this.getList({
+            let orderList = await this.getList({
                 appointment_id
             });
-            let order_date=null;
-            if(orderList && orderList.length>0){//最新订单的预约日期加一周
-                let newestOrder=orderList[0]
-                order_date=DateUtil.addDays(new Date(newestOrder.order_date),7);
-            }else{
-                order_date=DateUtil.addDays(new Date(appointment.appoint_date),7);
+            let order_date = null;
+            if (orderList && orderList.length > 0) {//最新订单的预约日期加一周
+                let newestOrder = orderList[0]
+                order_date = DateUtil.addDays(new Date(newestOrder.order_date), 7);
+            } else {
+                order_date = DateUtil.addDays(new Date(appointment.appoint_date), 7);
             }
 
 
             let op_date = DateUtil.getNowStr()
 
-            let obj={
+            let obj = {
                 op_date,
-                order_date:DateUtil.format(order_date),
-                order_id:Util.uuid(),
-                openid:appointment.openid,
-                therapist_id:appointment.therapist_id,
-                user_id:appointment.user_id,
-                amount:appointment.amount,
-                state:ORDER_STATE.COMMIT,
-                create_date:op_date,
+                order_date: DateUtil.format(order_date),
+                order_id: Util.uuid(),
+                openid: appointment.openid,
+                therapist_id: appointment.therapist_id,
+                user_id: appointment.user_id,
+                amount: appointment.amount,
+                state: ORDER_STATE.COMMIT,
+                create_date: op_date,
                 appointment_id,
             }
             let data = await think.model(tableName).add(obj).catch(e => {
@@ -160,7 +160,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 appointment_id,
-                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED,ORDER_STATE.PAYED]],
+                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED, ORDER_STATE.PAYED]],
             }).select().catch(e => {
                 throw new Error(e)
             });
@@ -182,6 +182,88 @@ module.exports = {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
+    async getDoneOrderListByTherapistId(therapist_id, page, pageSize) {
+
+        try {
+
+            let ORDER = think.model(tableName)
+            ORDER._pk = 'order_id'
+            let data = await ORDER.where({
+                therapist_id,
+                state: ORDER_STATE.DONE
+            }).join([
+                ` appoint_user as user on user.user_id=appoint_order.user_id`,
+            ]).page(page, pageSize).countSelect().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`查询咨询师收益列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `查询咨询师收益列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+    /**
+     *查询咨询师收益汇总
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getRevenueSumByTherapistId(therapist_id, page, pageSize) {
+
+        try {
+
+            let ORDER = think.model(tableName)
+            ORDER._pk = 'order_id'
+
+            let monthStart = DateUtil.getFirstDayStrOfCurrentMonth(),
+                weekStart = DateUtil.getFirstDayStrOfCurrentWeek(), dateEnd = DateUtil.getNowStr();
+
+            let allAmount = await ORDER.where({
+                therapist_id,
+                state: ORDER_STATE.DONE
+            }).sum('amount')
+
+            let monthAmount = await ORDER.where({
+                therapist_id,
+                state: ORDER_STATE.DONE,
+                order_date: ['between', [monthStart,dateEnd]]
+            }).sum('amount')
+
+            let weekAmount = await ORDER.where({
+                therapist_id,
+                state: ORDER_STATE.DONE,
+                order_date: ['between', [weekStart,dateEnd]]
+            }).sum('amount')
+
+            let data={
+                allAmount,
+                monthAmount,
+                weekAmount
+            }
+
+            logger.info(`查询咨询师收益汇总数据库返回：${JSON.stringify(data)}`)
+
+            return data
+
+        } catch (e) {
+            let msg = `查询咨询师收益汇总接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+
+    /**
+     *
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
     async getOrderListByTherapistId(therapist_id, page, pageSize) {
 
         try {
@@ -190,7 +272,9 @@ module.exports = {
             ORDER._pk = 'order_id'
             let data = await ORDER.where({
                 therapist_id
-            }).page(page, pageSize).countSelect().catch(e => {
+            }).join([
+                ` appoint_user as user on user.user_id=appoint_order.user_id`,
+            ]).page(page, pageSize).countSelect().catch(e => {
                 throw new Error(e)
             });
 

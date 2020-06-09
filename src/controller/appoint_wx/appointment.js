@@ -407,6 +407,30 @@ module.exports = class extends Base {
     }
 
     /**
+     *根据咨询师ID获取生效中的预约列表
+     * @returns {Promise<void>}
+     */
+    async getListOfUsingByTherapistIdAction() {
+
+        let therapist_id=this.post('therapist_id')
+
+        logger.info(`根据咨询师ID获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
+
+        try {
+
+            let orders = await appointmentService.getListOfUsingByTherapistId(therapist_id)
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`根据咨询师ID获取生效中的预约列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      *根据用户id获取预约历史
      * @returns {Promise<void>}
      */
