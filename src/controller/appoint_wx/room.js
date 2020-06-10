@@ -9,7 +9,7 @@ const stationTherapistRelationService = require('../../service/stationTherapistR
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const roomService = require('../../service/room')
 const appointmentService = require('../../service/appointment')
-const ROOM_STATE = require('../../config/ROOM_STATE')
+const ROOM_STATE = require('../../config/constants/ROOM_STATE')
 const entityName = '房间'
 const tableName = 'room'
 

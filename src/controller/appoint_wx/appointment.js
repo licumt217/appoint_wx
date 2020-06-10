@@ -3,9 +3,9 @@ const Base = require('./base.js');
 const request = require('request');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const Page = require('../../config/Page')
+const Page = require('../../config/constants/PAGE')
 const WechatUtil = require('../../util/WechatUtil')
-const ORDER_STATE = require('../../config/ORDER_STATE')
+const APPOINTMENT_STATE = require('../../config/constants/APPOINTMENT_STATE')
 const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
@@ -120,7 +120,7 @@ module.exports = class extends Base {
 
         const appointment=await appointmentService.getById(appointment_id);
 
-        if(appointment.state!==ORDER_STATE.COMMIT){
+        if(appointment.state!==APPOINTMENT_STATE.COMMIT){
             this.body = Response.businessException(`当前预约状态不可取消！`)
             return false;
         }
@@ -191,7 +191,7 @@ module.exports = class extends Base {
             //只有状态是已提交的预约才合法
 
             let appointment=await appointmentService.getById(appointment_id)
-            if(appointment.state!==ORDER_STATE.COMMIT){
+            if(appointment.state!==APPOINTMENT_STATE.COMMIT){
                 this.body = Response.businessException(`预约状态不合法！`)
                 return false;
             }
@@ -254,7 +254,7 @@ module.exports = class extends Base {
             //只有状态是已提交的预约才合法
 
             let appointment=await appointmentService.getById(appointment_id)
-            if(appointment.state!==ORDER_STATE.COMMIT){
+            if(appointment.state!==APPOINTMENT_STATE.COMMIT){
                 this.body = Response.businessException(`预约状态不合法！`)
                 return false;
             }

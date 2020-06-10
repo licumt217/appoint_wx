@@ -6,7 +6,8 @@ const logger = think.logger
 const entityName = '订单'
 const tableName = 'order'
 const appointmentService = require('../service/appointment')
-const ORDER_STATE = require('../config/ORDER_STATE')
+const ORDER_STATE = require('../config/constants/ORDER_STATE')
+const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
 
 module.exports = {
 
@@ -23,7 +24,7 @@ module.exports = {
 
             const appointment = await appointmentService.getById(appointment_id);
 
-            if (appointment.state !== ORDER_STATE.AUDITED) {
+            if (appointment.state !== APPOINTMENT_STATE.AUDITED) {
                 throw new Error(`只有审核通过的预约才能生成订单！`)
             }
 
@@ -151,6 +152,35 @@ module.exports = {
     },
 
     /**
+     *根据订单id数组获取订单列表
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getListByOrderIdArray(order_id_array) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                order_id:['in',order_id_array]
+            }).join([
+                ` appoint_appointment on appoint_order.appointment_id=appoint_appointment.appointment_id`
+            ]).select().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据订单id数组获取订单列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据订单id数组获取订单列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
      *根据预约id获取此预约对应的所有未完结的订单。未完结订单包括：已下单、已审核、已支付
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
@@ -160,7 +190,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 appointment_id,
-                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED, ORDER_STATE.PAYED]],
+                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.PAYED]],
             }).select().catch(e => {
                 throw new Error(e)
             });
@@ -288,6 +318,36 @@ module.exports = {
             throw new Error(msg)
         }
 
+
+    },
+
+    /**
+     * 根据订单id数组更新数据
+     * @param order_id_array
+     * @param updateObj
+     * @returns {Promise<number>}
+     */
+    async updateByOrderIdArray(order_id_array, updateObj) {
+
+        try {
+            let op_date = DateUtil.getNowStr()
+
+            updateObj.op_date = op_date
+
+            let data = await think.model(tableName).where({
+                order_id:['in',order_id_array]
+            }).update(updateObj).catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据订单id数组更新数据，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `根据订单id数组更新数据异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
 
     },
 

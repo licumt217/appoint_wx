@@ -2,7 +2,7 @@ const Base = require('./base.js');
 
 const WechatUtil = require('../../util/WechatUtil')
 const WechatConfig = require('../../config/WechatConfig')
-const ORDER_STATE = require('../../config/ORDER_STATE')
+const ORDER_STATE = require('../../config/constants/ORDER_STATE')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const SignUtil = require('../../util/SignUtil')
@@ -73,16 +73,11 @@ module.exports = class extends Base {
 
                 let data = params.xml;
 
-                let order_id = data.out_trade_no;
-
-                let order = await orderService.getOne({
-                    order_id
-                })
-
+                let out_trade_no = data.out_trade_no;
 
                 logger.info("更改订单状态")
 
-                await orderService.update({order_id},{state: ORDER_STATE.PAYED});
+                await orderService.update({out_trade_no},{state: ORDER_STATE.PAYED});
 
                 logger.info("添加支付记录")
 

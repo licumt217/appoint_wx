@@ -3,8 +3,9 @@ const schedule = require('node-schedule');
 const orderService =  require('../service/order');
 const appointmentService =  require('../service/appointment');
 
-const ORDER_STATE = require('../config/ORDER_STATE')
-const FEE_TYPE = require('../config/FEE_TYPE')
+const ORDER_STATE = require('../config/constants/ORDER_STATE')
+const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
+const FEE_TYPE = require('../config/constants/FEE_TYPE')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
 const job='* * 0 * * *';
@@ -43,7 +44,7 @@ const scheduleAppointment=async ()=>{
  */
 const handleCommitedAppoments=async ()=>{
     let appointments=await appointmentService.getList({
-        'state':ORDER_STATE.COMMIT
+        'state':APPOINTMENT_STATE.COMMIT
     });
 
     logger.info(`已下单预约:${appointments}`)
@@ -58,7 +59,7 @@ const handleCommitedAppoments=async ()=>{
                 await appointmentService.update({
                     order_id:appointment.appointment_id
                 },{
-                    state:ORDER_STATE.REJECTED
+                    state:APPOINTMENT_STATE.REJECTED
                 })
             }
         }
@@ -105,7 +106,7 @@ const handlePayedOrders=async ()=>{
  */
 const handleAuditedOrders=async ()=>{
     let orders=await orderService.getList({
-        'appoint_order.state':ORDER_STATE.AUDITED
+        'appoint_order.state':ORDER_STATE.COMMIT
     });
 
     logger.info(`已审核订单:${orders}`)

@@ -3,7 +3,7 @@ const Base = require('./base.js');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
-const Role = require('../../config/Role')
+const Role = require('../../config/constants/ROLE')
 const Constant = require('../../config/Constant')
 const logger = think.logger;
 

@@ -2,8 +2,8 @@ const Response = require('../config/response')
 const Util = require('../util/Util')
 const DateUtil = require('../util/DateUtil')
 const WechatUtil = require('../util/WechatUtil')
-const ORDER_STATE = require('../config/ORDER_STATE')
-const PERIOD_STATE = require('../config/PERIOD_STATE')
+const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
+const PERIOD_STATE = require('../config/constants/PERIOD_STATE')
 const logger = think.logger
 const entityName = '预约'
 const tableName = 'appointment'
@@ -27,8 +27,6 @@ module.exports = {
 
         let op_date = create_date
 
-        let state = ORDER_STATE.COMMIT
-
         period = period.join(',')
 
         let appointment = {
@@ -43,21 +41,6 @@ module.exports = {
             user_id,
             amount,
             station_id
-        }
-
-
-        let order_id = Util.uuid()
-        let order = {
-            order_id,
-            appointment_id,
-            openid,
-            therapist_id,
-            amount,
-            state,
-            create_date,
-            op_date,
-            user_id,
-            appoint_date
         }
 
 
@@ -113,7 +96,7 @@ module.exports = {
             let data = await think.model(tableName).where({
                 appointment_id
             }).update({
-                state: ORDER_STATE.CANCELED
+                state: APPOINTMENT_STATE.CANCELED
             }).catch(e => {
                 throw new Error(e)
             });
@@ -144,7 +127,7 @@ module.exports = {
             let data = await think.model(tableName).where({
                 appointment_id
             }).update({
-                state: ORDER_STATE.DONE
+                state: APPOINTMENT_STATE.DONE
             }).catch(e => {
                 throw new Error(e)
             });
@@ -437,7 +420,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.therapist_id': therapist_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
@@ -471,7 +454,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.room_id': room_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`
             ]).field(
@@ -506,7 +489,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.user_id': user_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.REJECTED, ORDER_STATE.DONE, ORDER_STATE.EXPIRED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.CANCELED, APPOINTMENT_STATE.REJECTED, APPOINTMENT_STATE.DONE, APPOINTMENT_STATE.EXPIRED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
@@ -541,7 +524,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.therapist_id': therapist_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.REJECTED, ORDER_STATE.DONE, ORDER_STATE.EXPIRED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.CANCELED, APPOINTMENT_STATE.REJECTED, APPOINTMENT_STATE.DONE, APPOINTMENT_STATE.EXPIRED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
@@ -577,7 +560,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.user_id': user_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
@@ -613,7 +596,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 'appoint_appointment.therapist_id': therapist_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
             ]).field(
@@ -647,7 +630,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 station_id,
-                'appoint_appointment.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.AUDITED]],
+                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).select().catch(e => {
                 throw new Error(e)
             });
@@ -711,7 +694,7 @@ module.exports = {
                 let data = await model.where({
                     appointment_id
                 }).update({
-                    state: ORDER_STATE.AUDITED,
+                    state: APPOINTMENT_STATE.AUDITED,
                     op_date,
                     room_id
                 }).catch(e => {
@@ -724,7 +707,7 @@ module.exports = {
                 // let order_data = await orderCate.where({
                 //     appointment_id
                 // }).update({
-                //     state: ORDER_STATE.AUDITED,
+                //     state: APPOINTMENT_STATE.AUDITED,
                 //     op_date
                 // }).catch(e => {
                 //     throw new Error(e)
@@ -779,7 +762,7 @@ module.exports = {
                 let data = await model.where({
                     appointment_id
                 }).update({
-                    state: ORDER_STATE.REJECTED,
+                    state: APPOINTMENT_STATE.REJECTED,
                     op_date
                 }).catch(e => {
                     throw new Error(e)
@@ -791,7 +774,7 @@ module.exports = {
                 let order_data = await orderCate.where({
                     appointment_id
                 }).update({
-                    state: ORDER_STATE.REJECTED,
+                    state: APPOINTMENT_STATE.REJECTED,
                     op_date
                 }).catch(e => {
                     throw new Error(e)

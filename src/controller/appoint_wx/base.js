@@ -1,5 +1,5 @@
 const Response = require('../../config/response')
-const Role = require('../../config/Role')
+const Role = require('../../config/constants/ROLE')
 
 module.exports = class extends think.Controller {
 

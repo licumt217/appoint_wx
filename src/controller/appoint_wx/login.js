@@ -2,7 +2,7 @@ const Base = require('./base.js');
 
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const Role = require('../../config/Role')
+const Role = require('../../config/constants/ROLE')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;

@@ -3,9 +3,9 @@ const Base = require('./base.js');
 const request = require('request');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const Page = require('../../config/Page')
+const Page = require('../../config/constants/PAGE')
 const WechatUtil = require('../../util/WechatUtil')
-const ORDER_STATE = require('../../config/ORDER_STATE')
+const ORDER_STATE = require('../../config/constants/ORDER_STATE')
 const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
@@ -76,7 +76,9 @@ module.exports = class extends Base {
 
             let order = await orderService.getOne({order_id});
 
-            let prepay_id = await WechatUtil.unifiedOrder(order.openid, order_id, order.amount, this.ip).catch(error => {
+            let out_trade_no=Util.uuid();
+
+            let prepay_id = await WechatUtil.unifiedOrder(order.openid, out_trade_no, order.amount, this.ip).catch(error => {
                 this.body = Response.businessException(error);
                 return false;
             })
@@ -97,6 +99,63 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`微信支付接口异常 msg:${e}`);
+            this.body = Response.businessException(e.message);
+        }
+
+
+    }
+
+    /**
+     * 微信多订单批量支付
+     * @returns {Promise<void>}
+     */
+    async batchPayAction() {
+
+        try {
+
+            logger.info(`微信多订单批量支付参数 ${JSON.stringify(this.post())}`);
+
+            let order_id_array = this.post('order_id_array')
+
+            if (!order_id_array || order_id_array.length===0) {
+                this.body = Response.businessException(`订单不能为空！`)
+                return false;
+            }
+
+
+
+
+            let order_array = await orderService.getListByOrderIdArray(order_id_array);
+
+            let out_trade_no=Util.uuid();
+            let allAmount=0;
+            order_array.forEach(order=>{
+                allAmount+=order.amount;
+            })
+            allAmount=allAmount.toFixed(2);
+
+            let prepay_id = await WechatUtil.unifiedOrder(order_array[0].openid, out_trade_no, allAmount, this.ip).catch(error => {
+                this.body = Response.businessException(error);
+                return false;
+            })
+
+            logger.info(`prepay_id ${prepay_id}`);
+
+            await orderService.updateByOrderIdArray(order_id_array, {
+                prepay_id,
+                out_trade_no
+            })
+
+            let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
+
+            logger.info(`微信多订单批量支付返回前端参数 paySign:${JSON.stringify(paySign)}`);
+
+            this.body = Response.success({
+                secuParam: paySign
+            });
+
+        } catch (e) {
+            logger.info(`微信多订单批量支付异常 msg:${e}`);
             this.body = Response.businessException(e.message);
         }
 
@@ -179,10 +238,6 @@ module.exports = class extends Base {
         //     this.body = Response.businessException(`咨询方式不能为空！`)
         //     return false;
         // }
-
-        let state = ORDER_STATE.COMMIT
-
-        let create_date = DateUtil.getNowStr()
 
         try {
 
@@ -297,7 +352,6 @@ module.exports = class extends Base {
 
             let orders = await this.model('order').where({
                 openid: ['=', openid],
-                // 'appoint_order.state': ['in', [ORDER_STATE.CANCELED, ORDER_STATE.EXPIRED, ORDER_STATE.DONE, ORDER_STATE.UNFUNDED, ORDER_STATE.REJECTED]],
             }).join([
                 ` appoint_user on appoint_user.user_id=appoint_order.therapist_id`
             ]).page(page, pageSize).countSelect();
@@ -448,7 +502,7 @@ module.exports = class extends Base {
 
             //只有未支付和已支付状态的订单可以取消
 
-            if (!(order.state === ORDER_STATE.COMMIT || order.state === ORDER_STATE.PAYED || order.state === ORDER_STATE.AUDITED)) {
+            if (!(order.state === ORDER_STATE.COMMIT || order.state === ORDER_STATE.PAYED )) {
                 let msg = `订单状态是 ${order.state} ,不允许取消订单`
                 logger.info(msg);
                 this.body = Response.businessException(msg);

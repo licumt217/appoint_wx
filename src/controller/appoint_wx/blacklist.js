@@ -1,9 +1,9 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
-const Role = require('../../config/Role')
-const COMPLAINT_TYPE = require('../../config/COMPLAINT_TYPE')
-const Complaint_STATE = require('../../config/Complaint_STATE')
+const Role = require('../../config/constants/ROLE')
+const COMPLAINT_TYPE = require('../../config/constants/COMPLAINT_TYPE')
+const Complaint_STATE = require('../../config/constants/COMPLAINT_STATE')
 
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')

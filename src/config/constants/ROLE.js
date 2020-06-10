@@ -1,7 +1,7 @@
 /**
  * 用户类型
  */
-let Role = {
+let ROLE = {
     admin: 0,      //超管
     divisionManager: 1,       //分部管理员
     caseManager: 2,       //案例管理员
@@ -9,7 +9,7 @@ let Role = {
     client: 4,    //c端用户
 };
 
-Role.getKeyByValue=(value)=>{
+ROLE.getKeyByValue=(value)=>{
     let map={
         0:'admin',
         1:'divisionManager',
@@ -22,4 +22,4 @@ Role.getKeyByValue=(value)=>{
 
 
 
-module.exports = Role
+module.exports = ROLE
