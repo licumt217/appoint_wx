@@ -3,8 +3,8 @@ const Util = require('../util/Util')
 const DateUtil = require('../util/DateUtil')
 
 const logger = think.logger
-const entityName = '咨询师'
-const tableName = 'therapist'
+const entityName = '咨询师时段设置'
+const tableName = 'therapist_period_set'
 
 module.exports = {
 
@@ -20,7 +20,7 @@ module.exports = {
 
             logger.info(`新增咨询师可用时段设置参数 :${therapist_id}`)
 
-            let data = await think.model('therapist_period_set').add({
+            let data = await think.model(tableName).add({
                 therapist_id,
                 period,
                 op_date:DateUtil.getNowStr(),
