@@ -4,32 +4,30 @@ const WechatConfig = require('../config/WechatConfig')
 let buttons={
     "button": [
         {
-            "name": "扫码",
-            "sub_button": [
-                {
-                    "type": "scancode_waitmsg",
-                    "name": "扫码带提示",
-                    "key": "rselfmenu_0_0",
-                    "sub_button": [ ]
-                },
-                {
-                    "type": "scancode_push",
-                    "name": "扫码推事件",
-                    "key": "rselfmenu_0_1",
-                    "sub_button": [ ]
-                }
-            ]
-        },
-        {
-            "name": "发送位置",
-            "type": "location_select",
-            "key": "rselfmenu_2_0"
+            "type": "view",
+            "name": "我的预约",
+            "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/appoint/myAppoint')
         },
         {
             "type": "view",
-            "name": "测试菜单2",
-            "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/appoint/myAppoint')
-        }
+            "name": "预约历史",
+            "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/appoint/history')
+        },
+        {
+            "name": "个人中心",
+            "sub_button": [
+                {
+                    "type": "view",
+                    "name": "个人信息",
+                    "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/user/center')
+                },
+                {
+                    "type": "view",
+                    "name": "设置",
+                    "url": getAuthUrl(WechatConfig.APP_ID,'http://www.zhuancaiqian.com/appointmobile/user/setting')
+                },
+            ]
+        },
     ]
 }
 

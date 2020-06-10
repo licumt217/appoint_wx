@@ -1,5 +1,5 @@
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 
 module.exports = class extends think.Controller {
 
@@ -34,7 +34,7 @@ module.exports = class extends think.Controller {
 
             } else {
 
-                const menuGroups = this.config(Role.getKeyByValue(userInfo.role));
+                const menuGroups = this.config(ROLE.getKeyByValue(userInfo.role));
 
                 if (!menuGroups.includes(currentController)) {
                     return this.json(Response.businessException('您没有权限！'))

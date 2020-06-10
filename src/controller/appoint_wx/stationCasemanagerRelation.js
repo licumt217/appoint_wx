@@ -3,7 +3,7 @@ const Base = require('./base.js');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const Constant = require('../../config/Constant')
 const logger = think.logger;
 
@@ -82,7 +82,7 @@ module.exports = class extends Base {
                 birthday: DateUtil.format(birthday, 'date'),
                 email,
                 op_date,
-                role: Role.caseManager
+                role: ROLE.caseManager
             }
 
             addJson.password = Constant.defaultPassword

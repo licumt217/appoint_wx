@@ -9,6 +9,7 @@ const entityName = '预约'
 const tableName = 'appointment'
 const roomPeriodSetService = require('./roomPeriodSet');
 const stationTherapistRelationService = require('./stationTherapistRelation');
+const therapistFeeSetService = require('./therapistFeeSet');
 const roomService = require('./room');
 
 module.exports = {
@@ -16,13 +17,13 @@ module.exports = {
 
     /**
      *新增预约
-     * 首先同步新增一条订单
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
     async addWithRelations(appointment_id, openid, therapist_id, appoint_date, period, isMulti, amount, user_id) {
 
 
         let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id);
+        const therapistFeeSet = await therapistFeeSetService.getByTherapistId(therapist_id)
         let create_date = DateUtil.getNowStr()
 
         let op_date = create_date
@@ -40,9 +41,11 @@ module.exports = {
             isMulti,
             user_id,
             amount,
-            station_id
+            station_id,
+            fee_type:therapistFeeSet.fee_type
         }
 
+        logger.info(`新增预约参数：${JSON.stringify(appointment)}`)
 
         try {
 
@@ -336,11 +339,9 @@ module.exports = {
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
                 ` appoint_user as userInfo on userInfo.user_id=appoint_appointment.user_id`,
-                ` appoint_therapist_fee_set as fee_set on fee_set.therapist_id=appoint_appointment.therapist_id`,
             ]).field(
                 `appoint_appointment.*,
                     therapist.name as therapist_name,
-                    fee_set.fee_type,
                     userInfo.name as user_name `,
             ).find().catch(e => {
                 throw new Error(e)

@@ -1,7 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const COMPLAINT_TYPE = require('../../config/constants/COMPLAINT_TYPE')
 const Complaint_STATE = require('../../config/constants/COMPLAINT_STATE')
 const Util = require('../../util/Util')
@@ -54,7 +54,7 @@ module.exports = class extends Base {
                 complaint_date,
                 order_id,
                 op_date: complaint_date,
-                type: userInfo.role === Role.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
+                type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
                 user_id: order.user_id,
                 therapist_id: order.therapist_id,
             }

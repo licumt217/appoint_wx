@@ -2,7 +2,7 @@ const Base = require('./base.js');
 
 const request = require('request');
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const Page = require('../../config/constants/PAGE')
 const Constant = require('../../config/Constant')
 const Util = require('../../util/Util')
@@ -65,7 +65,7 @@ module.exports = class extends Base {
             //新增咨询师，需要校验流派等
 
             let school_type_id, qualification_type_id, manner_type_id, level_type_id
-            if (role === Role.therapist) {
+            if (role === ROLE.therapist) {
                 school_type_id = this.post('school_type_id')
                 qualification_type_id = this.post('qualification_type_id')
                 manner_type_id = this.post('manner_type_id')
@@ -108,14 +108,14 @@ module.exports = class extends Base {
                 identification_no
             }
 
-            if (role !== Role.client) {
+            if (role !== ROLE.client) {
                 addJson.password = Constant.defaultPassword
             }
 
             await this.model('user').add(addJson);
 
             //新增咨询师，需要添加咨询师和流派、资历等的关系表
-            if (role === Role.therapist) {
+            if (role === ROLE.therapist) {
                 await this.model('therapist_attach_relation').add({
                     therapist_attach_relation_id: Util.uuid(),
                     therapist_id: user_id,
@@ -317,7 +317,7 @@ module.exports = class extends Base {
 
             //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
             let data = []
-            if (role === Role.therapist) {
+            if (role === ROLE.therapist) {
 
                 let whereObj = {
                     role
@@ -379,7 +379,7 @@ module.exports = class extends Base {
 
             //如果是加载咨询师列表，则将咨询师关联的等级、资历等关联加载
             let data = []
-            if (role === Role.therapist) {
+            if (role === ROLE.therapist) {
 
                 let whereObj = {
                     user_id

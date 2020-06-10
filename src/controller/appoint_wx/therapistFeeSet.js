@@ -2,12 +2,13 @@ const Base = require('./base.js');
 
 const request = require('request');
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const Page = require('../../config/constants/PAGE')
 const Constant = require('../../config/Constant')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const stationService = require('../../service/station')
+const therapistFeeSetService = require('../../service/therapistFeeSet')
 const md5 = require('md5')
 const logger = think.logger;
 const entityName='咨询师收费设置'
@@ -36,11 +37,11 @@ module.exports = class extends Base {
             let role=this.ctx.state.userInfo.role
 
 
-            if(role===Role.caseManager){
+            if(role===ROLE.caseManager){
 
                 station_id=await stationService.getStationIdByCaseManagerId(user_id)
 
-            }else if(role===Role.divisionManager){
+            }else if(role===ROLE.divisionManager){
                 if (!station_id) {
                     this.body = Response.businessException(`工作室ID不能为空！`)
                     return false;
@@ -96,10 +97,7 @@ module.exports = class extends Base {
 
             logger.info(`获取某个咨询师的收费设置参数 :${JSON.stringify(this.post())}`)
 
-            let data = await this.model(tableName).where({
-                therapist_id,
-            }).find();
-
+            let data = await therapistFeeSetService.getByTherapistId(therapist_id)
 
             logger.info(`获取某个咨询师的收费设置，数据库返回：${JSON.stringify(data)}`)
 

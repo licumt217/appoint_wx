@@ -38,7 +38,6 @@ module.exports = {
         "user",
         "wechatApi",
         "consulttype",
-        "therapistperiod",
         "complaint",
         "division",
         "station",
@@ -61,7 +60,6 @@ module.exports = {
         "user",
         "wechatApi",
         "consulttype",
-        "therapistperiod",
         "complaint",
         "division",
         "therapist",
@@ -84,7 +82,6 @@ module.exports = {
         "user",
         "wechatApi",
         "consulttype",
-        "therapistperiod",
         "complaint",
         "division",
         "therapist",
@@ -107,13 +104,13 @@ module.exports = {
         "user",
         "wechatApi",
         "consulttype",
-        "therapistperiod",
         "complaint",
         "division",
         "therapist",
         "emergencyContack",
         "appointment",
         "roomPeriodSet",
-        "stationCasemanagerRelation"
+        "stationCasemanagerRelation",
+        "stationTherapistRelation"
     ]
 };

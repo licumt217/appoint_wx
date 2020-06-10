@@ -2,11 +2,11 @@ const Base = require('./base.js');
 
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const DateUtil = require('../../util/DateUtil')
 const md5 = require('md5')
 const logger = think.logger;
-const therapistService = require('../../service/therapist')
+const therapistPeriodSetService = require('../../service/therapistPeriodSet')
 const userService = require('../../service/user')
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 module.exports = class extends Base {
@@ -62,7 +62,7 @@ module.exports = class extends Base {
 
                     let station = {}
 
-                    if (data.role === Role.caseManager) {
+                    if (data.role === ROLE.caseManager) {
                         station = await stationCasemanagerRelationService.getStationInfoByCasemanagerId(data.user_id)
                         logger.info(JSON.stringify(station))
                     }
@@ -215,7 +215,7 @@ module.exports = class extends Base {
                 birthday: DateUtil.format(birthday, 'date'),
                 name,
                 op_date,
-                role: Role.client
+                role: ROLE.client
             })
 
             let userInfo = await this.model('user').where({
@@ -348,7 +348,7 @@ module.exports = class extends Base {
 
 
     /**
-     * pc端咨询注册
+     * pc端咨询师注册
      * @returns {Promise<boolean>}
      */
     async registerAction() {
@@ -415,11 +415,11 @@ module.exports = class extends Base {
                     name,
                     op_date,
                     password: md5(password),
-                    role: Role.therapist
+                    role: ROLE.therapist
                 })
 
                 //如果是咨询师的话，初始化可用时段设置
-                await therapistService.initPeriodSet(user_id)
+                await therapistPeriodSetService.initPeriodSet(user_id)
 
 
                 this.body = Response.success()

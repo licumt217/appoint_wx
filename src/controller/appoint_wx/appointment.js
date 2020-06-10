@@ -9,7 +9,6 @@ const APPOINTMENT_STATE = require('../../config/constants/APPOINTMENT_STATE')
 const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
-const therapistperiodService = require('../../service/therapistperiod')
 const orderService = require('../../service/order')
 const appointmentService =  require('../../service/appointment');
 const pushService = require('../../service/push')
@@ -399,14 +398,14 @@ module.exports = class extends Base {
     }
 
     /**
-     *根据用户id获取预约列表
+     *根据用户id获取进行中的预约列表
      * @returns {Promise<void>}
      */
     async getListOfUsingByUserIdAction() {
 
         let user_id=this.ctx.state.userInfo.user_id
 
-        logger.info(`根据用户id获取预约列表参数 :${JSON.stringify(this.post())}`);
+        logger.info(`根据用户id获取进行中的预约列表参数 :${JSON.stringify(this.post())}`);
 
         try {
 
@@ -415,7 +414,7 @@ module.exports = class extends Base {
             this.body = Response.success(orders);
 
         } catch (e) {
-            logger.info(`根据用户id获取预约列表异常 msg:${e}`);
+            logger.info(`根据用户id获取进行中的预约列表异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

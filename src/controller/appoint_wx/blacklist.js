@@ -1,7 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const COMPLAINT_TYPE = require('../../config/constants/COMPLAINT_TYPE')
 const Complaint_STATE = require('../../config/constants/COMPLAINT_STATE')
 

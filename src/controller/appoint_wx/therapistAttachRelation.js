@@ -2,7 +2,7 @@ const Base = require('./base.js');
 
 const request = require('request');
 const Response = require('../../config/response')
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const Page = require('../../config/constants/PAGE')
 const Constant = require('../../config/Constant')
 const Util = require('../../util/Util')

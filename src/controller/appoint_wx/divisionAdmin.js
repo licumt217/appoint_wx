@@ -4,7 +4,7 @@ const Response = require('../../config/response')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
-const Role = require('../../config/constants/ROLE')
+const ROLE = require('../../config/constants/ROLE')
 const Constant = require('../../config/Constant')
 const entityName='分部和分部管理员关系'
 const tableName='division_admin_relation'
@@ -26,7 +26,7 @@ module.exports = class extends Base {
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
-            let role = Role.divisionManager;
+            let role = ROLE.divisionManager;
             let division_id = this.post('division_id')
 
             logger.info(`新增分部管理员参数 ${JSON.stringify(this.post())}`)
@@ -83,7 +83,7 @@ module.exports = class extends Base {
                 role,
             }
 
-            if(role!==Role.client){
+            if(role!==ROLE.client){
                 addJson.password=Constant.defaultPassword
             }
 

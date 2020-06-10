@@ -40,54 +40,6 @@ module.exports = {
 
     },
 
-    /**
-     * 批量新增
-     * @param arrays
-     * @returns {Promise<T>}
-     */
-    async addMany(arrays) {
-
-        try {
-
-            // therapist_id,
-            //     appoint_date,
-            //     periodArray,appointment_id
-
-            let orders=[]
-            let op_date = DateUtil.getNowStr()
-
-            arrays.forEach(item=>{
-                item.therapist_period_id=Util.uuid();
-                item.op_date=op_date
-                item.period=item.period.join(',')
-                orders.push(item);
-
-            })
-
-
-            // let addJson = {
-            //     therapist_period_id:Util.uuid(),
-            //     therapist_id,
-            //     appoint_date,
-            //     appointment_id,
-            //     op_date,
-            //     period:periodArray.join(',')
-            // }
-
-            let data = await think.model(tableName).addMany(orders).catch(e=>{
-                throw new Error(e)
-            });
-
-            logger.info(`批量新增${entityName}，数据库返回：${JSON.stringify(data)}`)
-
-            return data
-        } catch (e) {
-            let msg=`批量新增${entityName}异常 msg:${e}`
-            logger.info(msg);
-            throw new Error(msg)
-        }
-
-    },
 
     async update(whereObj,updateObj) {
 
