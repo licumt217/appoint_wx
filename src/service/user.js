@@ -2,25 +2,24 @@ const Response = require('../config/response')
 const Util = require('../util/Util')
 const DateUtil = require('../util/DateUtil')
 const WechatUtil = require('../util/WechatUtil')
-const logger =think.logger
+const logger = think.logger
 const entityName = '用户'
 const tableName = 'user'
 
-module.exports =  {
-
+module.exports = {
 
 
     /**
      *根据手机号获取对应用户
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getByPhone(phone){
+    async getByPhone(phone) {
 
-        try{
+        try {
 
             let data = await think.model(tableName).where({
                 phone
-            }).find().catch(e=>{
+            }).find().catch(e => {
                 throw new Error(e)
             });
 
@@ -28,12 +27,42 @@ module.exports =  {
 
             return data;
 
-        }catch (e) {
-            let msg=`根据手机号获取对应用户接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据手机号获取对应用户接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
 
+
+    },
+
+    /**
+     *根据用户id获取包含openid的用户信息
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getWithOpenidByUserId(user_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                'appoint_user.user_id':user_id
+            }).join({
+                table: 'weixin_user',
+                join: 'inner',
+                on: ['user_id', 'user_id']
+            }).find().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据用户id获取包含openid的用户信息数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据用户id获取包含openid的用户信息接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
 
 
     },
@@ -43,13 +72,13 @@ module.exports =  {
      * @param user_id
      * @returns {Promise<T>}
      */
-    async deleteById(user_id){
+    async deleteById(user_id) {
 
-        try{
+        try {
 
             let data = await think.model(tableName).where({
                 user_id
-            }).delete().catch(e=>{
+            }).delete().catch(e => {
                 throw new Error(e)
             });
 
@@ -57,12 +86,11 @@ module.exports =  {
 
             return data;
 
-        }catch (e) {
-            let msg=`根据用户id删除对应用户接口异常 msg:${e}`
+        } catch (e) {
+            let msg = `根据用户id删除对应用户接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
-
 
 
     },

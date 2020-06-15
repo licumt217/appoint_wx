@@ -8,7 +8,7 @@ const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
 const FEE_TYPE = require('../config/constants/FEE_TYPE')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
-const job='* * 0 * * *';
+const job='* 44 * * * *';
 
 
 const  scheduleCronstyle = async ()=>{
@@ -57,7 +57,7 @@ const handleCommitedAppoments=async ()=>{
             //未精确到具体时段。暂时以天计算
             if(DateUtil.before(create_date,DateUtil.addDays(now_date,-1))){
                 await appointmentService.update({
-                    order_id:appointment.appointment_id
+                    appointment_id:appointment.appointment_id
                 },{
                     state:APPOINTMENT_STATE.REJECTED
                 })

@@ -140,6 +140,27 @@ let Util = {
         let oneDay=1000*60*60*24;
         return new Date(nextMonthFirstDay-oneDay);
     },
+    getAppointmentPeriodStrFromArray(period) {
+        if(Array.isArray(period)){
+            period=period.join(',')
+        }
+        let str = '';
+        period.split(',').forEach(item => {
+            str += (`${Util.fixZero(item)}:00-${Util.fixZero(item)}:50 `)
+        })
+
+
+        return str;
+    },
+
+    fixZero(val) {
+        if (val < 10) {
+            return '0' + val;
+        } else {
+            return val;
+        }
+    }
+
 
 
 

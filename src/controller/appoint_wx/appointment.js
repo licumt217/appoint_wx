@@ -1,17 +1,13 @@
 const Base = require('./base.js');
 
-const request = require('request');
 const Response = require('../../config/response')
 const Util = require('../../util/Util')
-const Page = require('../../config/constants/PAGE')
-const WechatUtil = require('../../util/WechatUtil')
 const APPOINTMENT_STATE = require('../../config/constants/APPOINTMENT_STATE')
-const DateUtil = require('../../util/DateUtil')
-const WechatTemplates = require('../../config/WechatTemplates')
-const moment = require('moment')
 const orderService = require('../../service/order')
 const appointmentService =  require('../../service/appointment');
+const userService =  require('../../service/user');
 const pushService = require('../../service/push')
+const roomService = require('../../service/room')
 
 const table_text='预约'
 
@@ -33,8 +29,6 @@ module.exports = class extends Base {
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
         let isMulti = this.post('isMulti')
-        let consult_type_id = this.post('consult_type_id')
-        let manner_type_id = this.post('manner_type_id')
 
         let user_id=this.ctx.state.userInfo.user_id
 
@@ -60,16 +54,6 @@ module.exports = class extends Base {
             return false;
         }
 
-        // if (!consult_type_id) {
-        //     this.body = Response.businessException(`咨询类型不能为空！`)
-        //     return false;
-        // }
-        //
-        // if (!manner_type_id) {
-        //     this.body = Response.businessException(`咨询方式不能为空！`)
-        //     return false;
-        // }
-
         try {
 
 
@@ -83,13 +67,17 @@ module.exports = class extends Base {
 
             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointmentDetail?appointment_id=${appointment_id}`)
 
-            let weixin_user_obj = await this.model('weixin_user').where({
-                user_id: therapist_id
-            }).find()
-
+            let therapist = await userService.getWithOpenidByUserId(therapist_id)
+            let user = await userService.getWithOpenidByUserId(user_id)
 
             //咨询师审核推送
-            await pushService.sendTemplateMsg(weixin_user_obj.openid, url);
+            await pushService.sendAppointmentAuditTemplate(therapist.openid, url,{
+                name:user.name,
+                phone:user.phone,
+                date:appoint_date,
+                content:`预约申请`,
+                remark:`预约时段 ${Util.getAppointmentPeriodStrFromArray(periodArray)}`
+            });
 
             this.body = Response.success();
 
@@ -215,7 +203,17 @@ module.exports = class extends Base {
             //接受预约后生成一条订单
             await orderService.add(appointment_id)
 
+            let room=await roomService.getById(room_id)
+
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appoint/myAppoint`)
+
             //TODO 给用户推送让用户付款，如果是咨询前支付的话
+            //审核通过后告知用户推送
+            await pushService.sendAppointmentSuccess(appointment.openid, url,{
+                content:`心理咨询`,
+                date:appointment.appoint_date,
+                address:room.name,
+            });
 
             /**
              *
@@ -260,21 +258,12 @@ module.exports = class extends Base {
 
             await appointmentService.deny(appointment_id)
 
-            //TODO 给用户推送，通知用户
+            let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appoint/history`)
 
-            /**
-             *
-
-             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointmentDetail?appointment_id=${appointment_id}`)
-
-             let order = await appointmentService.getById(appointment_id)
-
-             await pushService.sendTemplateMsg(order.openid, url);
-
-             *
-             */
-
-
+            //审核拒绝后告知用户推送
+            await pushService.sendAppointmentReject(appointment.openid, url,{
+                date:appointment.appoint_date,
+            });
 
             this.body = Response.success();
 

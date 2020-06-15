@@ -2,8 +2,6 @@ const request = require('request');
 
 const WechatConfig = require("../config/WechatConfig")
 
-const WechatTemplates = require("../config/WechatTemplates")
-
 const SignUtil = require('./SignUtil')
 
 const BaseUtil = require('./Util')
@@ -221,7 +219,7 @@ let Util = {
      * @param bottom 底部提示文字
      * @returns {Promise<any>}
      */
-    sendTemplateMsg: (openId, templateName, dataArray, url, top, bottom) => {
+    sendTemplateMsg: (openId, templateName, url,dataArray,top,bottom) => {
 
         let data = {}
 
@@ -252,7 +250,7 @@ let Util = {
 
         let form = {
             "touser": openId,
-            "template_id": WechatTemplates[templateName],
+            "template_id": templateName,
             "url": url || "",
             "data": data
         };

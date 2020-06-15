@@ -747,18 +747,20 @@ module.exports = {
 
     },
 
+    /**
+     * 咨询师拒绝用户预约申请
+     * @param appointment_id
+     * @returns {Promise<any>}
+     */
     async deny(appointment_id) {
-
 
         let op_date = DateUtil.getNowStr()
 
         try {
-
-
             //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
             let model = think.model(tableName);
-            let appointment_return = await model.transaction(async () => {
+            await model.transaction(async () => {
 
                 let data = await model.where({
                     appointment_id
@@ -769,44 +771,14 @@ module.exports = {
                     throw new Error(e)
                 })
 
-                // 通过 db 方法让 user_cate 模型复用当前模型的数据库连接
-                const orderCate = think.model('order').db(model.db());
-
-                let order_data = await orderCate.where({
-                    appointment_id
-                }).update({
-                    state: APPOINTMENT_STATE.REJECTED,
-                    op_date
-                }).catch(e => {
-                    throw new Error(e)
-                });
-
-                const periodCate = think.model('therapist_period').db(model.db());
-
-                let period_data = await periodCate.where({
-                    appointment_id
-                }).update({
-                    state: PERIOD_STATE.NO,
-                    op_date
-                }).catch(e => {
-                    throw new Error(e)
-                });
-
-                logger.info(`拒绝${entityName}数据库返回：${JSON.stringify(data)}`)
-                logger.info(`拒绝关联小订单数据库返回：${JSON.stringify(order_data)}`)
-                logger.info(`拒绝关联咨询师时段数据库返回：${JSON.stringify(period_data)}`)
+                logger.info(`咨询师拒绝用户预约申请数据库返回：${JSON.stringify(data)}`)
 
                 return data;
             })
 
-
-            logger.info(`拒绝${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
-
-            return appointment_return;
-
         } catch (e) {
-            let msg = `拒绝${entityName}接口异常 msg:${e}`
-            let returnMsg = `拒绝订单接口异常`
+            let msg = `咨询师拒绝用户预约申请异常 msg:${e}`
+            let returnMsg = `咨询师拒绝用户预约申请异常`
             logger.info(msg);
             throw new Error(returnMsg)
         }

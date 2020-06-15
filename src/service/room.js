@@ -41,5 +41,34 @@ module.exports = {
 
     },
 
+    /**
+     * 根据房间ID获取房间信息
+     * @param room_id
+     * @returns {Promise<any>}
+     */
+    async getById(room_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                room_id
+            }).find().catch(e => {
+                throw new Error(e)
+            })
+
+
+            logger.info(`根据房间ID获取房间信息数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据房间ID获取房间信息异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
 };
