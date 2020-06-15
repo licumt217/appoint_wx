@@ -54,6 +54,7 @@ module.exports = {
                 state: ORDER_STATE.COMMIT,
                 create_date: op_date,
                 appointment_id,
+                pay_manner:appointment.pay_manner
             }
             let data = await think.model(tableName).add(obj).catch(e => {
                 throw new Error(e)

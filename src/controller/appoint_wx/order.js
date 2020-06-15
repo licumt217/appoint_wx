@@ -85,6 +85,7 @@ module.exports = class extends Base {
             logger.info(`prepay_id ${prepay_id}`);
 
             await orderService.update({order_id}, {
+                out_trade_no,
                 prepay_id,
             })
 

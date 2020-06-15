@@ -90,7 +90,8 @@ module.exports = {
         "emergencyContack",
         "appointment",
         "roomPeriodSet",
-        "stationCasemanagerRelation"
+        "stationCasemanagerRelation",
+        "therapistPeriodSet"
     ],
     client: [
         "login",

@@ -19,7 +19,7 @@ module.exports = {
      *新增预约
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async addWithRelations(appointment_id, openid, therapist_id, appoint_date, period, isMulti, amount, user_id) {
+    async add(appointment_id, openid, therapist_id, appoint_date, period, isMulti, user_id) {
 
 
         let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id);
@@ -40,7 +40,7 @@ module.exports = {
             period,
             isMulti,
             user_id,
-            amount,
+            amount:therapistFeeSet.fee,
             station_id,
             fee_type:therapistFeeSet.fee_type
         }
@@ -49,33 +49,9 @@ module.exports = {
 
         try {
 
-
-            //一个事务将大订单、小订单、咨询师预约时间段一起存库
-
-            let model = think.model(tableName);
-            let appointment_return = await model.transaction(async () => {
-
-                let data = await model.add(appointment).catch(e => {
-                    throw new Error(e)
-                })
-
-                // 通过 db 方法让 user_cate 模型复用当前模型的数据库连接
-                // const orderCate = think.model('order').db(model.db());
-                //
-                // let order_data = await orderCate.add(order).catch(e => {
-                //     throw new Error(e)
-                // });
-
-                logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
-                // logger.info(`新增关联订单数据库返回：${JSON.stringify(order_data)}`)
-
-                return data;
+             await think.model(tableName).add(appointment).catch(e => {
+                throw new Error(e)
             })
-
-
-            logger.info(`新增${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
-
-            return appointment_return;
 
         } catch (e) {
             let msg = `新增${entityName}接口异常 msg:${e}`
@@ -119,6 +95,38 @@ module.exports = {
     },
 
     /**
+     *过期预约
+     * 用户未按时支付
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async expire(appointment_id) {
+
+        try {
+
+
+            let data = await think.model(tableName).where({
+                appointment_id
+            }).update({
+                state: APPOINTMENT_STATE.EXPIRED
+            }).catch(e => {
+                throw new Error(e)
+            });
+            ;
+
+            logger.info(`过期预约数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `过期预约接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
      *咨询师完成预约
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
@@ -147,37 +155,6 @@ module.exports = {
 
 
     },
-
-    /**
-     *
-     * @returns {Promise<{isSuccess, errorMsg}>}
-     */
-    async add(obj) {
-
-        try {
-
-            let op_date = DateUtil.getNowStr()
-
-            obj.op_date = op_date
-
-            let data = await think.model(tableName).add(obj).catch(e => {
-                throw new Error(e)
-            });
-            ;
-
-            logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
-
-            return data;
-
-        } catch (e) {
-            let msg = `新增${entityName}接口异常 msg:${e}`
-            logger.info(msg);
-            throw new Error(msg)
-        }
-
-
-    },
-
 
     isRoomPeriodsContainsAppointPeriods(appointment, allAvailablePeriodArray) {
 
@@ -679,7 +656,7 @@ module.exports = {
     },
 
 
-    async accept(appointment_id, room_id) {
+    async accept(appointment_id, room_id,pay_manner) {
 
 
         let op_date = DateUtil.getNowStr()
@@ -697,7 +674,8 @@ module.exports = {
                 }).update({
                     state: APPOINTMENT_STATE.AUDITED,
                     op_date,
-                    room_id
+                    room_id,
+                    pay_manner
                 }).catch(e => {
                     throw new Error(e)
                 })

@@ -57,11 +57,7 @@ module.exports = class extends Base {
         try {
 
 
-            let appointment_data=await appointmentService.addWithRelations(appointment_id,openid,therapist_id,appoint_date,periodArray,isMulti,amount,user_id);
-
-            // let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
-
-            // logger.info(`微信支付统一下单接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
+            await appointmentService.add(appointment_id,openid,therapist_id,appoint_date,periodArray,isMulti,user_id);
 
             //给咨询师发送模板消息，通知他审核
 
@@ -169,9 +165,15 @@ module.exports = class extends Base {
             let appointment_id = this.post('appointment_id')
             let assign_room_type = this.post('assign_room_type')
             let room_id = this.post('room_id')
+            let pay_manner = this.post('pay_manner')
 
             if (!appointment_id) {
                 this.body = Response.businessException(`预约ID不能为空！`)
+                return false;
+            }
+
+            if (!pay_manner) {
+                this.body = Response.businessException(`支付方式不能为空！`)
                 return false;
             }
 
@@ -198,7 +200,7 @@ module.exports = class extends Base {
                 }
             }
 
-            await appointmentService.accept(appointment_id,room_id)
+            await appointmentService.accept(appointment_id,room_id,pay_manner)
 
             //接受预约后生成一条订单
             await orderService.add(appointment_id)
@@ -214,20 +216,6 @@ module.exports = class extends Base {
                 date:appointment.appoint_date,
                 address:room.name,
             });
-
-            /**
-             *
-
-             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/push/appointmentDetail?appointment_id=${appointment_id}`)
-
-             let order = await appointmentService.getById(appointment_id)
-
-             await pushService.sendTemplateMsg(order.openid, url);
-
-             *
-             */
-
-
 
             this.body = Response.success();
 
