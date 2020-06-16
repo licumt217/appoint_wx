@@ -1,4 +1,3 @@
-const Response = require('../config/response')
 const Util = require('../util/Util')
 const DateUtil = require('../util/DateUtil')
 const WechatUtil = require('../util/WechatUtil')
@@ -341,6 +340,68 @@ module.exports = {
             return data
         } catch (e) {
             let msg = `更新${entityName}异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+    },
+
+    /**
+     * 将订单设置为已过期
+     * @param order_id
+     * @returns {Promise<number>}
+     */
+    async expire(order_id) {
+
+        try {
+            let op_date = DateUtil.getNowStr()
+
+            updateObj.op_date = op_date
+
+            let data = await think.model(tableName).where({
+                order_id
+            }).update({
+                state:ORDER_STATE.EXPIRED
+            }).catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`将订单设置为已过期数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `将订单设置为已过期异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+    },
+
+    /**
+     * 将订单设置为已完结
+     * @param order_id
+     * @returns {Promise<number>}
+     */
+    async done(order_id) {
+
+        try {
+            let op_date = DateUtil.getNowStr()
+
+            updateObj.op_date = op_date
+
+            let data = await think.model(tableName).where({
+                order_id
+            }).update({
+                state:ORDER_STATE.DONE
+            }).catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`将订单设置为已完结数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `将订单设置为已完结异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }

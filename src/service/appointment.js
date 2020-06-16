@@ -156,6 +156,36 @@ module.exports = {
 
     },
 
+    /**
+     *咨询师拒绝预约
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async reject(appointment_id) {
+
+        try {
+
+
+            let data = await think.model(tableName).where({
+                appointment_id
+            }).update({
+                state: APPOINTMENT_STATE.REJECTED
+            }).catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`咨询师拒绝预约数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `咨询师拒绝预约接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
     isRoomPeriodsContainsAppointPeriods(appointment, allAvailablePeriodArray) {
 
         let periods = appointment.period.split(',')
