@@ -489,7 +489,7 @@ module.exports = {
      *根据用户id获取历史预约记录
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getHistoryByUserId(user_id) {
+    async getHistoryByUserId(user_id,page,pageSize) {
 
         try {
 
@@ -504,7 +504,7 @@ module.exports = {
                 `appoint_appointment.*,
                 room.name as room_name,
                     therapist.name as therapist_name`,
-            ).order('create_date desc ').select().catch(e => {
+            ).order('create_date desc ').page(page,pageSize).countSelect().catch(e => {
                 throw new Error(e)
             });
 

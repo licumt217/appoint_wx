@@ -1,6 +1,7 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
+const Page = require('../../config/constants/PAGE')
 const Util = require('../../util/Util')
 const APPOINTMENT_STATE = require('../../config/constants/APPOINTMENT_STATE')
 const orderService = require('../../service/order')
@@ -392,11 +393,14 @@ module.exports = class extends Base {
 
         let user_id=this.ctx.state.userInfo.user_id
 
+        let page = this.post('page') || Page.currentPage
+        let pageSize = this.post('pageSize') || Page.pageSize
+
         logger.info(`根据用户id获取预约历史参数 :${JSON.stringify(this.post())}`);
 
         try {
 
-            let appointments = await appointmentService.getHistoryByUserId(user_id)
+            let appointments = await appointmentService.getHistoryByUserId(user_id,page,pageSize)
 
             this.body = Response.success(appointments);
 
