@@ -113,6 +113,7 @@ module.exports = {
         "roomPeriodSet",
         "stationCasemanagerRelation",
         "stationTherapistRelation",
-        "therapistPeriodSet"
+        "therapistPeriodSet",
+        "feedback"
     ]
 };

@@ -20,6 +20,7 @@ module.exports = class extends Base {
 
     /**
      * 新增
+     * 如果已存在，则更新。
      * @returns {Promise<boolean>}
      */
     async addAction() {
@@ -40,38 +41,93 @@ module.exports = class extends Base {
                 return false;
             }
 
+            let userInfo = this.ctx.state.userInfo
+
+            let complaint=await this.model(tableName).where({
+                order_id,
+                type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
+            }).find()
+
             let complaint_date = DateUtil.getNowStr()
 
-            let order = await orderService.getOne({order_id})
+            if(Util.isEmptyObject(complaint)){//新增
+
+                let order = await orderService.getOne({order_id})
+
+                let addJson = {
+                    complaint_id: Util.uuid(),
+                    content,
+                    complaint_date,
+                    order_id,
+                    op_date: complaint_date,
+                    type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
+                    user_id: order.user_id,
+                    therapist_id: order.therapist_id,
+                }
+
+                await this.model(tableName).add(addJson);
+
+            }else{//更新
+
+                await this.model(tableName).where({
+                    complaint_id:complaint.complaint_id
+                }).update({
+                    content,
+                    complaint_date,
+                    op_date: complaint_date,
+                })
+
+            }
+
+            this.body = Response.success();
+
+        } catch (e) {
+            let msg=`新增${entityName}异常`
+            logger.info(`${msg} msg:${e}`);
+            this.body = Response.businessException(msg);
+        }
+
+
+    }
+
+    /**
+     * 根据订单ID获取投诉明细
+     * @returns {Promise<boolean>}
+     */
+    async getByOrderIdAction() {
+        try {
+
+            let order_id = this.post('order_id')
+
+            logger.info(`根据订单ID获取投诉明细参数 :${JSON.stringify(this.post())}`)
+
+            if (!order_id) {
+                this.body = Response.businessException(`订单id不能为空！`)
+                return false;
+            }
 
             let userInfo = this.ctx.state.userInfo
 
-            console.log(userInfo)
-
-            let addJson = {
-                complaint_id: Util.uuid(),
-                content,
-                complaint_date,
+            let data = await this.model(tableName).where({
                 order_id,
-                op_date: complaint_date,
                 type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
-                user_id: order.user_id,
-                therapist_id: order.therapist_id,
-            }
 
-            let data = await this.model(tableName).add(addJson);
+            }).find();
 
-            logger.info(`新增${entityName}，数据库返回：${JSON.stringify(data)}`)
+            logger.info(`根据订单ID获取投诉明细，数据库返回：${JSON.stringify(data)}`)
+
+            data=Util.isEmptyObject(data)?null:data
 
             this.body = Response.success(data);
 
         } catch (e) {
-            logger.info(`新增${entityName}异常 msg:${e}`);
+            logger.info(`根据订单ID获取投诉明细异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 
 
     }
+
 
     /**
      * 删除
