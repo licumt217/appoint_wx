@@ -6,6 +6,7 @@ const entityName = '订单'
 const tableName = 'order'
 const appointmentService = require('../service/appointment')
 const ORDER_STATE = require('../config/constants/ORDER_STATE')
+const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
 const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
 
 module.exports = {
@@ -29,32 +30,10 @@ module.exports = {
 
             //添加此条订单具体的预约日期
             let orderList = await this.getList({
-                'appoint_order.appointment_id':appointment_id
+                'appoint_order.appointment_id': appointment_id
             });
-            let order_date = null;
-            if (orderList && orderList.length > 0) {//最新订单的预约日期加一周
-                let newestOrder = orderList[0]
-                order_date = DateUtil.addDays(new Date(newestOrder.order_date), 7);
-            } else {
-                order_date = DateUtil.addDays(new Date(appointment.appoint_date), 0);
-            }
 
-
-            let op_date = DateUtil.getNowStr()
-
-            let obj = {
-                op_date,
-                order_date: DateUtil.format(order_date),
-                order_id: Util.uuid(),
-                openid: appointment.openid,
-                therapist_id: appointment.therapist_id,
-                user_id: appointment.user_id,
-                amount: appointment.amount,
-                state: ORDER_STATE.COMMIT,
-                create_date: op_date,
-                appointment_id,
-                pay_manner:appointment.pay_manner
-            }
+            let obj = this.getAddObj(appointment, orderList)
             let data = await think.model(tableName).add(obj).catch(e => {
                 throw new Error(e)
             });
@@ -72,6 +51,40 @@ module.exports = {
 
     },
 
+    /**
+     * 组装新增订单的对象
+     * @param appointment
+     * @param orderList
+     * @returns {{op_date: string, pay_manner, order_date: string, amount, user_id, openid, appointment_id, state, create_date, order_id: string, therapist_id}}
+     */
+    getAddObj(appointment, orderList) {
+        let order_date = null;
+        if (orderList && orderList.length > 0) {//最新订单的预约日期加一周
+            let newestOrder = orderList[0]
+            order_date = DateUtil.addDays(new Date(newestOrder.order_date), 7);
+        } else {
+            order_date = DateUtil.addDays(new Date(appointment.appoint_date), 0);
+        }
+
+
+        let op_date = DateUtil.getNowStr()
+
+        let obj = {
+            op_date,
+            order_date: DateUtil.format(order_date),
+            order_id: Util.uuid(),
+            openid: appointment.openid,
+            therapist_id: appointment.therapist_id,
+            user_id: appointment.user_id,
+            amount: appointment.amount,
+            state: ORDER_STATE.COMMIT,
+            create_date: op_date,
+            appointment_id: appointment.appointment_id,
+            pay_manner: appointment.pay_manner
+        }
+
+        return obj;
+    },
     /**
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
@@ -133,7 +146,7 @@ module.exports = {
         try {
 
             let data = await think.model(tableName).where({
-                order_id:['in',order_id_array]
+                order_id: ['in', order_id_array]
             }).join([
                 ` appoint_appointment on appoint_order.appointment_id=appoint_appointment.appointment_id`
             ]).select().catch(e => {
@@ -146,6 +159,39 @@ module.exports = {
 
         } catch (e) {
             let msg = `根据订单id数组获取订单列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
+     * 根据预约id获取订单记录
+     * @param appointment_id
+     * @returns {Promise<any>}
+     */
+    async getListByAppointmentId(appointment_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                'appoint_appointment.appointment_id': appointment_id
+            }).join([
+                ` appoint_user as therapist on therapist.user_id=appoint_order.therapist_id`,
+                ` appoint_appointment on appoint_appointment.appointment_id=appoint_order.appointment_id`
+            ]).field(
+                `appoint_order.*,
+            appoint_appointment.period,
+            therapist.name as therapist_name `,
+            ).select()
+
+            logger.info(`根据预约id获取订单记录，数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `根据预约id获取订单记录接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
@@ -234,19 +280,19 @@ module.exports = {
             let monthAmount = await ORDER.where({
                 therapist_id,
                 state: ORDER_STATE.DONE,
-                order_date: ['between', [monthStart,dateEnd]]
+                order_date: ['between', [monthStart, dateEnd]]
             }).sum('amount')
 
             let weekAmount = await ORDER.where({
                 therapist_id,
                 state: ORDER_STATE.DONE,
-                order_date: ['between', [weekStart,dateEnd]]
+                order_date: ['between', [weekStart, dateEnd]]
             }).sum('amount')
 
-            let data={
-                allAmount:allAmount||0,
-                monthAmount:monthAmount||0,
-                weekAmount:weekAmount||0
+            let data = {
+                allAmount: allAmount || 0,
+                monthAmount: monthAmount || 0,
+                weekAmount: weekAmount || 0
             }
 
             logger.info(`查询咨询师收益汇总数据库返回：${JSON.stringify(data)}`)
@@ -308,7 +354,7 @@ module.exports = {
             updateObj.op_date = op_date
 
             let data = await think.model(tableName).where({
-                order_id:['in',order_id_array]
+                order_id: ['in', order_id_array]
             }).update(updateObj).catch(e => {
                 throw new Error(e)
             });
@@ -361,7 +407,7 @@ module.exports = {
             let data = await think.model(tableName).where({
                 order_id
             }).update({
-                state:ORDER_STATE.EXPIRED
+                state: ORDER_STATE.EXPIRED
             }).catch(e => {
                 throw new Error(e)
             });
@@ -392,7 +438,7 @@ module.exports = {
             let data = await think.model(tableName).where({
                 order_id
             }).update({
-                state:ORDER_STATE.DONE
+                state: ORDER_STATE.DONE
             }).catch(e => {
                 throw new Error(e)
             });
@@ -402,6 +448,72 @@ module.exports = {
             return data
         } catch (e) {
             let msg = `将订单设置为已完结异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+    },
+
+    /**
+     * 取消订单
+     * 取消订单后：如果是单次预约，同步将预约设置为已完结；否则，生成下一条订单
+     * @param order_id
+     * @returns {Promise<number>}
+     */
+    async cancel(order_id) {
+
+        try {
+            let op_date = DateUtil.getNowStr()
+
+            let order = await think.model(tableName).where({order_id}).find();
+
+            let model = think.model(tableName);
+
+            await model.transaction(async () => {
+                let data = await model.where({
+                    order_id
+                }).update({
+                    state: ORDER_STATE.CANCELED,
+                    cancel_date: op_date,
+                    op_date
+                }).catch(e => {
+                    throw new Error(e)
+                });
+
+                let appointmentCate = think.model('appointment').db(model.db())
+
+                const appointment = await appointmentCate.where({appointment_id: order.appointment_id}).find();
+
+                if (appointment.ismulti === APPOINTMENT_MULTI.SINGLE) {
+
+                    data = await appointmentCate.where({
+                        appointment_id: order.appointment_id
+                    }).update({
+                        state: APPOINTMENT_STATE.DONE
+                    })
+                } else {
+
+                    //添加此条订单具体的预约日期
+
+                    let orderList = await model.where({
+                        'appoint_order.appointment_id': order.appointment_id
+                    }).join([
+                        ` appoint_appointment on appoint_order.appointment_id=appoint_appointment.appointment_id`
+                    ]).select().catch(e => {
+                        throw new Error(e)
+                    });
+
+                    let obj = this.getAddObj(appointment, orderList)
+                    data = await model.add(obj).catch(e => {
+                        throw new Error(e)
+                    });
+
+                    logger.info(`新增${entityName}数据库返回：${JSON.stringify(data)}`)
+                }
+                return data;
+            })
+        } catch (e) {
+            let msg = `取消订单异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }

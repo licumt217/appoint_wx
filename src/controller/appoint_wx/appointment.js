@@ -24,11 +24,9 @@ module.exports = class extends Base {
         let openid = this.post('openid')
         let therapist_id = this.post('therapist_id')
         let appointment_id = Util.uuid()
-        let amount = this.post('amount');
-
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
-        let isMulti = this.post('isMulti')
+        let ismulti = this.post('ismulti')
 
         let user_id=this.ctx.state.userInfo.user_id
 
@@ -57,7 +55,7 @@ module.exports = class extends Base {
         try {
 
 
-            await appointmentService.add(appointment_id,openid,therapist_id,appoint_date,periodArray,isMulti,user_id);
+            await appointmentService.add(appointment_id,openid,therapist_id,appoint_date,periodArray,ismulti,user_id);
 
             //给咨询师发送模板消息，通知他审核
 
@@ -78,7 +76,7 @@ module.exports = class extends Base {
             this.body = Response.success();
 
         } catch (e) {
-            logger.info(`微信支付统一下单接口异常 msg:${e}`);
+            logger.info(`用户新建预约接口异常 msg:${e}`);
             this.body = Response.businessException(e.message);
         }
 
@@ -116,6 +114,7 @@ module.exports = class extends Base {
             this.body = Response.success();
 
         } catch (e) {
+            logger.info(`取消预约接口异常 msg:${e}`);
             this.body = Response.businessException(e.message);
         }
 
@@ -135,10 +134,9 @@ module.exports = class extends Base {
             let appointment_id = this.post('appointment_id')
 
             if (!appointment_id) {
-                this.body = Response.businessException(`订单ID不能为空！`)
+                this.body = Response.businessException(`预约ID不能为空！`)
                 return false;
             }
-
 
             let data = await appointmentService.getById(appointment_id)
 
@@ -202,9 +200,6 @@ module.exports = class extends Base {
 
             await appointmentService.accept(appointment_id,room_id,pay_manner)
 
-            //接受预约后生成一条订单
-            await orderService.add(appointment_id)
-
             let room=await roomService.getById(room_id)
 
             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appoint/myAppoint`)
@@ -262,13 +257,13 @@ module.exports = class extends Base {
     }
 
     /**
-     * 咨询师能否主动完成预约（结束）
+     * 咨询师确认完成预约（结束）
      * 当前预约对应的所有订单必须都是最终状态：已拒绝、已取消、已过期、已完结。
      */
     async doneAction() {
         try {
 
-            logger.info(`咨询师确认完成参数 ${JSON.stringify(this.post())}`);
+            logger.info(`咨询师确认完成预约参数 ${JSON.stringify(this.post())}`);
 
             let appointment_id = this.post('appointment_id')
 
@@ -278,28 +273,16 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`当前预约有不是最终状态的订单，不能完成！`)
                 return false;
             }else{
-                appointmentService.done(appointment_id)
-
-                //TODO 给用户推送告知用户
-                // let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appointDetail?order_id=${order_id}`)
-                //
-                // let order = await orderService.getOne({order_id})
-                //
-                // await pushService.sendTemplateMsg(order.openid, url);
+                await appointmentService.done(appointment_id)
 
                 this.body = Response.success();
             }
 
-
-
         } catch (e) {
-            logger.info(`咨询师确认完成异常 msg:${e}`);
+            logger.info(`咨询师确认完成预约异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
     }
-
-
-
 
 
     /**
@@ -326,6 +309,7 @@ module.exports = class extends Base {
 
     }
 
+
     /**
      *根据房间ID获取生效中的预约列表
      * @returns {Promise<void>}
@@ -338,9 +322,9 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getListOfUsingByRoomId(room_id)
+            let appointments = await appointmentService.getListOfUsingByRoomId(room_id)
 
-            this.body = Response.success(orders);
+            this.body = Response.success(appointments);
 
         } catch (e) {
             logger.info(`根据房间ID获取生效中的预约列表异常 msg:${e}`);
@@ -362,9 +346,9 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getListOfUsingByStationId(station_id)
+            let appointments = await appointmentService.getListOfUsingByStationId(station_id)
 
-            this.body = Response.success(orders);
+            this.body = Response.success(appointments);
 
         } catch (e) {
             logger.info(`根据工作室ID获取生效中的预约列表异常 msg:${e}`);
@@ -386,9 +370,9 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getListOfUsingByUserId(user_id)
+            let appointments = await appointmentService.getListOfUsingByUserId(user_id)
 
-            this.body = Response.success(orders);
+            this.body = Response.success(appointments);
 
         } catch (e) {
             logger.info(`根据用户id获取进行中的预约列表异常 msg:${e}`);
@@ -398,29 +382,7 @@ module.exports = class extends Base {
 
     }
 
-    /**
-     *根据咨询师ID获取生效中的预约列表
-     * @returns {Promise<void>}
-     */
-    async getListOfUsingByTherapistIdAction() {
 
-        let therapist_id=this.post('therapist_id')
-
-        logger.info(`根据咨询师ID获取生效中的预约列表参数 :${JSON.stringify(this.post())}`);
-
-        try {
-
-            let orders = await appointmentService.getListOfUsingByTherapistId(therapist_id)
-
-            this.body = Response.success(orders);
-
-        } catch (e) {
-            logger.info(`根据咨询师ID获取生效中的预约列表异常 msg:${e}`);
-            this.body = Response.businessException(e);
-        }
-
-
-    }
 
     /**
      *根据用户id获取预约历史
@@ -434,9 +396,9 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getHistoryByUserId(user_id)
+            let appointments = await appointmentService.getHistoryByUserId(user_id)
 
-            this.body = Response.success(orders);
+            this.body = Response.success(appointments);
 
         } catch (e) {
             logger.info(`根据用户id获取预约历史异常 msg:${e}`);
@@ -458,9 +420,9 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await appointmentService.getHistoryByTherapistId(therapist_id)
+            let appointments = await appointmentService.getHistoryByTherapistId(therapist_id)
 
-            this.body = Response.success(orders);
+            this.body = Response.success(appointments);
 
         } catch (e) {
             logger.info(`根据咨询师id获取预约历史异常 msg:${e}`);

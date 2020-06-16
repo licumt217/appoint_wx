@@ -1,9 +1,8 @@
-const Response = require('../config/response')
 const Util = require('../util/Util')
 const DateUtil = require('../util/DateUtil')
 const WechatUtil = require('../util/WechatUtil')
 const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
-const PERIOD_STATE = require('../config/constants/PERIOD_STATE')
+const ORDER_STATE = require('../config/constants/ORDER_STATE')
 const logger = think.logger
 const entityName = '预约'
 const tableName = 'appointment'
@@ -19,7 +18,7 @@ module.exports = {
      *新增预约
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async add(appointment_id, openid, therapist_id, appoint_date, period, isMulti, user_id) {
+    async add(appointment_id, openid, therapist_id, appoint_date, period, ismulti, user_id) {
 
 
         let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id);
@@ -38,18 +37,18 @@ module.exports = {
             appoint_date,
             op_date,
             period,
-            isMulti,
+            ismulti,
             user_id,
-            amount:therapistFeeSet.fee,
+            amount: therapistFeeSet.fee,
             station_id,
-            fee_type:therapistFeeSet.fee_type
+            fee_type: therapistFeeSet.fee_type
         }
 
         logger.info(`新增预约参数：${JSON.stringify(appointment)}`)
 
         try {
 
-             await think.model(tableName).add(appointment).catch(e => {
+            await think.model(tableName).add(appointment).catch(e => {
                 throw new Error(e)
             })
 
@@ -686,15 +685,18 @@ module.exports = {
     },
 
 
-    async accept(appointment_id, room_id,pay_manner) {
-
+    /**
+     * 咨询师接受预约，同步生成一条订单记录
+     * @param appointment_id
+     * @param room_id
+     * @param pay_manner
+     * @returns {Promise<any>}
+     */
+    async accept(appointment_id, room_id, pay_manner) {
 
         let op_date = DateUtil.getNowStr()
 
         try {
-
-
-            //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
             let model = think.model(tableName);
             let appointment_return = await model.transaction(async () => {
@@ -710,38 +712,49 @@ module.exports = {
                     throw new Error(e)
                 })
 
-                // 通过 db 方法让 user_cate 模型复用当前模型的数据库连接
-                // const orderCate = think.model('order').db(model.db());
-                //
-                // let order_data = await orderCate.where({
-                //     appointment_id
-                // }).update({
-                //     state: APPOINTMENT_STATE.AUDITED,
-                //     op_date
-                // }).catch(e => {
-                //     throw new Error(e)
-                // });
+                //接受预约后生成一条订单
+                const appointment = await model.where({appointment_id}).find();
+                const orderCate = think.model('order').db(model.db());
 
-                // const periodCate = think.model('therapist_period').db(model.db());
-                //
-                // let period_data = await periodCate.where({
-                //     appointment_id
-                // }).update({
-                //     state: PERIOD_STATE.YES,
-                //     op_date
-                // }).catch(e => {
-                //     throw new Error(e)
-                // });
+                //添加此条订单具体的预约日期
+                let orderList = await orderCate.where({
+                    'appoint_order.appointment_id': appointment_id
+                }).join([
+                    ` appoint_appointment on appoint_order.appointment_id=appoint_appointment.appointment_id`
+                ]).select().catch(e => {
+                    throw new Error(e)
+                });
+                let order_date;
+                if (orderList && orderList.length > 0) {//最新订单的预约日期加一周
+                    let newestOrder = orderList[0]
+                    order_date = DateUtil.addDays(new Date(newestOrder.order_date), 7);
+                } else {
+                    order_date = DateUtil.addDays(new Date(appointment.appoint_date), 0);
+                }
+
+                let order = {
+                    op_date,
+                    order_date: DateUtil.format(order_date),
+                    order_id: Util.uuid(),
+                    openid: appointment.openid,
+                    therapist_id: appointment.therapist_id,
+                    user_id: appointment.user_id,
+                    amount: appointment.amount,
+                    state: ORDER_STATE.COMMIT,
+                    create_date: op_date,
+                    appointment_id,
+                    pay_manner: appointment.pay_manner
+                }
+                data = await orderCate.add(order).catch(e => {
+                    throw new Error(e)
+                });
+
+                logger.info(`新增订单数据库返回：${JSON.stringify(data)}`)
 
                 logger.info(`同意${entityName}数据库返回：${JSON.stringify(data)}`)
-                // logger.info(`同意关联小订单数据库返回：${JSON.stringify(order_data)}`)
-                // logger.info(`同意关联咨询师时段数据库返回：${JSON.stringify(period_data)}`)
 
                 return data;
             })
-
-
-            logger.info(`同意${entityName}数据库返回：${JSON.stringify(appointment_return)}`)
 
             return appointment_return;
 
@@ -765,24 +778,17 @@ module.exports = {
         let op_date = DateUtil.getNowStr()
 
         try {
-            //一个事务将大订单、小订单、咨询师预约时间段一起存库
 
-            let model = think.model(tableName);
-            await model.transaction(async () => {
+            let data = await think.model(tableName).where({
+                appointment_id
+            }).update({
+                state: APPOINTMENT_STATE.REJECTED,
+                op_date
+            }).catch(e => {
+                throw new Error(e)
+            });
 
-                let data = await model.where({
-                    appointment_id
-                }).update({
-                    state: APPOINTMENT_STATE.REJECTED,
-                    op_date
-                }).catch(e => {
-                    throw new Error(e)
-                })
-
-                logger.info(`咨询师拒绝用户预约申请数据库返回：${JSON.stringify(data)}`)
-
-                return data;
-            })
+            logger.info(`咨询师拒绝用户预约申请数据库返回：${JSON.stringify(data)}`)
 
         } catch (e) {
             let msg = `咨询师拒绝用户预约申请异常 msg:${e}`

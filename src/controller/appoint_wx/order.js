@@ -31,22 +31,8 @@ module.exports = class extends Base {
             return false;
         }
 
-        let data = await this.model('order').where({
-            'appoint_appointment.appointment_id': appointment_id
-        }).join([
-            ` appoint_user as therapist on therapist.user_id=appoint_order.therapist_id`,
-            ` appoint_appointment on appoint_appointment.appointment_id=appoint_order.appointment_id`
-        ]).field(
-            `appoint_order.*,
-            appoint_appointment.period,
-            therapist.name as therapist_name `,
-        ).select()
-
         try {
-
-
-            logger.info(`根据预约id获取订单记录数据库返回 :${JSON.stringify(data)}`);
-
+            let data = await orderService.getListByAppointmentId(appointment_id);
             this.body = Response.success(data);
 
         } catch (e) {
@@ -56,14 +42,14 @@ module.exports = class extends Base {
     }
 
     /**
-     * 微信支付
+     * 订单支付
      * @returns {Promise<void>}
      */
     async payAction() {
 
         try {
 
-            logger.info(`微信支付参数 ${JSON.stringify(this.post())}`);
+            logger.info(`订单支付参数 ${JSON.stringify(this.post())}`);
 
             let order_id = this.post('order_id')
 
@@ -98,7 +84,7 @@ module.exports = class extends Base {
             });
 
         } catch (e) {
-            logger.info(`微信支付接口异常 msg:${e}`);
+            logger.info(`订单支付接口异常 msg:${e}`);
             this.body = Response.businessException(e.message);
         }
 
@@ -121,9 +107,6 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`订单不能为空！`)
                 return false;
             }
-
-
-
 
             let order_array = await orderService.getListByOrderIdArray(order_id_array);
 
@@ -276,7 +259,7 @@ module.exports = class extends Base {
      * 取消订单
      * @returns {Promise<void>}
      */
-    async cancelOrderAction() {
+    async cancelAction() {
 
         let order_id = this.post('order_id')
 
@@ -293,34 +276,32 @@ module.exports = class extends Base {
             let order = await orderService.getOne({order_id})
 
             if (Util.isEmptyObject(order)) {
-                logger.info(`取消订单时根据订单号获取订单信息接口，未找到订单`);
-                this.body = Response.businessException(response.errorMsg);
-            }
-
-            //TODO 后期添加完善的取消订单的限制
-
-            //只有未支付和已支付状态的订单可以取消
-
-            if (!(order.state === ORDER_STATE.COMMIT || order.state === ORDER_STATE.PAYED )) {
-                let msg = `订单状态是 ${order.state} ,不允许取消订单`
+                let msg=`取消订单时根据订单号获取订单信息接口，未找到订单`
                 logger.info(msg);
                 this.body = Response.businessException(msg);
+                return false;
+
             }
 
-            //更新订单状态
-            await orderService.update({
-                order_id
-            }, {
-                state: ORDER_STATE.CANCELED,
-                cancel_date: DateUtil.getNowStr()
-            })
-
-
-
-            //如果需要退款的话，进行退款操作。
-            if (order.state === ORDER_STATE.PAYED) {
-                await orderService.refund(order_id, order.amount, order.amount)
+            //当前时间早于订单开始时间一天或以上，才允许取消；且只有状态是commit的订单允许取消
+            if (order.state !== ORDER_STATE.COMMIT) {
+                let msg = `订单当前状态不允许取消`
+                logger.info(msg);
+                this.body = Response.businessException(msg);
+                return false;
             }
+
+            let order_date=new Date(order.order_date)
+            if(DateUtil.afterNowMoreThanOneDay(order_date)){
+
+            }else{
+                let msg = `订单开始前24小时不允许取消订单`
+                logger.info(msg);
+                this.body = Response.businessException(msg);
+                return false;
+            }
+
+            await orderService.cancel(order_id)
 
             this.body = Response.success();
 

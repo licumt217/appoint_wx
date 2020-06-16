@@ -52,9 +52,7 @@ const handleCommitedAppointments=async ()=>{
         for(let i=0;i<appointments.length;i++){
             let appointment=appointments[i]
             let create_date=new Date(appointment.create_date);
-            let now_date=new Date();
-            //未精确到具体时段。暂时以天计算
-            if(DateUtil.before(create_date,DateUtil.addDays(now_date,-1))){
+            if(DateUtil.beforeNowMoreThanOneDay(create_date)){
                 await appointmentService.reject(appointment.appointment_id)
             }
         }
@@ -84,9 +82,8 @@ const handlePayedOrders=async ()=>{
 
             if(order.pay_manner===PAY_MANNER.BEFORE_SINGLE){
                 let order_date=new Date(order.order_date);
-                let now_date=new Date();
-                //未精确到具体时段。暂时以天计算
-                if(DateUtil.before(order_date,now_date)){
+
+                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
                     if(appointment.ismulti===APPOINTMENT_MULTI.SINGLE){
                         await orderService.done(order.order_id)
                         await appointmentService.done(order.appointment_id)
@@ -94,13 +91,11 @@ const handlePayedOrders=async ()=>{
                         await orderService.add(order.appointment_id)
                     }
                 }
+
             }else if(order.pay_manner===PAY_MANNER.AFTER_SINGLE){
                 let order_date=new Date(order.order_date);
-
-                let now_date=new Date();
-                now_date.setDate(now_date.getDate()-1)
                 //未精确到具体时段。暂时以天计算
-                if(DateUtil.before(order_date,now_date)){
+                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
                     if(appointment.ismulti===APPOINTMENT_MULTI.SINGLE){
                         await orderService.done(order.order_id)
                         await appointmentService.done(order.appointment_id)
@@ -142,20 +137,13 @@ const handleCommitedOrders=async ()=>{
             }else if(order.pay_manner===PAY_MANNER.AFTER_SINGLE){
                 let order_date=new Date(order.order_date);
 
-                let now_date=new Date();
-                now_date.setDate(now_date.getDate()-1)
-                //未精确到具体时段。暂时以天计算
-                if(DateUtil.before(order_date,now_date)){
+                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
                     await orderService.expire(order.order_id)
                     await appointmentService.done(order.appointment_id)
                 }
             }else if(order.pay_manner===PAY_MANNER.AFTER_MONTH){
                 let order_date=new Date(order.order_date);
-
-                let now_date=new Date();
-                now_date.setDate(now_date.getDate()-1)
-                //未精确到具体时段。暂时以天计算。生成一个新的订单
-                if(DateUtil.before(order_date,now_date)){
+                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
                     await orderService.add(order.appointment_id)
                 }
             }

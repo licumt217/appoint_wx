@@ -113,7 +113,34 @@ let DateUtil = {
      */
     before(date1, date2) {
         return date1.getTime() < date2.getTime();
+    },
+    /**
+     * 判断给定日期是否晚于当前时间1天或更久
+     * @param date
+     * @returns {boolean}
+     */
+    afterNowMoreThanOneDay(date){
+
+        let now_date=new Date();
+        now_date.setDate(now_date.getDate()+1)
+        //未精确到具体时段。暂时以天计算
+        return DateUtil.before(now_date,date);
+    },
+
+    /**
+     * 判断给定日期是否早于当前时间1天或更久
+     * @param date
+     * @returns {boolean}
+     */
+    beforeNowMoreThanOneDay(date){
+
+        let now_date=new Date();
+        now_date.setDate(now_date.getDate()-1)
+        //未精确到具体时段。暂时以天计算
+        return DateUtil.before(date,now_date);
     }
+
+
 
 
 }
