@@ -420,11 +420,14 @@ module.exports = class extends Base {
 
         let therapist_id=this.ctx.state.userInfo.user_id
 
+        let page = this.post('page') || Page.currentPage
+        let pageSize = this.post('pageSize') || Page.pageSize
+
         logger.info(`根据咨询师id获取预约历史参数 :${JSON.stringify(this.post())}`);
 
         try {
 
-            let appointments = await appointmentService.getHistoryByTherapistId(therapist_id)
+            let appointments = await appointmentService.getHistoryByTherapistId(therapist_id,page,pageSize)
 
             this.body = Response.success(appointments);
 

@@ -502,10 +502,12 @@ module.exports = {
                 'appoint_appointment.state': ['in', [APPOINTMENT_STATE.CANCELED, APPOINTMENT_STATE.REJECTED, APPOINTMENT_STATE.DONE, APPOINTMENT_STATE.EXPIRED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_user as user on user.user_id=appoint_appointment.user_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
             ]).field(
                 `appoint_appointment.*,
                 room.name as room_name,
+                user.name as user_name,
                     therapist.name as therapist_name`,
             ).order('create_date desc ').page(page,pageSize).countSelect().catch(e => {
                 throw new Error(e)
@@ -527,7 +529,7 @@ module.exports = {
      *根据咨询师id获取历史预约记录
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getHistoryByTherapistId(therapist_id) {
+    async getHistoryByTherapistId(therapist_id,page,pageSize) {
 
         try {
 
@@ -537,12 +539,14 @@ module.exports = {
                 'appoint_appointment.state': ['in', [APPOINTMENT_STATE.CANCELED, APPOINTMENT_STATE.REJECTED, APPOINTMENT_STATE.DONE, APPOINTMENT_STATE.EXPIRED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_user as user on user.user_id=appoint_appointment.user_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
             ]).field(
                 `appoint_appointment.*,
                 room.name as room_name,
+                user.name as user_name,
                     therapist.name as therapist_name`,
-            ).order('create_date desc ').select().catch(e => {
+            ).order('create_date desc ').page(page,pageSize).countSelect().catch(e => {
                 throw new Error(e)
             });
 
