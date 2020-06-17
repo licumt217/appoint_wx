@@ -80,7 +80,8 @@ module.exports = {
             state: ORDER_STATE.COMMIT,
             create_date: op_date,
             appointment_id: appointment.appointment_id,
-            pay_manner: appointment.pay_manner
+            pay_manner: appointment.pay_manner,
+            room_id:appointment.room_id
         }
 
         return obj;
@@ -179,10 +180,14 @@ module.exports = {
                 'appoint_appointment.appointment_id': appointment_id
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_order.therapist_id`,
+                ` appoint_user as user on user.user_id=appoint_order.user_id`,
+                ` appoint_room as room on room.room_id=appoint_order.room_id`,
                 ` appoint_appointment on appoint_appointment.appointment_id=appoint_order.appointment_id`
             ]).field(
                 `appoint_order.*,
+                room.name as room_name,
             appoint_appointment.period,
+            user.name as user_name,
             therapist.name as therapist_name `,
             ).select()
 
@@ -402,12 +407,11 @@ module.exports = {
         try {
             let op_date = DateUtil.getNowStr()
 
-            updateObj.op_date = op_date
-
             let data = await think.model(tableName).where({
                 order_id
             }).update({
-                state: ORDER_STATE.EXPIRED
+                state: ORDER_STATE.EXPIRED,
+                op_date
             }).catch(e => {
                 throw new Error(e)
             });
@@ -433,12 +437,11 @@ module.exports = {
         try {
             let op_date = DateUtil.getNowStr()
 
-            updateObj.op_date = op_date
-
             let data = await think.model(tableName).where({
                 order_id
             }).update({
-                state: ORDER_STATE.DONE
+                state: ORDER_STATE.DONE,
+                op_date
             }).catch(e => {
                 throw new Error(e)
             });

@@ -430,14 +430,17 @@ module.exports = {
                 'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_user as user on user.user_id=appoint_appointment.user_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
             ]).field(
                 `appoint_appointment.*,
                 room.name as room_name,
+                user.name as user_name,
                     therapist.name as therapist_name`,
             ).order('create_date desc ').select().catch(e => {
                 throw new Error(e)
             });
+
 
             logger.info(`根据咨询师ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
 
@@ -570,10 +573,12 @@ module.exports = {
                 'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
             }).join([
                 ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
+                ` appoint_user as user on user.user_id=appoint_appointment.user_id`,
                 ` appoint_room as room on room.room_id=appoint_appointment.room_id`,
             ]).field(
                 `appoint_appointment.*,
                 room.name as room_name,
+                user.name as user_name,
                     therapist.name as therapist_name`,
             ).order('create_date desc ').select().catch(e => {
                 throw new Error(e)
@@ -585,40 +590,6 @@ module.exports = {
 
         } catch (e) {
             let msg = `根据用户ID获取生效中的预约列表异常 msg:${e}`
-            logger.info(msg);
-            throw new Error(msg)
-        }
-
-
-    },
-
-    /**
-     *根据咨询师ID获取生效中的预约列表
-     * @returns {Promise<{isSuccess, errorMsg}>}
-     */
-    async getListOfUsingByTherapistId(therapist_id) {
-
-        try {
-
-
-            let data = await think.model(tableName).where({
-                'appoint_appointment.therapist_id': therapist_id,
-                'appoint_appointment.state': ['in', [APPOINTMENT_STATE.COMMIT, APPOINTMENT_STATE.AUDITED]],
-            }).join([
-                ` appoint_user as therapist on therapist.user_id=appoint_appointment.therapist_id`,
-            ]).field(
-                `appoint_appointment.*,
-                    therapist.name as therapist_name`,
-            ).order('create_date desc ').select().catch(e => {
-                throw new Error(e)
-            });
-
-            logger.info(`根据咨询师ID获取生效中的预约列表数据库返回：${JSON.stringify(data)}`)
-
-            return data;
-
-        } catch (e) {
-            let msg = `根据咨询师ID获取生效中的预约列表异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
@@ -654,36 +625,6 @@ module.exports = {
 
 
     },
-
-    /**
-     *
-     * @returns {Promise<{isSuccess, errorMsg}>}
-     */
-    async getOrderListByTherapistId(therapist_id, page, pageSize) {
-
-        try {
-
-            let ORDER = think.model(tableName)
-            ORDER._pk = 'order_id'
-            let data = await ORDER.where({
-                therapist_id
-            }).page(page, pageSize).countSelect().catch(e => {
-                throw new Error(e)
-            });
-
-            logger.info(`根据条件查询${entityName}列表：${JSON.stringify(data)}`)
-
-            return data;
-
-        } catch (e) {
-            let msg = `根据条件查询${entityName}列表接口异常 msg:${e}`
-            logger.info(msg);
-            throw new Error(msg)
-        }
-
-
-    },
-
 
     /**
      * 咨询师接受预约，同步生成一条订单记录
@@ -743,7 +684,8 @@ module.exports = {
                     state: ORDER_STATE.COMMIT,
                     create_date: op_date,
                     appointment_id,
-                    pay_manner: appointment.pay_manner
+                    pay_manner: appointment.pay_manner,
+                    room_id
                 }
                 data = await orderCate.add(order).catch(e => {
                     throw new Error(e)
