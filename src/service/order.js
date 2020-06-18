@@ -81,7 +81,8 @@ module.exports = {
             create_date: op_date,
             appointment_id: appointment.appointment_id,
             pay_manner: appointment.pay_manner,
-            room_id:appointment.room_id
+            room_id:appointment.room_id,
+            period:appointment.period,
         }
 
         return obj;
@@ -328,7 +329,12 @@ module.exports = {
                 therapist_id
             }).join([
                 ` appoint_user as user on user.user_id=appoint_order.user_id`,
-            ]).page(page, pageSize).countSelect().catch(e => {
+                ` appoint_room as room on room.room_id=appoint_order.room_id`,
+            ]).field(
+                `appoint_order.*,
+                room.name as room_name,
+            user.* `,
+            ).page(page, pageSize).countSelect().catch(e => {
                 throw new Error(e)
             });
 

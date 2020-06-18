@@ -689,7 +689,8 @@ module.exports = {
                     create_date: op_date,
                     appointment_id,
                     pay_manner: appointment.pay_manner,
-                    room_id
+                    room_id,
+                    period:appointment.period
                 }
                 data = await orderCate.add(order).catch(e => {
                     throw new Error(e)
