@@ -220,6 +220,7 @@ module.exports = class extends Base {
             let manner_type_id = this.post('manner_type_id')
             let qualification_type_id = this.post('qualification_type_id')
             let school_type_id = this.post('school_type_id')
+            let area = this.post('area')
             let gender = this.post('gender')
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
@@ -246,6 +247,10 @@ module.exports = class extends Base {
 
             if (gender) {
                 whereObj.gender = gender;
+            }
+            if (area) {
+                area=area.join(',')
+                whereObj.area = area;
             }
 
 
