@@ -182,6 +182,42 @@ module.exports = class extends Base {
     }
 
     /**
+     * 启用停用伦理公告
+     * @returns {Promise<boolean>}
+     */
+    async onOffAction() {
+        try {
+
+            let ethicsnotice_id = this.post('ethicsnotice_id')
+            let state = this.post('state')
+
+            if (!ethicsnotice_id) {
+                this.body = Response.businessException(`${entityName}ID不能为空！`)
+                return false;
+            }
+
+            let op_date = DateUtil.getNowStr()
+
+            let data = await this.model(tableName).where({
+                ethicsnotice_id
+            }).update({
+                op_date,
+                state
+            });
+
+            logger.info(`启用停用伦理公告，数据库返回：${JSON.stringify(data)}`)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`启用停用伦理公告异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
      * 列表
      * @returns {Promise<boolean>}
      */

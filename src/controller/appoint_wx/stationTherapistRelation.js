@@ -6,7 +6,7 @@ const DateUtil = require('../../util/DateUtil')
 const ROLE = require('../../config/constants/ROLE')
 const Constant = require('../../config/Constant')
 const logger = think.logger;
-
+const ETHICSNOTICE_STATE=require('../../config/constants/ETHICSNOTICE_STATE')
 const entityName = '工作室和咨询师关联'
 const tableName = 'station_therapist_relation'
 const userService = require('../../service/user')
@@ -229,7 +229,7 @@ module.exports = class extends Base {
 
             let data = []
             let whereObj = {
-                role
+                role,
             }
 
             //咨询方式：线上、线下
@@ -268,6 +268,10 @@ module.exports = class extends Base {
                 table: 'therapist_fee_set',
                 join: 'left',
                 as: 'feeset',
+                on: ['therapist_id', 'therapist_id']
+            }).join({
+                table: 'ethicsnotice',
+                join: 'left',
                 on: ['therapist_id', 'therapist_id']
             }).join({
                 table: 'weixin_user',

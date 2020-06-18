@@ -84,6 +84,7 @@ module.exports = class extends Base {
 
     /**
      * 根据openid获取对应的c端用户信息
+     * 判断是否黑名单用户
      * @param code
      * @returns {Promise<void>}
      */
@@ -116,11 +117,13 @@ module.exports = class extends Base {
 
                 logger.info(`根据user_id查询用户信息数据库返回：${JSON.stringify(data)}`)
 
-                if (Util.isEmptyObject(data)) {
-                    this.body = Response.success();
-                    return;
-                }
+                //黑名单判断
 
+                if(true){
+                    logger.info(`当前用户是系统黑名单用户，不允许登录系统！`);
+                    this.body = Response.businessException(`抱歉，您是系统黑名单用户，不允许登录系统`);
+                    return false;
+                }
 
                 const TokenSerivce = this.service('token');
 
