@@ -126,7 +126,7 @@ module.exports = {
                 throw new Error(e)
             });
 
-            logger.info(`根据条件查询${entityName}列表：${JSON.stringify(data)}`)
+            logger.info(`根据条件查询${entityName}列表返回数量：${data.length}`)
 
             return data;
 

@@ -6,6 +6,7 @@ let COMPLAINT_STATE = {
     UNHANDLED: 0,      //未处理
     REJECTED: 1,      //已驳回
     ADD_BLACKLIST: 2,      //已添加黑名单
+    REMOVED: 3,      //已移除黑名单
 };
 
 

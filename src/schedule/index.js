@@ -7,16 +7,17 @@ const ORDER_STATE = require('../config/constants/ORDER_STATE')
 const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
 const PAY_MANNER = require('../config/constants/PAY_MANNER')
 const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
+const ORDER_GENERATED_NEXT = require('../config/constants/ORDER_GENERATED_NEXT')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
-const job='* 44 * * * *';
+const job='1 46 * * * *';
 
 
 const  scheduleCronstyle = async ()=>{
     schedule.scheduleJob(job,async ()=>{
         logger.info(`定时任务开始执行：`)
         await scheduleOrder();
-        await scheduleAppointment();
+        // await scheduleAppointment();
     });
 }
 
@@ -26,7 +27,7 @@ const  scheduleCronstyle = async ()=>{
  */
 const scheduleOrder=async ()=>{
     await handleCommitedOrders();
-    await handlePayedOrders();
+    // await handlePayedOrders();
 }
 
 /**
@@ -46,7 +47,7 @@ const handleCommitedAppointments=async ()=>{
         'state':APPOINTMENT_STATE.COMMIT
     });
 
-    logger.info(`已下单预约:${appointments.length}`)
+    logger.info(`已提交状态预约数:${appointments.length}`)
 
     if(appointments && appointments.length>0){
         for(let i=0;i<appointments.length;i++){
@@ -72,7 +73,7 @@ const handlePayedOrders=async ()=>{
         'appoint_order.state':ORDER_STATE.PAYED
     });
 
-    logger.info(`已支付订单:${orders}`)
+    logger.info(`已支付状态订单数:${orders.length}`)
 
     if(orders && orders.length>0){
         let appointment=await appointmentService.getById(orders[0].appointment_id)
@@ -83,7 +84,7 @@ const handlePayedOrders=async ()=>{
             if(order.pay_manner===PAY_MANNER.BEFORE_SINGLE){
                 let order_date=new Date(order.order_date);
 
-                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
+                if(DateUtil.isOrderExpired(order_date,order.period)){
                     if(appointment.ismulti===APPOINTMENT_MULTI.SINGLE){
                         await orderService.done(order.order_id)
                         await appointmentService.done(order.appointment_id)
@@ -112,7 +113,7 @@ const handlePayedOrders=async ()=>{
  * 1、已下单（待支付）：
  * 1.1 预约前按单支付，超过预约开始时间，状态改为已过期，同时预约改为已完结。
  * 1.2 预约后按单支付，订单结束后下一天，状态改为已过期，同时预约改为已完结。
- * 1.3 预约后按月支付，订单结束后下一天，自动生成下一条订单。
+ * 1.3 预约后按月支付，订单结束后下一天，如果当前单子没有生成过下一周订单，则自动生成下一条订单，且将是否已生成订单字段更新。
  * @returns {Promise<void>}
  */
 const handleCommitedOrders=async ()=>{
@@ -120,7 +121,7 @@ const handleCommitedOrders=async ()=>{
         'appoint_order.state':ORDER_STATE.COMMIT
     });
 
-    logger.info(`已下单订单数:${orders.length}`)
+    logger.info(`已下单状态订单数:${orders.length}`)
 
     if(orders && orders.length>0){
         for(let i=0;i<orders.length;i++){
@@ -143,7 +144,12 @@ const handleCommitedOrders=async ()=>{
                 }
             }else if(order.pay_manner===PAY_MANNER.AFTER_MONTH){
                 let order_date=new Date(order.order_date);
-                if(DateUtil.beforeNowMoreThanOneDay(order_date)){
+                if(DateUtil.beforeNowMoreThanOneDay(order_date) && order.generated_next===ORDER_GENERATED_NEXT.NO){
+                    await orderService.update({
+                        order_id:order.order_id
+                    },{
+                        generated_next:ORDER_GENERATED_NEXT.YES
+                    })
                     await orderService.add(order.appointment_id)
                 }
             }

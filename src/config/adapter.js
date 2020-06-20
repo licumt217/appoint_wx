@@ -117,11 +117,13 @@ exports.logger = {
         handle: Basic,
         appenders: {
             everything: {
-                type: 'file',
+                type: 'dateFile',
+                pattern: 'yyyy-MM-dd',
                 filename: path.join(think.ROOT_PATH, 'logs/app.log')
             },
             emergencies: {
-                type: 'file',
+                type: 'dateFile',
+                pattern: 'yyyy-MM-dd',
                 filename: path.join(think.ROOT_PATH, 'logs/app-error.log')
             },
             'just-errors': {

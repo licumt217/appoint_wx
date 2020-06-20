@@ -8,6 +8,8 @@ const Complaint_STATE = require('../../config/constants/COMPLAINT_STATE')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const orderService = require('../../service/order')
+const complaintService = require('../../service/complaint')
+const blacklistService = require('../../service/blacklist')
 const logger = think.logger;
 
 const entityName = '黑名单'
@@ -33,6 +35,15 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`id不能为空！`)
                 return false;
             }
+
+
+            //同时将对应的投诉的状态改为已移除黑名单
+            let blacklist=await blacklistService.getById(blacklist_id)
+            await complaintService.update({
+                complaint_id:blacklist.complaint_id
+            },{
+                state:Complaint_STATE.REMOVED
+            })
 
             await this.model(tableName).where({
                 blacklist_id

@@ -8,6 +8,7 @@ const md5 = require('md5')
 const logger = think.logger;
 const therapistPeriodSetService = require('../../service/therapistPeriodSet')
 const userService = require('../../service/user')
+const blacklistService = require('../../service/blacklist')
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 module.exports = class extends Base {
 
@@ -119,7 +120,9 @@ module.exports = class extends Base {
 
                 //黑名单判断
 
-                if(true){
+                let isBlacklist=await blacklistService.isBlacklistUser(user_id)
+
+                if(isBlacklist){
                     logger.info(`当前用户是系统黑名单用户，不允许登录系统！`);
                     this.body = Response.businessException(`抱歉，您是系统黑名单用户，不允许登录系统`);
                     return false;

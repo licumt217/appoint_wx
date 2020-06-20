@@ -138,6 +138,29 @@ let DateUtil = {
         now_date.setDate(now_date.getDate()-1)
         //未精确到具体时段。暂时以天计算
         return DateUtil.before(date,now_date);
+    },
+
+    /**
+     * 判断订单是否已过期（订单的最后一个时段已过）
+     * 需要当前日期大于等于订单最后一个时段的日期
+     * @param order_date
+     * @param periodStr
+     * @returns {boolean}
+     */
+    isOrderExpired(order_date_str,periodStr){
+        let periodArray=periodStr.split(',');
+        periodArray=periodArray.map((period)=>{
+            return period*1;
+        })
+        periodArray=periodArray.sort();
+        let maxPeriod=periodArray[periodArray.length-1];
+
+        let order_date=new Date(order_date_str);
+        order_date.setHours(maxPeriod)
+        order_date.setMinutes(50);
+
+        let now_date=new Date();
+        return DateUtil.before(order_date,now_date);
     }
 
 

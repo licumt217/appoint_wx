@@ -268,7 +268,7 @@ module.exports = class extends Base {
                 op_date
             })
 
-            await blacklistService.add(user_id,op_user_id);
+            await blacklistService.add(user_id,op_user_id,complaint_id);
 
             this.body = Response.success(data);
 
