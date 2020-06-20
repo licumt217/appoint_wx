@@ -25,6 +25,8 @@ module.exports = {
         "stationCasemanagerRelation",
         "ethicsnotice",
         "blacklist",
+        "measure",
+        "question",
     ],
     divisionManager: [
         "login",
@@ -46,7 +48,9 @@ module.exports = {
         "appointment",
         "roomPeriodSet",
         "stationCasemanagerRelation",
-        "stationTherapistRelation"
+        "stationTherapistRelation",
+        "measure",
+        "question",
     ],
     caseManager: [
         "login",
@@ -68,7 +72,9 @@ module.exports = {
         "roomPeriodSet",
         "station",
         "stationCasemanagerRelation",
-        "stationTherapistRelation"
+        "stationTherapistRelation",
+        "measure",
+        "question",
     ],
     therapist: [
         "login",
@@ -91,7 +97,9 @@ module.exports = {
         "appointment",
         "roomPeriodSet",
         "stationCasemanagerRelation",
-        "therapistPeriodSet"
+        "therapistPeriodSet",
+        "measure",
+        "question",
     ],
     client: [
         "login",
