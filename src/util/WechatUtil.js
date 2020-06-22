@@ -12,11 +12,7 @@ const EventTypes = require("../weixin/EventTypes")
 const fs = require("fs")
 const path = require("path")
 
-const schedule = require('node-schedule')
-
-let scheduleJob = null;
-
-let scheduleJobOfJsapiTicket = null;
+const wechatSettingService=require('../service/wechatSetting')
 
 const logger = think.logger
 
@@ -28,52 +24,13 @@ let Util = {
      */
     getAccessToken: async () => {
 
-        let token = null;
-
-        //说明执行过此方法，直接文件中获取token
-        if (scheduleJob) {
-
-            token = fs.readFileSync(path.join(__dirname, '../config/access_token'));
-
-        } else {//首次进入，通过接口获取
-
-            token = await Util.realGetAccessToken();
-
-            fs.writeFileSync(path.join(__dirname, '../config/access_token'), token);
-
-            logger.info("-------->access_token写入文件，然后每100分钟刷新token");
-
-            scheduleJob = schedule.scheduleJob('* 30 * * * *', async () => {
-                token = await Util.realGetAccessToken();
-
-                fs.writeFileSync(path.join(__dirname, '../config/access_token'), token);
-            })
-        }
+        let token=await wechatSettingService.getAccessToken();
 
         return token;
 
     },
 
-    /**
-     * 获取token
-     * 基础支持的token
-     * @returns {Promise<any>}
-     */
-    realGetAccessToken: () => {
 
-        return new Promise(((resolve, reject) => {
-            request.get(`${WechatConfig.URL_OF_GET_ACCESS_TOKEN}?grant_type=client_credential&appid=${WechatConfig.APP_ID}&secret=${WechatConfig.SECRET}`, (error, response, body) => {
-                logger.info(`微信获取token回信息 error:${error}， body:${body}， response:${response}`);
-                if (error) {
-                    resolve(null)
-                } else {
-
-                    resolve(JSON.parse(body).access_token)
-                }
-            })
-        }))
-
-    },
 
     /**
      * 获取jsapi_ticket
@@ -81,54 +38,12 @@ let Util = {
      */
     getJsapiTicket: async () => {
 
-        let jsapiTicket = null;
+        let ticket=await wechatSettingService.getJsApiTicket()
 
-        //说明执行过此方法，直接文件中获取token
-        if (scheduleJobOfJsapiTicket) {
-
-            jsapiTicket = fs.readFileSync(path.join(__dirname, '../config/jsapi_ticket'));
-
-        } else {//首次进入，通过接口获取
-
-            jsapiTicket = await Util.realGetJsapiTicket();
-
-            fs.writeFileSync(path.join(__dirname, '../config/jsapi_ticket'), jsapiTicket);
-
-            logger.info("-------->jsapi_ticket写入文件，然后每100分钟刷新jsapi_ticket")
-
-            scheduleJobOfJsapiTicket = schedule.scheduleJob('* 40 * * * *', async () => {
-                jsapiTicket = await Util.realGetJsapiTicket();
-
-                fs.writeFileSync(path.join(__dirname, '../config/jsapi_ticket'), jsapiTicket);
-            })
-        }
-
-        return jsapiTicket;
+        return ticket;
 
     },
 
-    /**
-     * 通过接口获取jsapi_ticket
-     * @returns {Promise<any>}
-     */
-    realGetJsapiTicket: () => {
-
-        return new Promise((async (resolve, reject) => {
-
-            let ACCESS_TOKEN = await Util.getAccessToken();
-
-            request.get(`${WechatConfig.URL_OF_GET_JSAPI_TICKET}?access_token=${ACCESS_TOKEN}&type=jsapi`, (error, response, body) => {
-
-                if (error) {
-                    resolve(null)
-                } else {
-
-                    resolve(JSON.parse(body).ticket)
-                }
-            })
-        }))
-
-    },
 
     /**
      * 校验微信签名
