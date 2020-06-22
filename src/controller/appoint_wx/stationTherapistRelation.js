@@ -158,7 +158,7 @@ module.exports = class extends Base {
     }
 
     /**
-     * 获取没有关联工作室的咨询师列表【目前限制一个咨询师只能关联一个工作室】
+     * 获取没有关联工作室的咨询师列表【目前限制一个咨询师可以被多个工作室关联】
      * 此咨询师必须已设置相关预约设置：收费类型、预约设置等
      * @returns {Promise<boolean>}
      */
@@ -167,11 +167,14 @@ module.exports = class extends Base {
 
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
+            let station_id = this.post('station_id')
 
             logger.info(`获取当前工作室没有关联的咨询师列表参数 :${JSON.stringify(this.post())}`)
 
 
-            let idArray=await this.model(tableName).getField('therapist_id');
+            let idArray=await this.model(tableName).where({station_id}).getField('therapist_id');
+
+            logger.info('idArray:'+JSON.stringify(idArray))
 
             let whereObj={
                 'appoint_user.role': ROLE.therapist
@@ -277,6 +280,10 @@ module.exports = class extends Base {
                 table: 'weixin_user',
                 join: 'inner',
                 on: ['therapist_id', 'user_id']
+            }).join({
+                table: 'station',
+                join: 'left',
+                on: ['station_id', 'station_id']
             }).page(page, pageSize).countSelect();
 
 

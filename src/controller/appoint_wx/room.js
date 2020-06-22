@@ -224,6 +224,8 @@ module.exports = class extends Base {
 
     /**
      * 查询咨询师所在工作室的房间列表
+     * 一个咨询师可能对应多个工作室，工作室ID需要通过参数传过来
+     * 此接口供咨询师调用
      * @returns {Promise<boolean>}
      */
     async listByTherapistNoPageAction() {
@@ -232,18 +234,13 @@ module.exports = class extends Base {
             logger.info(`查询咨询师所在工作室的房间列表参数 :${JSON.stringify(this.post())}`)
 
             //只查询对应工作室下边的
-            let user_id = this.ctx.state.userInfo.user_id;
-            let therapist_id = this.post('therapist_id')
+            let therapist_id = this.ctx.state.userInfo.user_id;
+            let station_id = this.post('station_id')
 
-            if (!therapist_id) {
-                this.body = Response.businessException(`咨询师ID不能为空！`)
+            if (!station_id) {
+                this.body = Response.businessException(`工作室ID不能为空！`)
                 return false;
             }
-
-
-            let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id)
-
-            console.log(user_id, station_id)
 
             let data = await roomService.getListByStationIdNoPage(station_id)
 

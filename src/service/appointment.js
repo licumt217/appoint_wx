@@ -18,10 +18,9 @@ module.exports = {
      *新增预约
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async add(appointment_id, openid, therapist_id, appoint_date, period, ismulti, user_id) {
+    async add(appointment_id, openid, therapist_id, appoint_date, period, ismulti, user_id,station_id) {
 
 
-        let station_id = await stationTherapistRelationService.getStationIdByTherapistId(therapist_id);
         const therapistFeeSet = await therapistFeeSetService.getByTherapistId(therapist_id)
         let create_date = DateUtil.getNowStr()
 

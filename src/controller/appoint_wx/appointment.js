@@ -24,6 +24,7 @@ module.exports = class extends Base {
 
         let openid = this.post('openid')
         let therapist_id = this.post('therapist_id')
+        let station_id = this.post('station_id')
         let appointment_id = Util.uuid()
         let appoint_date = this.post('appoint_date')
         let periodArray = this.post('periodArray')
@@ -43,6 +44,11 @@ module.exports = class extends Base {
             return false;
         }
 
+        if (!station_id) {
+            this.body = Response.businessException(`工作室ID不能为空！`)
+            return false;
+        }
+
         if (!appoint_date) {
             this.body = Response.businessException(`咨询日期不能为空！`)
             return false;
@@ -56,7 +62,7 @@ module.exports = class extends Base {
         try {
 
 
-            await appointmentService.add(appointment_id,openid,therapist_id,appoint_date,periodArray,ismulti,user_id);
+            await appointmentService.add(appointment_id,openid,therapist_id,appoint_date,periodArray,ismulti,user_id,station_id);
 
             //给咨询师发送模板消息，通知他审核
 
