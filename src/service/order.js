@@ -83,6 +83,7 @@ module.exports = {
             pay_manner: appointment.pay_manner,
             room_id:appointment.room_id,
             period:appointment.period,
+            function_level:appointment.function_level
         }
 
         return obj;

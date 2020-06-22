@@ -10,6 +10,7 @@ const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
 const orderService = require('../../service/order')
+const payRecordService = require('../../service/payRecord')
 const pushService = require('../../service/push')
 
 const logger = think.logger
@@ -92,6 +93,44 @@ module.exports = class extends Base {
     }
 
     /**
+     * 订单线下支付
+     * @returns {Promise<void>}
+     */
+    async offlinePayAction() {
+
+        try {
+
+            logger.info(`订单线下支付参数 ${JSON.stringify(this.post())}`);
+
+            let order_id = this.post('order_id')
+
+            if (!order_id) {
+                this.body = Response.businessException(`订单ID不能为空！`)
+                return false;
+            }
+
+            let order = await orderService.getOne({order_id});
+
+            let op_date=DateUtil.getNowStr()
+
+            await orderService.update({order_id},{
+                op_date,
+                state:ORDER_STATE.PAYED
+            })
+
+            await payRecordService.addOfflinePayRecord(order.openid,order.amount)
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`订单线下支付接口异常 msg:${e}`);
+            this.body = Response.businessException(e.message);
+        }
+
+
+    }
+
+    /**
      * 微信多订单批量支付
      * @returns {Promise<void>}
      */
@@ -139,6 +178,51 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`微信多订单批量支付异常 msg:${e}`);
+            this.body = Response.businessException(e.message);
+        }
+
+
+    }
+
+    /**
+     * 多订单线下批量支付
+     * @returns {Promise<void>}
+     */
+    async offlineBatchPayAction() {
+
+        try {
+
+            logger.info(`多订单线下批量支付参数 ${JSON.stringify(this.post())}`);
+
+            let order_id_array = this.post('order_id_array')
+
+            if (!order_id_array || order_id_array.length===0) {
+                this.body = Response.businessException(`订单不能为空！`)
+                return false;
+            }
+
+            let order_array = await orderService.getListByOrderIdArray(order_id_array);
+
+            let allAmount=0;
+            order_array.forEach(order=>{
+                allAmount+=order.amount;
+            })
+            allAmount=allAmount.toFixed(2);
+
+            let op_date=DateUtil.getNowStr()
+
+            await orderService.updateByOrderIdArray(order_id_array, {
+                op_date,
+                state:ORDER_STATE.PAYED
+            })
+
+
+            await payRecordService.addOfflinePayRecord(order_array[0].openid,allAmount)
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`多订单线下批量支付异常 msg:${e}`);
             this.body = Response.businessException(e.message);
         }
 

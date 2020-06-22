@@ -9,6 +9,7 @@ const tableName = 'appointment'
 const roomPeriodSetService = require('./roomPeriodSet');
 const stationTherapistRelationService = require('./stationTherapistRelation');
 const therapistFeeSetService = require('./therapistFeeSet');
+const divisionService = require('./division');
 const roomService = require('./room');
 
 module.exports = {
@@ -21,6 +22,7 @@ module.exports = {
     async add(appointment_id, openid, therapist_id, appoint_date, period, ismulti, user_id,station_id) {
 
 
+        let division=await divisionService.getByStationId(station_id)
         const therapistFeeSet = await therapistFeeSetService.getByTherapistId(therapist_id)
         let create_date = DateUtil.getNowStr()
 
@@ -40,7 +42,8 @@ module.exports = {
             user_id,
             amount: therapistFeeSet.fee,
             station_id,
-            fee_type: therapistFeeSet.fee_type
+            fee_type: therapistFeeSet.fee_type,
+            function_level:division.function_level
         }
 
         logger.info(`新增预约参数：${JSON.stringify(appointment)}`)
@@ -689,7 +692,8 @@ module.exports = {
                     appointment_id,
                     pay_manner: appointment.pay_manner,
                     room_id,
-                    period:appointment.period
+                    period:appointment.period,
+                    function_level: appointment.function_level
                 }
                 data = await orderCate.add(order).catch(e => {
                     throw new Error(e)

@@ -4,6 +4,7 @@ const Response = require('../../config/response')
 const Page = require('../../config/constants/PAGE')
 const Util = require('../../util/Util')
 const APPOINTMENT_STATE = require('../../config/constants/APPOINTMENT_STATE')
+const USE_ROOM = require('../../config/constants/USE_ROOM')
 const orderService = require('../../service/order')
 const appointmentService =  require('../../service/appointment');
 const userService =  require('../../service/user');
@@ -171,6 +172,7 @@ module.exports = class extends Base {
             let assign_room_type = this.post('assign_room_type')
             let room_id = this.post('room_id')
             let pay_manner = this.post('pay_manner')
+            let use_room = this.post('use_room')
 
             if (!appointment_id) {
                 this.body = Response.businessException(`预约ID不能为空！`)
@@ -190,24 +192,32 @@ module.exports = class extends Base {
                 return false;
             }
 
-            //判断是否可分配有效房间
-            if(assign_room_type===0){//自动分配
-                room_id=await appointmentService.autoAssignRoomId(appointment_id);
+            let address=``
+            if(use_room===USE_ROOM.YES){
+                //判断是否可分配有效房间
+                if(assign_room_type===0){//自动分配
+                    room_id=await appointmentService.autoAssignRoomId(appointment_id);
 
-                if (!room_id) {
-                    this.body = Response.businessException(`无可用房间！`)
-                    return false;
+                    if (!room_id) {
+                        this.body = Response.businessException(`无可用房间！`)
+                        return false;
+                    }
+                }else{
+                    if (!room_id) {
+                        this.body = Response.businessException(`房间ID不能为空！`)
+                        return false;
+                    }
                 }
+                let room=await roomService.getById(room_id)
+                address=room.name;
             }else{
-                if (!room_id) {
-                    this.body = Response.businessException(`房间ID不能为空！`)
-                    return false;
-                }
+                address=`不使用房间`
+                room_id='';
             }
 
-            await appointmentService.accept(appointment_id,room_id,pay_manner)
 
-            let room=await roomService.getById(room_id)
+
+            await appointmentService.accept(appointment_id,room_id,pay_manner)
 
             let url = Util.getAuthUrl(`http://www.zhuancaiqian.com/appointmobile/appoint/myAppoint`)
 
@@ -216,7 +226,7 @@ module.exports = class extends Base {
             await pushService.sendAppointmentSuccess(appointment.openid, url,{
                 content:`心理咨询`,
                 date:appointment.appoint_date,
-                address:room.name,
+                address
             });
 
             this.body = Response.success();

@@ -7,6 +7,7 @@ const logger = think.logger;
 
 const entityName='分部'
 const tableName='division'
+const divisionService = require('../../service/division')
 
 
 module.exports = class extends Base {
@@ -154,6 +155,52 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`获取${entityName}列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 根据工作室和咨询师关系ID获取对应的分部
+     * @returns {Promise<boolean>}
+     */
+    async getByStationTherapistRelationIdAction() {
+        try {
+
+            logger.info(`根据工作室和咨询师关系ID获取对应的分部参数：${JSON.stringify(this.post())} `)
+
+            let station_therapist_relation_id = this.post('station_therapist_relation_id')
+
+            let data = await divisionService.getByStationTherapistRelationId(station_therapist_relation_id)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`根据工作室和咨询师关系ID获取对应的分部异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
+
+    /**
+     * 根据工作室ID获取对应的分部
+     * @returns {Promise<boolean>}
+     */
+    async getByStationIdAction() {
+        try {
+
+            logger.info(`根据工作室ID获取对应的分部参数：${JSON.stringify(this.post())} `)
+
+            let station_id = this.post('station_id')
+
+            let data = await divisionService.getByStationId(station_id)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            logger.info(`根据工作室ID获取对应的分部异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

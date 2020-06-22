@@ -81,6 +81,9 @@ module.exports = class extends Base {
 
                 logger.info("添加支付记录")
 
+
+                let op_date=DateUtil.getNowStr()
+
                 //在支付记录表添加一条支付记录
                 await this.model('pay_record').add({
                     pay_record_id:Util.uuid(),
@@ -94,7 +97,8 @@ module.exports = class extends Base {
                     mch_id: data.mch_id,
                     is_subscribe: data.is_subscribe,
                     appid: data.appid,
-                    trade_type: data.trade_type
+                    trade_type: data.trade_type,
+                    op_date
                 })
 
                 this.body = returnData
