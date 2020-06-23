@@ -54,6 +54,12 @@ module.exports = class extends Base {
      */
     async payNotifyUrlAction() {
 
+        this.handlePayNotifyCommon(this.post())
+
+
+    }
+
+    async handlePayNotifyCommon(params,isServiceMerchantModel){
         try {
 
             let returnData = Util.obj2xml({
@@ -61,13 +67,11 @@ module.exports = class extends Base {
                 return_msg: "OK"
             })
 
-            const params = this.post();
+            logger.info(`服务商模式异步接收微信支付结果通知参数：${JSON.stringify(params)}`)
 
-            logger.info(`异步接收微信支付结果通知参数：${JSON.stringify(params)}`)
+            let flag = WechatUtil.checkWechatMessageSignature(params.xml,isServiceMerchantModel)
 
-            let flag = WechatUtil.checkWechatMessageSignature(params.xml)
-
-            logger.info(`异步接收微信支付结果通知验证签名结果：${flag}`)
+            logger.info(`服务商模式异步接收微信支付结果通知验证签名结果：${flag}`)
 
             if (flag) {
 
@@ -85,6 +89,7 @@ module.exports = class extends Base {
                 let op_date=DateUtil.getNowStr()
 
                 //在支付记录表添加一条支付记录
+                //sub_mch_id? //TODO
                 await this.model('pay_record').add({
                     pay_record_id:Util.uuid(),
                     bank_type: data.bank_type,
@@ -111,8 +116,17 @@ module.exports = class extends Base {
             }
 
         } catch (e) {
-            logger.info(`异步接收微信支付结果通知异常：${e}`)
+            logger.info(`服务商模式异步接收微信支付结果通知异常：${e}`)
         }
+    }
+
+    /**
+     * 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。[服务商模式]
+     * @returns {Promise<void>}
+     */
+    async payNotifyUrlOfSmmAction() {
+
+        this.handlePayNotifyCommon(this.post(),true)
 
 
     }
@@ -124,18 +138,27 @@ module.exports = class extends Base {
      */
     async refundNotifyUrlAction() {
 
+        this.handleRefundNotifyCommon(this.post(),this.post('xml'))
+
+
+
+
+
+    }
+
+    async handleRefundNotifyCommon(params,xml,isServiceMerchantModel){
         try{
-            let return_code = this.post('xml').return_code[0]
+            let return_code = xml.return_code[0]
 
 
-            logger.info("退款通知内容：" + JSON.stringify(this.post()))
+            logger.info("退款通知内容：" + JSON.stringify(params))
 
 
             if (return_code === "SUCCESS") {
 
-                let req_info = this.post('xml').req_info[0]
+                let req_info = xml.req_info[0]
 
-                const data = WechatUtil.decryptRefundNotifyParam(req_info);
+                const data = WechatUtil.decryptRefundNotifyParam(req_info,isServiceMerchantModel);
 
                 logger.info("解密出来的内容：" + JSON.stringify(data))
 
@@ -186,6 +209,16 @@ module.exports = class extends Base {
                 return_msg: ""
             });
         }
+    }
+
+    /**
+     * 异步接收微信退款结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。[服务商模式]
+     * 退款结果对重要的数据进行了加密，商户需要用商户秘钥进行解密后才能获得结果通知的内容
+     * @returns {Promise<void>}
+     */
+    async refundNotifyUrlOfSmmAction() {
+
+        this.handleRefundNotifyCommon(this.post(),this.post('xml'),true)
 
 
 

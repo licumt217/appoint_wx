@@ -5,10 +5,23 @@ module.exports={
     SECRET:"9baa2dca71483cb0c268d2d332d20219",
 
     /**
+     * 普通商户ID
+     */
+    MCH_ID:"1545814681",
+
+    /**
+     * 服务商模式下的商户ID
+     */
+    MCH_ID_OF_SERVICE_MERCHANT:"1573357691",
+
+    /**
      * 商户平台秘钥key
      */
-    KEY:"klmxue202ad35ei93xnmqb3148ypc247",
-    // KEY:"xinhangtuadmin007xinhangtuadmin0",
+    KEY:"xinhangtuadmin007xinhangtuadmin0",
+    /**
+     * 服务商模式下的KEY
+     */
+    SERVICE_MERCHANT_KEY:"klmxue202ad35ei93xnmqb3148ypc247",
 
     /**
      * 接口调用token
@@ -77,9 +90,22 @@ module.exports={
     URL_OF_NOTIFY_URL:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/payNotifyUrl",
 
     /**
+     * 微信支付通知URL(服务商模式)
+     * Smm:ServiceMerchantModel
+     * 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+     */
+    URL_OF_NOTIFY_URL_OF_SMM:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/payNotifyUrlOfSmm",
+
+    /**
      * 退款通知URL
      */
     URL_OF_REFUND_NOTIFY_URL:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/refundNotifyUrl",
+
+    /**
+     * 退款通知URL(服务商模式)
+     * Smm:ServiceMerchantModel
+     */
+    URL_OF_REFUND_NOTIFY_URL_OF_SMM:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/refundNotifyUrlOfSMM",
 
 
 

@@ -12,6 +12,7 @@ const moment = require('moment')
 const orderService = require('../../service/order')
 const payRecordService = require('../../service/payRecord')
 const pushService = require('../../service/push')
+const divisionService = require('../../service/division')
 
 const logger = think.logger
 
@@ -62,9 +63,11 @@ module.exports = class extends Base {
 
             let order = await orderService.getOne({order_id});
 
+            //先确认是普通支付还是服务商支付
+            let division=await divisionService.getByOrderId(order_id)
             let out_trade_no=Util.uuid();
 
-            let prepay_id = await WechatUtil.unifiedOrder(order.openid, out_trade_no, order.amount, this.ip).catch(error => {
+            let prepay_id = await WechatUtil.unifiedOrder(division,order.openid, out_trade_no, order.amount, this.ip).catch(error => {
                 this.body = Response.businessException(error);
                 return false;
             })
@@ -76,7 +79,7 @@ module.exports = class extends Base {
                 prepay_id,
             })
 
-            let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
+            let paySign = await WechatUtil.getJsApiPaySign(division,prepay_id)
 
             logger.info(`微信支付接口返回前端参数 paySign:${JSON.stringify(paySign)}`);
 
@@ -156,7 +159,10 @@ module.exports = class extends Base {
             })
             allAmount=allAmount.toFixed(2);
 
-            let prepay_id = await WechatUtil.unifiedOrder(order_array[0].openid, out_trade_no, allAmount, this.ip).catch(error => {
+            //先确认是普通支付还是服务商支付
+            let division=await divisionService.getByOrderId(order_array[0].order_id)
+
+            let prepay_id = await WechatUtil.unifiedOrder(division,order_array[0].openid, out_trade_no, allAmount, this.ip).catch(error => {
                 this.body = Response.businessException(error);
                 return false;
             })
@@ -168,7 +174,7 @@ module.exports = class extends Base {
                 out_trade_no
             })
 
-            let paySign = await WechatUtil.getJsApiPaySign(prepay_id)
+            let paySign = await WechatUtil.getJsApiPaySign(division,prepay_id)
 
             logger.info(`微信多订单批量支付返回前端参数 paySign:${JSON.stringify(paySign)}`);
 

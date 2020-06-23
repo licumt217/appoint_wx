@@ -85,6 +85,46 @@ module.exports = {
 
     },
 
+    /**
+     * 根据订单id获取分部详情
+     * @param division_id
+     * @returns {Promise<any>}
+     */
+    async getByOrderId(order_id) {
+
+
+        try {
+
+            let data = await think.model(tableName).where({
+                'appoint_order.order_id':order_id
+            }).join({
+                table:'station',
+                join:'inner',
+                on:['division_id','division_id'],
+            }).join({
+                table:'appointment',
+                join:'inner',
+                on:['station_id','station_id'],
+            }).join({
+                table:'order',
+                join:'inner',
+                on:['appointment_id','appointment_id'],
+            }).find().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据订单id获取分部详情，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `根据订单id获取分部详情异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
 
 };
