@@ -8,6 +8,7 @@ const DateUtil = require('../../util/DateUtil')
 const SignUtil = require('../../util/SignUtil')
 const Response = require('../../config/response')
 const orderService = require('../../service/order')
+const payRecordService = require('../../service/payRecord')
 const logger = think.logger;
 
 
@@ -67,13 +68,14 @@ module.exports = class extends Base {
                 return_msg: "OK"
             })
 
-            logger.info(`服务商模式异步接收微信支付结果通知参数：${JSON.stringify(params)}`)
+            logger.info(`异步接收微信支付结果通知参数：${JSON.stringify(params)}，是否服务商：${!!isServiceMerchantModel}`)
 
             let flag = WechatUtil.checkWechatMessageSignature(params.xml,isServiceMerchantModel)
 
-            logger.info(`服务商模式异步接收微信支付结果通知验证签名结果：${flag}`)
+            logger.info(`异步接收微信支付结果通知验证签名结果：${flag}`)
 
             if (flag) {
+                this.body = returnData
 
                 let data = params.xml;
 
@@ -85,28 +87,27 @@ module.exports = class extends Base {
 
                 logger.info("添加支付记录")
 
+                let payRecord=await payRecordService.getByOutTradeNo(out_trade_no)
+                if(Util.isEmptyObject(payRecord)){
+                    let op_date=DateUtil.getNowStr()
 
-                let op_date=DateUtil.getNowStr()
-
-                //在支付记录表添加一条支付记录
-                //sub_mch_id? //TODO
-                await this.model('pay_record').add({
-                    pay_record_id:Util.uuid(),
-                    bank_type: data.bank_type,
-                    cash_fee: Number(data.cash_fee) / 100,
-                    openid: data.openid,
-                    out_trade_no: data.out_trade_no,
-                    time_end: data.time_end,
-                    total_fee: Number(data.total_fee) / 100,
-                    transaction_id: data.transaction_id,
-                    mch_id: data.mch_id,
-                    is_subscribe: data.is_subscribe,
-                    appid: data.appid,
-                    trade_type: data.trade_type,
-                    op_date
-                })
-
-                this.body = returnData
+                    //在支付记录表添加一条支付记录
+                    await this.model('pay_record').add({
+                        pay_record_id:Util.uuid(),
+                        bank_type: data.bank_type,
+                        cash_fee: Number(data.cash_fee) / 100,
+                        openid: data.openid,
+                        out_trade_no: data.out_trade_no,
+                        time_end: data.time_end,
+                        total_fee: Number(data.total_fee) / 100,
+                        transaction_id: data.transaction_id,
+                        mch_id: data.mch_id,
+                        is_subscribe: data.is_subscribe,
+                        appid: data.appid,
+                        trade_type: data.trade_type,
+                        op_date
+                    })
+                }
 
             } else {
 
@@ -116,7 +117,7 @@ module.exports = class extends Base {
             }
 
         } catch (e) {
-            logger.info(`服务商模式异步接收微信支付结果通知异常：${e}`)
+            logger.info(`异步接收微信支付结果通知异常：${e}`)
         }
     }
 
@@ -156,45 +157,52 @@ module.exports = class extends Base {
 
             if (return_code === "SUCCESS") {
 
+
                 let req_info = xml.req_info[0]
 
                 const data = WechatUtil.decryptRefundNotifyParam(req_info,isServiceMerchantModel);
 
                 logger.info("解密出来的内容：" + JSON.stringify(data))
 
-                //如果库里已经记录过了，则直接返回成功
-
-                let record = await this.model('refund_record').where({
-                    transaction_id:data.transaction_id
-                }).find()
-
-                if(Util.isEmptyObject(record)){
-                    //验证参数后，在退款记录表添加一条记录
-                    let refund_record_id=await this.model('refund_record').add({
-                        refund_record_id:Util.uuid(),
-                        out_refund_no:data.out_refund_no,
-                        out_trade_no:data.out_trade_no,
-                        refund_account:data.refund_account,
-                        refund_fee:Number(data.refund_fee)/100,
-                        refund_id:data.refund_id,
-                        refund_recv_accout:data.refund_recv_accout,
-                        refund_request_source:data.refund_request_source,
-                        refund_status:data.refund_status,
-                        settlement_refund_fee:Number(data.settlement_refund_fee)/100,
-                        settlement_total_fee:Number(data.settlement_total_fee)/100,
-                        success_time:data.success_time,
-                        total_fee:Number(data.total_fee)/100,
-                        transaction_id:data.transaction_id,
-                    })
-                    logger.info(`添加退款记录成功，refund_record_id:${refund_record_id}`)
-                }else{
-                    logger.info(`退款记录已存在，直接返回成功`)
-                }
-
                 this.body = Util.obj2xml({
                     return_code: "SUCCESS",
                     return_msg: "OK"
                 });
+
+                //如果库里已经记录过了，则直接返回成功
+
+                let record = await this.model('refund_record').where({
+                    out_refund_no:data.out_refund_no
+                }).find()
+
+                //验证参数后，更新退款记录
+                await this.model('refund_record').where({
+                    out_refund_no:data.out_refund_no
+                }).update({
+                    out_refund_no:data.out_refund_no,
+                    out_trade_no:data.out_trade_no,
+                    refund_account:data.refund_account,
+                    refund_fee:Number(data.refund_fee)/100,
+                    refund_id:data.refund_id,
+                    refund_recv_accout:data.refund_recv_accout,
+                    refund_request_source:data.refund_request_source,
+                    refund_status:data.refund_status,
+                    settlement_refund_fee:Number(data.settlement_refund_fee)/100,
+                    settlement_total_fee:Number(data.settlement_total_fee)/100,
+                    success_time:data.success_time,
+                    total_fee:Number(data.total_fee)/100,
+                    transaction_id:data.transaction_id,
+                })
+                logger.info(`退款记录更新成功`)
+
+                //将订单状态改为已退款
+                await orderService.update({
+                    order_id:record.order_id
+                },{
+
+                    state:ORDER_STATE.UNFUNDED
+                })
+
             } else {
 
                 this.body = Util.obj2xml({
@@ -226,24 +234,6 @@ module.exports = class extends Base {
 
     }
 
-
-    /**
-     * 退款
-     * @returns {Promise<void>}
-     */
-    async refundAction() {
-
-        let out_trade_no = this.post('out_trade_no')
-        let out_refund_no = this.post('out_refund_no')
-        let total_fee = Number(this.post('total_fee')) * 100
-        let refund_fee = Number(this.post('refund_fee')) * 100
-        let notify_url = this.post('notify_url')
-
-        let data = await WechatUtil.refund(out_trade_no, total_fee, refund_fee);
-
-        this.body = Response.success(data);
-
-    }
 
     /**
      * 查询退款
@@ -290,6 +280,7 @@ module.exports = class extends Base {
 
     /**
      * 前端调用微信jssdk 时要用到的签名
+     * 例如分享朋友圈等，暂时没有使用
      * @returns {Promise<void>}
      */
     async getJsSdkSignatureAction() {

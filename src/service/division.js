@@ -95,27 +95,31 @@ module.exports = {
 
         try {
 
-            let data = await think.model(tableName).where({
+            let data=await await think.model(`order`).where({
                 'appoint_order.order_id':order_id
-            }).join({
-                table:'station',
-                join:'inner',
-                on:['division_id','division_id'],
             }).join({
                 table:'appointment',
                 join:'inner',
-                on:['station_id','station_id'],
-            }).join({
-                table:'order',
-                join:'inner',
-                on:['appointment_id','appointment_id'],
+                on:['appointment_id','appointment_id']
             }).find().catch(e => {
                 throw new Error(e)
             });
 
-            logger.info(`根据订单id获取分部详情，数据库返回：${data}`)
+            let station_id=data.station_id
 
-            return data
+            let division = await think.model(`station`).where({
+                'appoint_station.station_id':station_id
+            }).join({
+                table:'division',
+                join:'inner',
+                on:['division_id','division_id'],
+            }).find().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据订单id获取分部详情，数据库返回：${division}`)
+
+            return division
         } catch (e) {
             let msg = `根据订单id获取分部详情异常 msg:${e}`
             logger.info(msg);

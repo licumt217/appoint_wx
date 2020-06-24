@@ -6,6 +6,8 @@ const Util = require('../../util/Util')
 const Page = require('../../config/constants/PAGE')
 const WechatUtil = require('../../util/WechatUtil')
 const ORDER_STATE = require('../../config/constants/ORDER_STATE')
+const FUNCTION_LEVEL = require('../../config/constants/FUNCTION_LEVEL')
+const ROLE = require('../../config/constants/ROLE')
 const DateUtil = require('../../util/DateUtil')
 const WechatTemplates = require('../../config/WechatTemplates')
 const moment = require('moment')
@@ -68,8 +70,7 @@ module.exports = class extends Base {
             let out_trade_no=Util.uuid();
 
             let prepay_id = await WechatUtil.unifiedOrder(division,order.openid, out_trade_no, order.amount, this.ip).catch(error => {
-                this.body = Response.businessException(error);
-                return false;
+                throw new Error(error)
             })
 
             logger.info(`prepay_id ${prepay_id}`);
@@ -163,8 +164,7 @@ module.exports = class extends Base {
             let division=await divisionService.getByOrderId(order_array[0].order_id)
 
             let prepay_id = await WechatUtil.unifiedOrder(division,order_array[0].openid, out_trade_no, allAmount, this.ip).catch(error => {
-                this.body = Response.businessException(error);
-                return false;
+                throw new Error(error)
             })
 
             logger.info(`prepay_id ${prepay_id}`);
@@ -293,6 +293,40 @@ module.exports = class extends Base {
 
 
     }
+    /**
+     * 获取分部对应的订单列表
+     * @returns {Promise<void>}
+     */
+    async getOrderListByDivisionAdminIdAction() {
+
+        let role = this.ctx.state.userInfo.role;
+        let user_id = this.ctx.state.userInfo.user_id;
+
+        let page = this.post('page') || Page.currentPage
+        let pageSize = this.post('pageSize') || Page.pageSize
+
+        logger.info(`获取分部对应的订单列表参数 :${JSON.stringify(this.post())}`);
+
+        if(role!==ROLE.divisionManager){
+            this.body = Response.businessException(`您没有权限！`)
+            return false;
+        }
+
+        try {
+
+            let orders = await orderService.getOrderListByDivisionAdminId(user_id, page, pageSize)
+
+            logger.info(`获取咨询师对应的订单列表参数数据库返回 orders:${JSON.stringify(orders)}`);
+
+            this.body = Response.success(orders);
+
+        } catch (e) {
+            logger.info(`获取咨询师对应的订单列表异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+
+    }
 
     /**
      * 查询咨询师收益列表
@@ -397,6 +431,68 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`取消订单接口异常 msg:${e}`);
+            this.body = Response.businessException(e);
+        }
+
+    }
+
+    /**
+     * 订单退款
+     * 暂定只有分部管理员可以退款
+     * @returns {Promise<void>}
+     */
+    async refundAction() {
+
+        let order_id = this.post('order_id')
+
+        logger.info(`订单退款参数 ${JSON.stringify(this.post())}`);
+
+        try {
+
+            if (!order_id) {
+                this.body = Response.businessException('订单ID不能为空');
+                return;
+            }
+
+            let role = this.ctx.state.userInfo.role;
+
+            if (role!==ROLE.divisionManager) {
+                this.body = Response.businessException('您没有权限！');
+                return;
+            }
+
+            let order = await orderService.getOne({order_id})
+
+            if (Util.isEmptyObject(order)) {
+                let msg=`订单不存在`
+                logger.info(msg);
+                this.body = Response.businessException(msg);
+                return false;
+
+            }
+
+            if (order.state!==ORDER_STATE.PAYED && order.state!==ORDER_STATE.DONE && order.state!==ORDER_STATE.REFUNDING ) {
+                this.body = Response.businessException('该订单未支付，不能退款！');
+                return;
+            }
+
+            if (order.state===ORDER_STATE.REFUNDING ) {
+                this.body = Response.businessException('该订单正在退款中，请勿重复退款！');
+                return;
+            }
+
+
+            if (order.function_level!==FUNCTION_LEVEL.ONLINEPAY ) {
+                this.body = Response.businessException('现金支付的订单不能退款！');
+                return;
+            }
+
+            await orderService.refund(order_id)
+
+            this.body = Response.success();
+
+        } catch (e) {
+            logger.info(`订单退款接口异常 msg:${e}`);
             this.body = Response.businessException(e);
         }
 

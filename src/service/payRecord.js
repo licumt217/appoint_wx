@@ -41,6 +41,33 @@ module.exports = {
 
     },
 
+    /**
+     * 根据out_trade_no获取支付记录
+     * @param out_trade_no
+     * @returns {Promise<number>}
+     */
+    async getByOutTradeNo(out_trade_no) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                out_trade_no
+            }).find().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据out_trade_no获取支付记录，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg='根据out_trade_no获取支付记录异常'
+            logger.info(`${msg},msg:${e}`);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
 
 };

@@ -10,6 +10,7 @@ let ORDER_STATE = {
     EXPIRED: 3,     //已过期
     CANCELED: 4,     //已取消
     DONE: 5,     //已完结
+    REFUNDING: 6,     //退款中
 
 
 };

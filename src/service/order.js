@@ -5,6 +5,10 @@ const logger = think.logger
 const entityName = '订单'
 const tableName = 'order'
 const appointmentService = require('../service/appointment')
+const payRecordService = require('../service/payRecord')
+const divisionService = require('../service/division')
+const divisionAdminRelationService = require('../service/divisionAdminRelation')
+const stationService = require('../service/station')
 const ORDER_STATE = require('../config/constants/ORDER_STATE')
 const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
 const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
@@ -353,6 +357,53 @@ module.exports = {
     },
 
     /**
+     *获取分部对应的订单列表
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async getOrderListByDivisionAdminId(division_admin_id, page, pageSize) {
+
+        try {
+
+            let division_id=await divisionAdminRelationService.getDivisionIdByAdminId(division_admin_id)
+
+            let stationIdArray=await stationService.getStationIdArrayByDivisionId(division_id)
+
+            let data = await think.model(tableName).where({
+                'appoint_appointment.station_id':['in',stationIdArray]
+            }).join({
+                table:'appointment',
+                join:'inner',
+                on:['appointment_id','appointment_id']
+            }).join({
+                table:'user',
+                join:'inner',
+                on:['user_id','user_id']
+            }).join({
+                table:'room',
+                join:'inner',
+                on:['room_id','room_id']
+            }).field(
+                `appoint_order.*,
+                appoint_room.name as room_name,
+            appoint_user.* `,
+            ).page(page, pageSize).countSelect().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`获取分部对应的订单列表数据库返回：${JSON.stringify(data)}`)
+
+            return data;
+
+        } catch (e) {
+            let msg = `获取分部对应的订单列表接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
      * 根据订单id数组更新数据
      * @param order_id_array
      * @param updateObj
@@ -530,11 +581,31 @@ module.exports = {
 
     },
 
-    async refund(order_id, total_amount, refund_amount) {
+    /**
+     * 订单退款
+     * //TODO 需要使用事务
+     * @param order_id
+     * @returns {Promise<void>}
+     */
+    async refund(order_id) {
 
         try {
 
-            await WechatUtil.refund(order_id, total_amount, refund_amount).catch((e) => {
+            let order=await this.getOne({order_id})
+
+            let payRecord=await payRecordService.getByOutTradeNo(order.out_trade_no)
+
+
+            let op_date=DateUtil.getNowStr()
+            await this.update({
+                order_id
+            },{
+                state:ORDER_STATE.REFUNDING,
+                op_date
+            });
+
+            let division=await divisionService.getByOrderId(order_id)
+            await WechatUtil.refund(division,order.out_trade_no, payRecord.total_fee, order.amount,order.order_id).catch((e) => {
                 throw new Error(e)
             })
 
