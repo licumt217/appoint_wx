@@ -36,6 +36,34 @@ module.exports = {
 
     },
 
+    /**
+     * 根据订单iD查询退款记录详情
+     * 暂时不支持单个订单部分退款
+     * @param order_id
+     * @returns {Promise<number>}
+     */
+    async getByOrderId(order_id) {
+
+        try {
+
+            let data = await think.model(tableName).where({
+                order_id
+            }).find().catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`根据订单iD查询退款记录详情，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `根据订单iD查询退款记录详情 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
 
 

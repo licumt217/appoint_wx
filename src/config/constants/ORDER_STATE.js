@@ -11,6 +11,7 @@ let ORDER_STATE = {
     CANCELED: 4,     //已取消
     DONE: 5,     //已完结
     REFUNDING: 6,     //退款中
+    PAYING: 7,     //支付中
 
 
 };

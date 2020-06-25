@@ -2,15 +2,21 @@ const schedule = require('node-schedule');
 
 const orderService = require('../service/order');
 const appointmentService = require('../service/appointment');
+const refundRecordService = require('../service/refundRecord');
+const payRecordService = require('../service/payRecord');
+const divisionService = require('../service/division');
+const Util = require('../util/Util');
+const WechatUtil = require('../util/WechatUtil');
 
 const ORDER_STATE = require('../config/constants/ORDER_STATE')
+const TRADE_STATE = require('../config/constants/TRADE_STATE')
 const APPOINTMENT_STATE = require('../config/constants/APPOINTMENT_STATE')
 const PAY_MANNER = require('../config/constants/PAY_MANNER')
 const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
 const ORDER_GENERATED_NEXT = require('../config/constants/ORDER_GENERATED_NEXT')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
-const job = '1 1 * * * *';
+const job = '1 32 * * * *';
 
 
 const scheduleCronstyle = async () => {
@@ -18,6 +24,8 @@ const scheduleCronstyle = async () => {
         logger.info(`定时任务开始执行：`)
         await scheduleOrder();
         await scheduleAppointment();
+        await scheduleRefundQuery()
+        await schedulePayingQuery()
     });
 }
 
@@ -28,6 +36,116 @@ const scheduleCronstyle = async () => {
 const scheduleOrder = async () => {
     await handleCommitedOrders();
     await handlePayedOrders();
+}
+
+/**
+ *退款查询
+ * 定时查询退款中的订单，防止有些退款通知没有接收到的问题
+ */
+const scheduleRefundQuery = async () => {
+    let orders = await orderService.getList({
+        'appoint_order.state': ORDER_STATE.REFUNDING
+    });
+
+    logger.info(`退款中状态订单数:${orders.length}`)
+
+    if (orders && orders.length > 0) {
+        for (let i = 0; i < orders.length; i++) {
+            let order = orders[i]
+            let division=await divisionService.getByOrderId(order.order_id)
+            let refundRecord=await refundRecordService.getByOrderId(order.order_id)
+            WechatUtil.refundQuery(division,refundRecord.out_refund_no).then(async data=>{
+
+                //验证参数后，更新退款记录
+                await think.model('refund_record').where({
+                    out_refund_no:refundRecord.out_refund_no
+                }).update({
+                    out_trade_no:data.out_trade_no,
+                    refund_account:data.refund_account||data.refund_account_0,
+                    refund_fee:Number(data.refund_fee || data.refund_fee_0)/100,
+                    refund_id:data.refund_id||data.refund_id_0,
+                    refund_recv_accout:data.refund_recv_accout || data.refund_recv_accout_0,
+                    refund_request_source:data.refund_request_source,
+                    refund_status:data.refund_status || data.refund_status_0,
+                    settlement_refund_fee:Number(data.settlement_refund_fee)/100,
+                    settlement_total_fee:Number(data.settlement_total_fee)/100,
+                    success_time:data.refund_success_time || data.refund_success_time_0,
+                    total_fee:Number(data.total_fee)/100,
+                    transaction_id:data.transaction_id,
+                })
+                logger.info(`定时任务中退款记录更新成功`)
+
+                orderService.update({
+                    order_id:order.order_id
+                },{
+                    state:ORDER_STATE.UNFUNDED,
+                    op_date:DateUtil.getNowStr()
+                })
+            },err=>{
+                logger.info(`定时退款查询接口错误：${err}`)
+            })
+
+        }
+    }
+}
+
+/**
+ *支付中订单查询
+ * 定时查询支付中的订单，防止有些支付通知没有接收到的问题
+ */
+const schedulePayingQuery = async () => {
+    let orders = await orderService.getList({
+        'appoint_order.state': ORDER_STATE.PAYING
+    });
+
+    logger.info(`支付中状态订单数:${orders.length}`)
+
+    if (orders && orders.length > 0) {
+        for (let i = 0; i < orders.length; i++) {
+            let order = orders[i]
+            let division=await divisionService.getByOrderId(order.order_id)
+            WechatUtil.orderQuery(division,order.out_trade_no).then(async (data)=>{
+                if(data.trade_state===TRADE_STATE.SUCCESS){
+
+                    let payRecord=await payRecordService.getByOutTradeNo(order.out_trade_no)
+
+                    let op_date=DateUtil.getNowStr();
+                    if(Util.isEmptyObject(payRecord)){
+                        let op_date=DateUtil.getNowStr()
+
+                        //在支付记录表添加一条支付记录
+                        await think.model('pay_record').add({
+                            pay_record_id:Util.uuid(),
+                            bank_type: data.bank_type,
+                            cash_fee: Number(data.cash_fee) / 100,
+                            openid: data.openid,
+                            out_trade_no: data.out_trade_no,
+                            time_end: data.time_end,
+                            total_fee: Number(data.total_fee) / 100,
+                            transaction_id: data.transaction_id,
+                            mch_id: data.mch_id,
+                            is_subscribe: data.is_subscribe,
+                            appid: data.appid,
+                            trade_type: data.trade_type,
+                            op_date
+                        })
+                    }
+
+
+                    orderService.update({
+                        order_id:order.order_id
+                    },{
+                        state:ORDER_STATE.PAYED,
+                        op_date
+                    })
+                }
+
+            },err=>{
+                logger.info(`定时支付中订单查询接口错误：${err}`)
+            })
+
+        }
+    }
 }
 
 /**

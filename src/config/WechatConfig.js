@@ -105,7 +105,7 @@ module.exports={
      * 退款通知URL(服务商模式)
      * Smm:ServiceMerchantModel
      */
-    URL_OF_REFUND_NOTIFY_URL_OF_SMM:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/refundNotifyUrlOfSMM",
+    URL_OF_REFUND_NOTIFY_URL_OF_SMM:"http://www.zhuancaiqian.com/appoint_wx/wechatApi/refundNotifyUrlOfSmm",
 
 
 

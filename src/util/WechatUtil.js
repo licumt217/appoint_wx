@@ -13,8 +13,8 @@ const EventTypes = require("../weixin/EventTypes")
 const fs = require("fs")
 const path = require("path")
 
-const wechatSettingService=require('../service/wechatSetting')
-const refundRecordService=require('../service/refundRecord')
+const wechatSettingService = require('../service/wechatSetting')
+const refundRecordService = require('../service/refundRecord')
 
 const logger = think.logger
 
@@ -26,12 +26,11 @@ let Util = {
      */
     getAccessToken: async () => {
 
-        let token=await wechatSettingService.getAccessToken();
+        let token = await wechatSettingService.getAccessToken();
 
         return token;
 
     },
-
 
 
     /**
@@ -40,7 +39,7 @@ let Util = {
      */
     getJsapiTicket: async () => {
 
-        let ticket=await wechatSettingService.getJsApiTicket()
+        let ticket = await wechatSettingService.getJsApiTicket()
 
         return ticket;
 
@@ -136,7 +135,7 @@ let Util = {
      * @param bottom 底部提示文字
      * @returns {Promise<any>}
      */
-    sendTemplateMsg: (openId, templateName, url,dataArray,top,bottom) => {
+    sendTemplateMsg: (openId, templateName, url, dataArray, top, bottom) => {
 
         let data = {}
 
@@ -214,9 +213,9 @@ let Util = {
      * @param obj
      * @returns {string}
      */
-    getPaySign(obj,isServiceMerchantModel) {
+    getPaySign(obj, isServiceMerchantModel) {
 
-        let key=isServiceMerchantModel?WechatConfig.SERVICE_MERCHANT_KEY:WechatConfig.KEY
+        let key = isServiceMerchantModel ? WechatConfig.SERVICE_MERCHANT_KEY : WechatConfig.KEY
         return SignUtil.md5(SignUtil.transObj2UrlKeyValueByAscii(obj) + `&key=${key}`).toUpperCase()
     },
 
@@ -225,7 +224,7 @@ let Util = {
      * @param json
      * @returns {boolean}
      */
-    checkWechatMessageSignature(json,isServiceMerchantModel) {
+    checkWechatMessageSignature(json, isServiceMerchantModel) {
 
         for (let key in json) {
             if (typeof json[key] === 'object') {//array
@@ -245,7 +244,7 @@ let Util = {
 
             delete json.sign;
 
-            let calculatedSign = Util.getPaySign(json,isServiceMerchantModel);
+            let calculatedSign = Util.getPaySign(json, isServiceMerchantModel);
 
             if (sign === calculatedSign) {
                 return true;
@@ -262,8 +261,8 @@ let Util = {
      * @param division
      * @returns {boolean}
      */
-    isServiceMerchantModel:(division)=>{
-        if(division.receive_side===RECEIVE_SIDE.SELF){
+    isServiceMerchantModel: (division) => {
+        if (division.receive_side === RECEIVE_SIDE.SELF) {
             return true;
         }
         return false;
@@ -274,14 +273,14 @@ let Util = {
      * @param xml
      * @returns {Promise<any>}
      */
-    unifiedOrder: (division,openid, out_trade_no, total_fee, ip) => {
+    unifiedOrder: (division, openid, out_trade_no, total_fee, ip) => {
 
         let trade_type = "JSAPI"
 
         let body = "北大-心理咨询"
 
         total_fee = Number(total_fee) * 100
-        let obj={
+        let obj = {
             openid: openid,
             nonce_str: BaseUtil.uuid(),
             body: body,
@@ -292,22 +291,22 @@ let Util = {
         }
 
         //服务商模式
-        if(Util.isServiceMerchantModel(division)){
-            obj=Object.assign(obj,{
+        if (Util.isServiceMerchantModel(division)) {
+            obj = Object.assign(obj, {
                 appid: WechatConfig.APP_ID,
                 mch_id: WechatConfig.MCH_ID_OF_SERVICE_MERCHANT,
                 notify_url: WechatConfig.URL_OF_NOTIFY_URL_OF_SMM,
                 sub_mch_id: division.sub_mch_id,
             })
-        }else{
-            obj=Object.assign(obj,{
+        } else {
+            obj = Object.assign(obj, {
                 appid: WechatConfig.APP_ID,
                 mch_id: WechatConfig.MCH_ID,
                 notify_url: WechatConfig.URL_OF_NOTIFY_URL,
             })
         }
 
-        let sign = Util.getPaySign(obj,Util.isServiceMerchantModel(division));
+        let sign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
 
         obj.sign = sign;
 
@@ -315,7 +314,7 @@ let Util = {
 
         logger.info("统一下单参数：" + xml)
 
-        return new Promise(( (resolve, reject) => {
+        return new Promise(((resolve, reject) => {
 
             request.post(
                 {
@@ -355,7 +354,7 @@ let Util = {
      * @returns {Promise<any>}
      * 需要双向签名
      */
-    refund: async (division,out_trade_no, total_fee, refund_fee,order_id) => {
+    refund: async (division, out_trade_no, total_fee, refund_fee, order_id) => {
         let out_refund_no = BaseUtil.uuid()
 
         logger.info(`退款接口参数：out_trade_no：${out_trade_no},total_fee：${total_fee},：refund_fee：${refund_fee}`)
@@ -372,14 +371,14 @@ let Util = {
             refund_fee: refund_fee,
         }
 
-        if(Util.isServiceMerchantModel(division)){
-            obj = Object.assign(obj,{
+        if (Util.isServiceMerchantModel(division)) {
+            obj = Object.assign(obj, {
                 mch_id: WechatConfig.MCH_ID_OF_SERVICE_MERCHANT,
                 sub_mch_id: division.sub_mch_id,
                 notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL_OF_SMM
             })
-        }else{
-            obj =Object.assign(obj, {
+        } else {
+            obj = Object.assign(obj, {
                 mch_id: WechatConfig.MCH_ID,
                 notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL
             })
@@ -393,7 +392,7 @@ let Util = {
 
         logger.info(`微信退款加密前参数 obj:${JSON.stringify(obj)}`)
 
-        let sign = Util.getPaySign(obj,Util.isServiceMerchantModel(division));
+        let sign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
 
         obj.sign = sign;
 
@@ -403,14 +402,24 @@ let Util = {
 
         return new Promise((async (resolve, reject) => {
 
+            let agentOptions={}
+            if(Util.isServiceMerchantModel(division) ){
+                agentOptions={
+                    pfx:fs.readFileSync(path.join(__dirname, '../config/cert/smm/apiclient_cert.p12')),//微信商户平台证书,
+                    passphrase:WechatConfig.MCH_ID_OF_SERVICE_MERCHANT
+                }
+            }else{
+                agentOptions={
+                    pfx:fs.readFileSync(path.join(__dirname, '../config/cert/apiclient_cert.p12')),
+                    passphrase:WechatConfig.MCH_ID
+                }
+            }
+
             request.post(
                 {
                     url: WechatConfig.URL_OF_REFUND,
                     form: xml,
-                    agentOptions: {
-                        pfx: fs.readFileSync(path.join(__dirname, '../config/cert/apiclient_cert.p12')), //微信商户平台证书,
-                        passphrase: Util.isServiceMerchantModel(division)?WechatConfig.MCH_ID_OF_SERVICE_MERCHANT:WechatConfig.MCH_ID
-                    }
+                    agentOptions
                 },
                 (error, response, body) => {
                     logger.info(`退款接口微信返回 error:${error},response:${JSON.stringify(response)},body:${JSON.stringify(body)}`)
@@ -424,7 +433,7 @@ let Util = {
                         logger.info("退款接口返回信息：" + JSON.stringify(json))
 
                         //再次校验签名
-                        if (Util.checkWechatMessageSignature(json,Util.isServiceMerchantModel(division))) {
+                        if (Util.checkWechatMessageSignature(json, Util.isServiceMerchantModel(division))) {
                             let return_code = json.return_code;
                             let return_msg = json.return_msg;
                             let result_code = json.result_code;
@@ -457,27 +466,27 @@ let Util = {
      * @param out_refund_no 商户退款订单号
      * @returns {Promise<any>}
      */
-    refundQuery: (division,out_refund_no) => {
+    refundQuery: (division, out_refund_no) => {
 
         let obj = {
+            appid: WechatConfig.APP_ID,
             nonce_str: BaseUtil.uuid(),
             out_refund_no: out_refund_no
         }
 
-        if(Util.isServiceMerchantModel(division)){
-            obj = {
-                appid: WechatConfig.APP_ID,
+        if (Util.isServiceMerchantModel(division)) {
+            obj = Object.assign(obj,{
+
                 mch_id: WechatConfig.MCH_ID_OF_SERVICE_MERCHANT,
-                sub_mch_id:'xxx'
-            }
-        }else{
-            obj = {
-                appid: WechatConfig.APP_ID,
+                sub_mch_id: division.sub_mch_id
+            })
+        } else {
+            obj = Object.assign(obj,{
                 mch_id: WechatConfig.MCH_ID,
-            }
+            })
         }
 
-        let sign = Util.getPaySign(obj,Util.isServiceMerchantModel(division));
+        let sign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
 
 
         obj.sign = sign;
@@ -494,13 +503,13 @@ let Util = {
                 (error, response, body) => {
                     logger.info(`微信退款查询返回信息 error:${error}， body:${body}， response:${response}`);
                     if (error) {
-                        resolve({"退款查询失败": error})
+                        reject({"退款查询失败": error})
                     } else {
 
                         let json = BaseUtil.xml2JsonObj(body)
 
                         //再次校验签名
-                        if (Util.checkWechatMessageSignature(json,Util.isServiceMerchantModel(division))) {
+                        if (Util.checkWechatMessageSignature(json, Util.isServiceMerchantModel(division))) {
                             let return_code = json.return_code;
                             let return_msg = json.return_msg;
                             let result_code = json.result_code;
@@ -534,7 +543,7 @@ let Util = {
      * @param prepay_id
      * @returns {Promise<any>}
      */
-    getJsApiPaySign: (division,prepay_id) => {
+    getJsApiPaySign: (division, prepay_id) => {
 
         let obj = {
             appId: WechatConfig.APP_ID,
@@ -544,7 +553,7 @@ let Util = {
             signType: 'MD5'
         }
 
-        let paySign = Util.getPaySign(obj,Util.isServiceMerchantModel(division));
+        let paySign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
 
         obj.paySign = paySign;
 
@@ -559,11 +568,11 @@ let Util = {
      （2）对商户key做md5，得到32位小写key* ( key设置路径：微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置 )
      （3）用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
      */
-    decryptRefundNotifyParam: (req_info,isServiceMerchantModel) => {
+    decryptRefundNotifyParam: (req_info, isServiceMerchantModel) => {
 
         logger.info(`退款解密参数：req_info:${req_info}`)
 
-        let shanghuKey = isServiceMerchantModel?WechatConfig.SERVICE_MERCHANT_KEY:WechatConfig.KEY
+        let shanghuKey = isServiceMerchantModel ? WechatConfig.SERVICE_MERCHANT_KEY : WechatConfig.KEY
 
         shanghuKey = SignUtil.md5(shanghuKey)
 
@@ -596,26 +605,25 @@ let Util = {
      PAYERROR--支付失败(其他原因，如银行返回失败)
 
      */
-    orderQuery: (division,out_trade_no) => {
+    orderQuery: (division, out_trade_no) => {
 
         let obj = {
+            appid: WechatConfig.APP_ID,
             nonce_str: BaseUtil.uuid(),
             out_trade_no: out_trade_no,
         }
 
-        if(Util.isServiceMerchantModel(division)){
-            obj = {
-                appid: WechatConfig.APP_ID,
+        if (Util.isServiceMerchantModel(division)) {
+            obj = Object.assign(obj,{
                 mch_id: WechatConfig.MCH_ID_OF_SERVICE_MERCHANT,
-                sub_mch_id: "xxx"
-            }
-        }else{
-            obj = {
-                appid: WechatConfig.APP_ID,
+                sub_mch_id: division.sub_mch_id
+            })
+        } else {
+            obj = Object.assign(obj,{
                 mch_id: WechatConfig.MCH_ID,
-            }
+            })
         }
-        let sign = Util.getPaySign(obj,Util.isServiceMerchantModel(division));
+        let sign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
 
         obj.sign = sign;
 
@@ -628,17 +636,18 @@ let Util = {
                     url: WechatConfig.URL_OF_ORDER_QUERY,
                     form: xml
                 }, (error, response, body) => {
-                logger.info(`微信查询订单返回信息 error:${error}， body:${body}， response:${response}`);
+                    logger.info(`微信查询订单返回信息 error:${error}， body:${body}， response:${response}`);
                     if (error) {
-                        resolve({"error": "error"})
+                        reject(error)
                     } else {
                         let json = BaseUtil.xml2JsonObj(body)
 
-                        let result_code = json.result_code;
+                        let return_code = json.return_code;
                         let return_msg = json.return_msg;
+                        let result_code = json.result_code;
 
                         if (return_code === "SUCCESS" && result_code === "SUCCESS") {
-                            resolve(json.trade_state)
+                            resolve(json)
                         } else {
                             reject(return_msg)
                         }

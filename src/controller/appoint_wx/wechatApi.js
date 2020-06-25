@@ -260,9 +260,9 @@ module.exports = class extends Base {
 
         console.log("订单查询订单号：" + out_trade_no)
 
-        let trade_state = await WechatUtil.orderQuery(out_trade_no);
+        let json = await WechatUtil.orderQuery(out_trade_no);
 
-        this.body = Response.success(trade_state);
+        this.body = Response.success(json);
 
     }
 

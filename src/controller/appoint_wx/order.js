@@ -78,6 +78,7 @@ module.exports = class extends Base {
             await orderService.update({order_id}, {
                 out_trade_no,
                 prepay_id,
+                state:ORDER_STATE.PAYING
             })
 
             let paySign = await WechatUtil.getJsApiPaySign(division,prepay_id)

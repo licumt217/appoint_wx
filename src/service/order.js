@@ -220,7 +220,7 @@ module.exports = {
 
             let data = await think.model(tableName).where({
                 appointment_id,
-                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.PAYED]],
+                'appoint_order.state': ['in', [ORDER_STATE.COMMIT, ORDER_STATE.PAYED,ORDER_STATE.PAYING,ORDER_STATE.REFUNDING]],
             }).select().catch(e => {
                 throw new Error(e)
             });
