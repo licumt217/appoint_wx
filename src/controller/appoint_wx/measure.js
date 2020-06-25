@@ -58,24 +58,18 @@ module.exports = class extends Base {
   }
   /**量表管理*/
   async listAction() {
-
-    var values=this.post()
-    var currentPage=this.post("currentPage")
-    var pageSize=this.post("pageSize")
-    var userId=this.post("userId")
-    var isAll=this.post("isAll")
+    var userId=this.ctx.state.userInfo["user_id"]
+    var role=this.ctx.state.userInfo["role"]
     var condition={}
-    //condition["user_id"]=this.ctx.state.userInfo["user_id"]
-    if(think.isEmpty(currentPage)){
-        currentPage=1
+    let roleData=[]
+    if(role!==0){
+      let roleUser=await this.model('user').where({role:0}).select()
+      if(roleUser&&roleUser[0]){
+        roleData =await this.model('measure').where({user_id:roleUser[0]["user_id"]}).order('createtime DESC').select()
       }
-      if(think.isEmpty(pageSize)){
-        pageSize=10
-      }
-    const data =await this.model('measure').where(condition).order('createtime DESC').page(currentPage, pageSize).countSelect();
-    data["success"]=0
-    data["total"]=data.count
-    return this.json(data);
+    }
+    const data =await this.model('measure').where({user_id:userId}).order('createtime DESC').select()
+    return this.json({success:0,data:data,roleData:roleData,total:1});
   }
   async listAllAction() {
     var userId=this.post("userId")
@@ -96,13 +90,18 @@ module.exports = class extends Base {
   async getByIdAction(){
     const id = this.post('id');
     const data =await this.model('measure').where({id:id}).select()
-
     const json={success:0,data:data,total:1}
     return this.json(json);
   }
   async addAction(){
     const values = this.post()
-    var userId=this.ctx.state.userInfo["user_id"]
+    let userId=this.ctx.state.userInfo["user_id"]
+    let role=this.ctx.state.userInfo["role"]
+    values['role']=role
+    let userMeasure=await this.model('measure').where({user_id:userId}).select()
+    if(userMeasure&&userMeasure.length>0){
+      return this.json({success:1,error:'只能添加一个预检表'})
+    }
     values["user_id"]=userId
     values["createtime"]=moment(new Date().getTime()).format('YYYY-MM-DD HH:mm:ss');
     const measureId=await this.model('measure').add(values)
@@ -114,6 +113,10 @@ module.exports = class extends Base {
     const values = this.post()
     const id = this.post('id');
     const data=await this.model('measure').where({id:id}).find()
+    let userId=this.ctx.state.userInfo["user_id"]
+    if(userId!=data['user_id']){
+      return this.json({success:1,error:'您无权限更新'})
+    }
     delete values["id"]
     const measureId = await this.model('measure').where({id: id}).update(values);
     const json={success:0,data:[],total:1}
@@ -122,6 +125,10 @@ module.exports = class extends Base {
   async deleteAction(){
     const id = this.post('id');
     const data=await this.model('measure').where({id:id}).find()
+    let userId=this.ctx.state.userInfo["user_id"]
+    if(userId!=data['user_id']){
+      return this.json({success:1,error:'您无权限删除'})
+    }
     this.model('measure').where({id: id}).delete()
     this.model('question').where({measureId: id}).delete()
     this.model('measure_factor_rule').where({measureId: id}).delete()

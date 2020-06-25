@@ -6,7 +6,8 @@ module.exports = class extends Base {
   async listAction() {
   	const measureId = this.post('measureId')
    	const data =await this.model('question').setRelation('children').where({'measureId':measureId}).order('indexSort ASC').select()
-   	const json={success:0,data:data,total:data.length}
+   	let measure=await this.model("measure").where({id:measureId}).find()
+    const json={success:0,data:data,total:data.length,role:measure.role}
     return this.json(json);
   }
   async getByIdAction(){
