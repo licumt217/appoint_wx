@@ -57,7 +57,6 @@ module.exports = class extends Base {
 
         this.handlePayNotifyCommon(this.post())
 
-
     }
 
     async handlePayNotifyCommon(params,isServiceMerchantModel){

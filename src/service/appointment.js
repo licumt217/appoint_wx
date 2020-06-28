@@ -679,6 +679,8 @@ module.exports = {
                     order_date = DateUtil.addDays(new Date(appointment.appoint_date), 0);
                 }
 
+                let amount=(appointment.period.split(',').length*appointment.amount).toFixed(2)
+
                 let order = {
                     op_date,
                     order_date: DateUtil.format(order_date),
@@ -686,7 +688,7 @@ module.exports = {
                     openid: appointment.openid,
                     therapist_id: appointment.therapist_id,
                     user_id: appointment.user_id,
-                    amount: appointment.amount,
+                    amount,
                     state: ORDER_STATE.COMMIT,
                     create_date: op_date,
                     appointment_id,
