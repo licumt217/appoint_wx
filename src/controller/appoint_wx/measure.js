@@ -69,7 +69,11 @@ module.exports = class extends Base {
       }
     }
     const data =await this.model('measure').where({user_id:userId}).order('createtime DESC').select()
-    return this.json({success:0,data:data,roleData:roleData,total:1});
+    this.body=Response.success({
+      data:data,
+      roleData:roleData,
+      total:1
+    })
   }
   async listAllAction() {
     var userId=this.post("userId")
@@ -91,7 +95,7 @@ module.exports = class extends Base {
     const id = this.post('id');
     const data =await this.model('measure').where({id:id}).select()
     const json={success:0,data:data,total:1}
-    return this.json(json);
+    this.body=Response.success(json)
   }
   async addAction(){
     const values = this.post()

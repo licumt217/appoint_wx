@@ -1,4 +1,5 @@
 const Base = require('./base.js');
+const Response = require('../../config/response')
 var moment = require('moment');
 const fs = require('fs');
 module.exports = class extends Base {
@@ -8,13 +9,13 @@ module.exports = class extends Base {
    	const data =await this.model('question').setRelation('children').where({'measureId':measureId}).order('indexSort ASC').select()
    	let measure=await this.model("measure").where({id:measureId}).find()
     const json={success:0,data:data,total:data.length,role:measure.role}
-    return this.json(json);
+    this.body=Response.success(json)
   }
   async getByIdAction(){
     const id = this.post('id');
     const data =await this.model('question').setRelation('children').where({id:id}).select()
     const json={success:0,data:data,total:1}
-    return this.json(json);
+      this.body=Response.success(json)
   }
   async addBatchAction(){
     const batch = this.post()
@@ -51,7 +52,7 @@ module.exports = class extends Base {
     }else{
        json={success:'1',error:'没有量表参数'}
     }
-    return this.json(json)
+      this.body=Response.success(json)
   }
   async addAction(){
   	const values = this.post()
@@ -77,13 +78,13 @@ module.exports = class extends Base {
           }
          const data =await this.model('question').setRelation('children').where({id:questionId}).select()
          const json={success:0,data:data,total:1}
-         return this.json(json);
+            this.body=Response.success(json)
        }else{
-         return this.json({success:'1',error:'出现重复排序'});
+            this.body=Response.businessException("出现重复排序")
        }
         
     }else{
-        return this.json({success:'1',error:'没有量表参数'});
+        this.body=Response.businessException("没有量表参数")
     }
 
   }
