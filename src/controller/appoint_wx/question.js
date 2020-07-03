@@ -113,8 +113,9 @@ module.exports = class extends Base {
         const measureId = this.post('measureId');
         const data = await this.model('measure').where({id: measureId}).find()
         if (!think.isEmpty(data)) {
-            if (data["user_id"] !== this.ctx.state.userInfo["id"]) {
-                return this.json({success: 1, error: "您没有权限修改"})
+            if (String(data["user_id"]) !== this.ctx.state.userInfo["user_id"]) {
+                this.body=Response.businessException("您没有权限修改")
+                return false;
             }
         }
         delete values["id"]
@@ -124,8 +125,10 @@ module.exports = class extends Base {
         }
         const questionId = await this.model('question').where({id: id}).update(values);
         //const data =await this.model('question').setRelation('children').where({id:id}).select()
-        const json = {success: 0, data: questionId, total: 1}
-        return this.json(json);
+        this.body=Response.success({
+            questionId,
+            total: 1
+        })
     }
 
     async updateBatchAction() {
@@ -145,7 +148,7 @@ module.exports = class extends Base {
         }
 
 
-        return this.json({success: 0});
+        this.body=Response.success()
     }
 
     async deleteAction() {
@@ -154,7 +157,7 @@ module.exports = class extends Base {
         const data = await this.model('measure').where({id: measureId}).find()
         this.model('question').where({id: id}).delete()
         this.model('question_children').where({parentId: id}).delete()
-        return this.json({success: 0, error: ''});
+        this.body=Response.success()
     }
 
     /**子条目管理*/
@@ -162,14 +165,20 @@ module.exports = class extends Base {
         const questionId = this.post("parentId")
         const data = await this.model('question_children').where({parentId: questionId}).select()
         const json = {success: 0, data: data, total: data.length}
-        return this.json(json);
+        this.body=Response.success({
+            data,
+            total: data.length
+        })
     }
 
     async getByIdChildrenAction() {
         const id = this.post("id")
         const data = await this.model('question_children').where({id: id}).select()
         const json = {success: 0, data: data, total: data.length}
-        return this.json(json);
+        this.body=Response.success({
+            data,
+            total: data.length
+        })
     }
 
     async addChildrenAction() {
@@ -178,7 +187,10 @@ module.exports = class extends Base {
         const questionId = await this.model('question_children').add(values)
         const data = await this.model('question_children').where({id: questionId}).select()
         const json = {success: 0, data: data, total: 1}
-        return this.json(json);
+        this.body=Response.success({
+            data,
+            total: 1
+        })
     }
 
     async updateChildrenAction() {
@@ -189,8 +201,10 @@ module.exports = class extends Base {
         delete values["id"]
         const questionId = await this.model('question_children').where({id: id}).update(values);
         //const data =await this.model('question_children').where({id:id}).select()
-        const json = {success: 0, data: questionId, total: 1}
-        return this.json(json);
+        this.body=Response.success({
+            data:questionId,
+            total: 1
+        })
     }
 
     async deleteChildrenAction() {
@@ -198,6 +212,7 @@ module.exports = class extends Base {
         const measureId = this.post('measureId');
         this.model('question_children').where({id: id}).delete()
         return this.json({success: 0, error: ''});
+        this.body=Response.success()
     }
 
     async upLoadFileAction() {
