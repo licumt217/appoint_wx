@@ -27,6 +27,7 @@ module.exports = {
         "blacklist",
         "measure",
         "question",
+        "questionMobile",
     ],
     divisionManager: [
         "login",
@@ -51,6 +52,7 @@ module.exports = {
         "stationTherapistRelation",
         "measure",
         "question",
+        "questionMobile",
     ],
     caseManager: [
         "login",
@@ -75,6 +77,7 @@ module.exports = {
         "stationTherapistRelation",
         "measure",
         "question",
+        "questionMobile",
     ],
     therapist: [
         "login",
@@ -100,6 +103,7 @@ module.exports = {
         "therapistPeriodSet",
         "measure",
         "question",
+        "questionMobile",
     ],
     client: [
         "login",
