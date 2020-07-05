@@ -8,11 +8,11 @@ module.exports = class extends Base{
     //userId="sdfsdfsdfsf"
     let answer=await this.model('answer').where({user_id:userId,organization_id:organizationId}).select()
     let roleAnwer=await this.model('answer_role').where({user_id:userId,role:0}).select()
-    if((!think.isEmpty(answer)&&answer.length>0&&answer[0].finsh==2)&&(!think.isEmpty(roleAnwer)&&roleAnwer.length>0&&roleAnwer[0].finsh==2)){
+    if((!think.isEmpty(answer)&&answer.length>0&&answer[0].finish==2)&&(!think.isEmpty(roleAnwer)&&roleAnwer.length>0&&roleAnwer[0].finish==2)){
       //return this.json({success:0,data:[],status:0})
       this.body=Response.success({
         data:[],
-        status:0
+        status:1
       })
     }else if((!think.isEmpty(roleAnwer)&&roleAnwer.length>0&&roleAnwer[0].finish==2)&&think.isEmpty(answer)){
       let curMeasure=await this.model("measure").where({user_id:organizationId}).select()
@@ -72,7 +72,7 @@ module.exports = class extends Base{
   async getAnswerMeasureListAction(){
     let organizationId=this.post('organizationId')
     let userId=this.post('userId')
-    //userId="sdfsdfsdfsf"
+    // userId="sdfsdfsdfsf"
     let answer=await this.model('answer').where({user_id:userId,organization_id:organizationId}).select()
     let roleAnwer=await this.model('answer_role').where({user_id:userId,role:0}).select()
     let data={}
