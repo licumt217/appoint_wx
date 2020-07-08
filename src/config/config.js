@@ -126,6 +126,7 @@ module.exports = {
         "stationCasemanagerRelation",
         "stationTherapistRelation",
         "therapistPeriodSet",
-        "feedback"
+        "feedback",
+        "questionMobile",
     ]
 };
