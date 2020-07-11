@@ -11,7 +11,6 @@ module.exports = class extends Base {
         let answer = await this.model('answer').where({user_id: userId, organization_id: organizationId}).select()
         let roleAnswer = await this.model('answer_role').where({user_id: userId, role: 0}).select()
         if ((!think.isEmpty(answer) && answer.length > 0 && answer[0].finish == 2) && (!think.isEmpty(roleAnswer) && roleAnswer.length > 0 && roleAnswer[0].finish == 2)) {
-            //return this.json({success:0,data:[],status:0})
             this.body = Response.success({
                 data: [],
                 status: 1
@@ -20,13 +19,16 @@ module.exports = class extends Base {
             let curMeasure = await this.model("measure").where({user_id: organizationId}).select()
             if (curMeasure && curMeasure.length > 0) {
                 let questionList = await this.model('question').setRelation('children').where({'measureId': curMeasure[0].id}).order('indexSort ASC').select()
-                //return this.json({success:0,data:{organizationAnswer:questionList},status:1})
-                //curMeasure.answerlist=JSON.parse(JSON.stringify(questionList))
                 this.body = Response.success({
                     data: [],
                     status: 0,
                     organizationAnswer: questionList
                 })
+            }else{
+              this.body=Response.success({
+                data:[],
+                status:1,
+              })
             }
         } else {
             let data = {}
@@ -50,9 +52,6 @@ module.exports = class extends Base {
                 roleAnswer: data.roleAnswer
             })
         }
-        //return this.json({success:0,data:[],status:1})
-        //let roleMeasure=await this.model("measure").where({role:0}).select()
-
     }
 
     async saveAnswerAction() {
