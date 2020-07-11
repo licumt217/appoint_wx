@@ -16,6 +16,7 @@ module.exports = {
     async initPeriodSet(therapist_id) {
 
         try {
+            let weeks='1,2,3,4,5'
             let period='8,9,10,11,13,14,15,16'
 
             logger.info(`新增咨询师可用时段设置参数 :${therapist_id}`)
@@ -23,6 +24,7 @@ module.exports = {
             let data = await think.model(tableName).add({
                 therapist_id,
                 period,
+                weeks,
                 op_date:DateUtil.getNowStr(),
                 therapist_period_set_id:Util.uuid()
             }).catch(e=>{

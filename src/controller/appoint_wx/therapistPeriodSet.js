@@ -3,7 +3,7 @@ const Base = require('./base.js');
 const Response = require('../../config/response')
 const logger = think.logger;
 const tableName='therapist_period_set'
-
+const DateUtil = require('../../util/DateUtil')
 module.exports = class extends Base {
 
     /**
@@ -43,9 +43,20 @@ module.exports = class extends Base {
     async updateByTherapistIdAction() {
         try {
 
+            let weeks=this.post('weeks')
             let period=this.post('period')
+            let end_date=this.post('end_date')
             let therapist_id=this.ctx.state.userInfo.user_id
 
+            if (!end_date) {
+                this.body = Response.businessException(`有效期不能为空！`)
+                return false;
+            }
+
+            if (!weeks) {
+                this.body = Response.businessException(`周次不能为空！`)
+                return false;
+            }
             if (!period) {
                 this.body = Response.businessException(`时段设置不能为空！`)
                 return false;
@@ -53,9 +64,13 @@ module.exports = class extends Base {
 
             logger.info(`更新咨询师可用时段设置参数 :${JSON.stringify(this.post())}`)
 
+            end_date = DateUtil.format(end_date)
+
             let data = await this.model(tableName).where({
                 therapist_id
             }).update({
+                end_date,
+                weeks,
                 period
             })
 

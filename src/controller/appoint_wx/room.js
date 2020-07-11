@@ -5,7 +5,6 @@ const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
 const logger = think.logger;
 const stationService = require('../../service/station')
-const stationTherapistRelationService = require('../../service/stationTherapistRelation')
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const roomService = require('../../service/room')
 const appointmentService = require('../../service/appointment')
@@ -294,21 +293,27 @@ module.exports = class extends Base {
         try {
 
             let period = this.post('period')
+            let weeks = this.post('weeks')
 
             logger.info(`更新房间可用时段设置参数 :${JSON.stringify(this.post())}`)
 
+            if (!weeks) {
+                this.body = Response.businessException('周次不能为空！')
+                return;
+            }
             if (!period) {
                 this.body = Response.businessException('时段设置不能为空！')
                 return;
             }
 
             let user_id = this.ctx.state.userInfo.user_id;
-            let station_id = await stationService.getStationIdByCaseManagerId(user_id);
+            let station_id = await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id);
 
             let data = await this.model('room_period_set').where({
                 station_id
             }).update({
-                period
+                period,
+                weeks
             })
 
 
