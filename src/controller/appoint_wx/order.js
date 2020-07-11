@@ -333,9 +333,9 @@ module.exports = class extends Base {
      * 查询咨询师收益列表
      * @returns {Promise<void>}
      */
-    async getDoneOrderListByTherapistIdAction() {
+    async getDoneOrderListAction() {
 
-        let therapist_id = this.post('therapist_id')
+        let userInfo = this.ctx.state.userInfo
 
         let page = this.post('page') || Page.currentPage
         let pageSize = this.post('pageSize') || Page.pageSize
@@ -344,7 +344,7 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await orderService.getDoneOrderListByTherapistId(therapist_id, page, pageSize)
+            let orders = await orderService.getDoneOrderList(userInfo.role,userInfo.user_id, page, pageSize)
 
             this.body = Response.success(orders);
 
@@ -358,17 +358,17 @@ module.exports = class extends Base {
 
     /**
      * 查询咨询师收益汇总
+     * 咨询师和分部管理员两个角色都可以查看
      * @returns {Promise<void>}
      */
-    async getRevenueSumByTherapistIdAction() {
+    async getRevenueSumAction() {
 
-        let therapist_id = this.post('therapist_id')
 
-        logger.info(`查询咨询师收益汇总参数 :${JSON.stringify(this.post())}`);
+        let userInfo = this.ctx.state.userInfo
 
         try {
 
-            let orders = await orderService.getRevenueSumByTherapistId(therapist_id)
+            let orders = await orderService.getRevenueSum(userInfo.role,userInfo.user_id)
 
             this.body = Response.success(orders);
 

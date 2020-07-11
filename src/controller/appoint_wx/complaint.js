@@ -9,6 +9,8 @@ const Page = require('../../config/constants/PAGE')
 const DateUtil = require('../../util/DateUtil')
 const orderService = require('../../service/order')
 const blacklistService = require('../../service/blacklist')
+const divisionService = require('../../service/division')
+const divisionAdminRelationService = require('../../service/divisionAdminRelation')
 const logger = think.logger;
 
 const entityName = '投诉'
@@ -50,6 +52,8 @@ module.exports = class extends Base {
 
             let complaint_date = DateUtil.getNowStr()
 
+            let division=await divisionService.getByOrderId(order_id)
+
             if(Util.isEmptyObject(complaint)){//新增
 
                 let order = await orderService.getOne({order_id})
@@ -63,6 +67,7 @@ module.exports = class extends Base {
                     type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
                     user_id: order.user_id,
                     therapist_id: order.therapist_id,
+                    division_id:division.division_id
                 }
 
                 await this.model(tableName).add(addJson);
@@ -298,27 +303,33 @@ module.exports = class extends Base {
             let userName = this.post('userName')
             let therapistName = this.post('therapistName')
 
-            let dateWhere = {}
+            let whereObj = {}
 
             if (startDate && endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['between', [startDate, endDate]]
                 }
             } else if (startDate && !endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['>', startDate]
                 }
             } else if (!startDate && endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['<', endDate]
                 }
+            }
+
+            let userInfo = this.ctx.state.userInfo
+
+            if(userInfo.role===ROLE.divisionManager){
+                whereObj.division_id=await divisionAdminRelationService.getDivisionIdByAdminId(userInfo.user_id)
             }
 
             let data = await this.model(tableName).where(Object.assign({
                 'type': COMPLAINT_TYPE.USER_THERAPIST,
                 'user.name': ['like', `%${userName || ''}%`],
                 'therapist.name': ['like', `%${therapistName || ''}%`],
-            }, dateWhere)).join({
+            }, whereObj)).join({
                 table: 'user',
                 join: 'inner',
                 as: 'user',
@@ -361,27 +372,33 @@ module.exports = class extends Base {
             let userName = this.post('userName')
             let therapistName = this.post('therapistName')
 
-            let dateWhere = {}
+            let whereObj = {}
 
             if (startDate && endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['between', [startDate, endDate]]
                 }
             } else if (startDate && !endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['>', startDate]
                 }
             } else if (!startDate && endDate) {
-                dateWhere = {
+                whereObj = {
                     'complaint_date': ['<', endDate]
                 }
+            }
+
+            let userInfo = this.ctx.state.userInfo
+
+            if(userInfo.role===ROLE.divisionManager){
+                whereObj.division_id=await divisionAdminRelationService.getDivisionIdByAdminId(userInfo.user_id)
             }
 
             let data = await this.model(tableName).where(Object.assign({
                 'type': COMPLAINT_TYPE.THERAPIST_USER,
                 'user.name': ['like', `%${userName || ''}%`],
                 'therapist.name': ['like', `%${therapistName || ''}%`],
-            }, dateWhere)).join({
+            }, whereObj)).join({
                 table: 'user',
                 join: 'inner',
                 as: 'user',

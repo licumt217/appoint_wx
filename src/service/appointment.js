@@ -43,7 +43,10 @@ module.exports = {
             amount: therapistFeeSet.fee,
             station_id,
             fee_type: therapistFeeSet.fee_type,
-            function_level:division.function_level
+            function_level:division.function_level,
+            division_id:division.division_id,
+
+
         }
 
         logger.info(`新增预约参数：${JSON.stringify(appointment)}`)
