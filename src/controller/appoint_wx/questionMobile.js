@@ -17,7 +17,7 @@ module.exports = class extends Base {
             })
         } else if ((!think.isEmpty(roleAnswer) && roleAnswer.length > 0 && roleAnswer[0].finish == 2) && think.isEmpty(answer)) {
             let curMeasure = await this.model("measure").where({user_id: organizationId}).select()
-            if (curMeasure && curMeasure.length > 0) {
+            if (!think.isEmpty(curMeasure) && curMeasure.length > 0) {
                 let questionList = await this.model('question').setRelation('children').where({'measureId': curMeasure[0].id}).order('indexSort ASC').select()
                 this.body = Response.success({
                     data: [],
@@ -33,13 +33,13 @@ module.exports = class extends Base {
         } else {
             let data = {}
             let roleMeasure = await this.model("measure").where({role: 0}).select()
-            if (roleMeasure && roleMeasure.length > 0) {
+            if (!think.isEmpty(roleMeasure) && roleMeasure.length > 0) {
                 let questionList = await this.model('question').setRelation('children').where({'measureId': roleMeasure[0].id}).order('indexSort ASC').select()
                 data.roleAnswer = questionList
                 //roleMeasure.answerlist=JSON.parse(JSON.stringify(questionList))
             }
             let curMeasure = await this.model("measure").where({user_id: organizationId}).select()
-            if (curMeasure && curMeasure.length > 0) {
+            if (think.isEmpty(curMeasure) && curMeasure.length > 0) {
                 let questionList = await this.model('question').setRelation('children').where({'measureId': curMeasure[0].id}).order('indexSort ASC').select()
                 data.organizationAnswer = questionList
                 //curMeasure.answerlist=JSON.parse(JSON.stringify(questionList))
