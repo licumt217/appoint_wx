@@ -28,6 +28,7 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
+        "agreement",
     ],
     divisionManager: [
         "login",
@@ -128,5 +129,7 @@ module.exports = {
         "therapistPeriodSet",
         "feedback",
         "questionMobile",
+        "agreement",
+        "userAgreement",
     ]
 };

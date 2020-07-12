@@ -330,10 +330,11 @@ module.exports = class extends Base {
     }
 
     /**
-     * 查询咨询师收益列表
+     * 查询咨询师收益明细列表
+     * 分部管理员、案例、咨询师自己都可以查看
      * @returns {Promise<void>}
      */
-    async getDoneOrderListAction() {
+    async getRevenueListAction() {
 
         let userInfo = this.ctx.state.userInfo
 
@@ -344,7 +345,7 @@ module.exports = class extends Base {
 
         try {
 
-            let orders = await orderService.getDoneOrderList(userInfo.role,userInfo.user_id, page, pageSize)
+            let orders = await orderService.getRevenueList(userInfo.role,userInfo.user_id, page, pageSize)
 
             this.body = Response.success(orders);
 
@@ -358,7 +359,7 @@ module.exports = class extends Base {
 
     /**
      * 查询咨询师收益汇总
-     * 咨询师和分部管理员两个角色都可以查看
+     * 咨询师和分部管理员和案例管理员都可以查看
      * @returns {Promise<void>}
      */
     async getRevenueSumAction() {

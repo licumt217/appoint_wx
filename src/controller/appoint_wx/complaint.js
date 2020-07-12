@@ -11,6 +11,7 @@ const orderService = require('../../service/order')
 const blacklistService = require('../../service/blacklist')
 const divisionService = require('../../service/division')
 const divisionAdminRelationService = require('../../service/divisionAdminRelation')
+const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const logger = think.logger;
 
 const entityName = '投诉'
@@ -52,8 +53,6 @@ module.exports = class extends Base {
 
             let complaint_date = DateUtil.getNowStr()
 
-            let division=await divisionService.getByOrderId(order_id)
-
             if(Util.isEmptyObject(complaint)){//新增
 
                 let order = await orderService.getOne({order_id})
@@ -67,7 +66,8 @@ module.exports = class extends Base {
                     type: userInfo.role === ROLE.therapist ? COMPLAINT_TYPE.THERAPIST_USER : COMPLAINT_TYPE.USER_THERAPIST,
                     user_id: order.user_id,
                     therapist_id: order.therapist_id,
-                    division_id:division.division_id
+                    division_id:order.division_id,
+                    station_id:order.station_id,
                 }
 
                 await this.model(tableName).add(addJson);
@@ -288,6 +288,7 @@ module.exports = class extends Base {
 
     /**
      * 查询用户投诉咨询师列表
+     * 超管、分部管理员、案例管理员都可以查看
      * @returns {Promise<boolean>}
      */
     async getUserComplaintsAction() {
@@ -323,6 +324,8 @@ module.exports = class extends Base {
 
             if(userInfo.role===ROLE.divisionManager){
                 whereObj.division_id=await divisionAdminRelationService.getDivisionIdByAdminId(userInfo.user_id)
+            }else if(userInfo.role===ROLE.caseManager){
+                whereObj.station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(userInfo.user_id)
             }
 
             let data = await this.model(tableName).where(Object.assign({
@@ -392,6 +395,8 @@ module.exports = class extends Base {
 
             if(userInfo.role===ROLE.divisionManager){
                 whereObj.division_id=await divisionAdminRelationService.getDivisionIdByAdminId(userInfo.user_id)
+            }else if(userInfo.role===ROLE.caseManager){
+                whereObj.station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(userInfo.user_id)
             }
 
             let data = await this.model(tableName).where(Object.assign({

@@ -8,6 +8,7 @@ const appointmentService = require('../service/appointment')
 const payRecordService = require('../service/payRecord')
 const divisionService = require('../service/division')
 const divisionAdminRelationService = require('../service/divisionAdminRelation')
+const stationCasemanagerRelationService = require('../service/stationCasemanagerRelation')
 const stationService = require('../service/station')
 const ORDER_STATE = require('../config/constants/ORDER_STATE')
 const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
@@ -89,7 +90,8 @@ module.exports = {
             room_id:appointment.room_id,
             period:appointment.period,
             function_level:appointment.function_level,
-            division_id:appointment.division_id
+            division_id:appointment.division_id,
+            station_id:appointment.station_id,
         }
 
         return obj;
@@ -244,7 +246,7 @@ module.exports = {
      *
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getDoneOrderList(role,user_id, page, pageSize) {
+    async getRevenueList(role,user_id, page, pageSize) {
 
         try {
 
@@ -253,6 +255,7 @@ module.exports = {
             ORDER._pk = 'order_id'
 
             let division_id=null;
+            let station_id=null;
 
             let baseWhereObj={
                 state: ORDER_STATE.DONE
@@ -261,6 +264,11 @@ module.exports = {
                 division_id=await divisionAdminRelationService.getDivisionIdByAdminId(user_id)
 
                 baseWhereObj.division_id=division_id;
+
+            }else if(role===ROLE.caseManager){
+                station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
+
+                baseWhereObj.station_id=station_id;
 
             }else{
 
@@ -302,6 +310,7 @@ module.exports = {
                 weekStart = DateUtil.getFirstDayStrOfCurrentWeek(), dateEnd = DateUtil.getNowStr();
 
             let division_id=null;
+            let station_id=null;
             let therapist_id=null;
             let baseWhereObj={
                 state: ORDER_STATE.DONE
@@ -311,32 +320,48 @@ module.exports = {
             let weekWhereObj={};
             if(role===ROLE.divisionManager){
                 division_id=await divisionAdminRelationService.getDivisionIdByAdminId(user_id)
-                allWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(allWhereObj,baseWhereObj,{
                     division_id
                 })
 
-                monthWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(monthWhereObj,baseWhereObj,{
                     division_id,
                     order_date: ['between', [monthStart, dateEnd]]
                 })
 
-                weekWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(weekWhereObj,baseWhereObj,{
                     division_id,
+                    order_date: ['between', [weekStart, dateEnd]]
+                })
+
+            }else if(role===ROLE.caseManager){
+                station_id=await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
+                Object.assign(allWhereObj,baseWhereObj,{
+                    station_id
+                })
+
+                Object.assign(monthWhereObj,baseWhereObj,{
+                    station_id,
+                    order_date: ['between', [monthStart, dateEnd]]
+                })
+
+                Object.assign(weekWhereObj,baseWhereObj,{
+                    station_id,
                     order_date: ['between', [weekStart, dateEnd]]
                 })
 
             }else{
                 therapist_id=user_id;
-                allWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(allWhereObj,baseWhereObj,{
                     therapist_id
                 })
 
-                monthWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(monthWhereObj,baseWhereObj,{
                     therapist_id,
                     order_date: ['between', [monthStart, dateEnd]]
                 })
 
-                weekWhereObj=Object.assign(baseWhereObj,{
+                Object.assign(weekWhereObj,baseWhereObj,{
                     therapist_id,
                     order_date: ['between', [weekStart, dateEnd]]
                 })
@@ -345,9 +370,9 @@ module.exports = {
 
             let allAmount = await ORDER.where(allWhereObj).sum('amount')
 
-            let monthAmount = await ORDER.where(monthWhereObj).sum('amount')
+            let monthAmount =await ORDER.where(monthWhereObj).sum('amount')
 
-            let weekAmount = await ORDER.where(weekWhereObj).sum('amount')
+            let weekAmount =await ORDER.where(weekWhereObj).sum('amount')
 
             let data = {
                 allAmount: allAmount || 0,
