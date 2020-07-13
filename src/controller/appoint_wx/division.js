@@ -10,6 +10,7 @@ const logger = think.logger;
 const entityName = '分部'
 const tableName = 'division'
 const divisionService = require('../../service/division')
+const continueEduSettingService = require('../../service/continueEduSetting')
 
 
 module.exports = class extends Base {
@@ -48,8 +49,9 @@ module.exports = class extends Base {
 
             let create_date = DateUtil.getNowStr()
 
+            let division_id=Util.uuid()
             let addJson = {
-                division_id: Util.uuid(),
+                division_id,
                 division_name,
                 create_date,
                 op_date: create_date,
@@ -61,6 +63,9 @@ module.exports = class extends Base {
             let data = await this.model(tableName).add(addJson);
 
             logger.info(`新增${entityName}，数据库返回：${JSON.stringify(data)}`)
+
+            //新增分部后同步新增一条设置信息
+            await continueEduSettingService.add(division_id)
 
             this.body = Response.success(data);
 

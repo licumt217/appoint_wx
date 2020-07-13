@@ -54,6 +54,7 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
+        "continueEduSetting",
     ],
     caseManager: [
         "login",
