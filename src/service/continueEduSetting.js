@@ -9,6 +9,53 @@ module.exports = {
 
 
     /**
+     *超管初始化一条继续教育设置记录
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async init() {
+
+        let entity=await think.model(tableName).find().catch(e => {
+            throw new Error(e)
+        })
+
+        if(Util.isEmptyObject(entity)){
+            let op_date = DateUtil.getNowStr()
+
+            let start_date=new Date();
+            start_date.setMonth(0)
+            start_date.setDate(1);
+            start_date=DateUtil.format(start_date)
+
+            let end_date=new Date();
+            end_date.setMonth(0)
+            end_date.setDate(31);
+            end_date=DateUtil.format(end_date)
+
+            try {
+
+                await think.model(tableName).add({
+                    setting_id:Util.uuid(),
+                    op_date,
+                    start_date,
+                    end_date
+                }).catch(e => {
+                    throw new Error(e)
+                })
+
+            } catch (e) {
+                let msg = `超管初始化一条继续教育设置记录接口异常 msg:${e}`
+                let returnMsg = `超管初始化一条继续教育设置记录接口异常`
+                logger.info(msg);
+                throw new Error(returnMsg)
+            }
+        }
+
+
+
+
+    },
+
+    /**
      *新建分部时初始化一条配置信息
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
@@ -71,26 +118,24 @@ module.exports = {
     },
 
     /**
-     *根据分部ID获取设置信息
+     *获取设置信息
      * @returns {Promise<{isSuccess, errorMsg}>}
      */
-    async getByDivisionId(division_id) {
+    async get() {
 
         try {
 
-            let data = await think.model(tableName).where({
-                division_id
-            }).find().catch(e => {
+            let data = await think.model(tableName).find().catch(e => {
                 throw new Error(e)
             })
 
 
-            logger.info(`根据分部ID获取设置信息数据库返回：${JSON.stringify(data)}`)
+            logger.info(`获取设置信息数据库返回：${JSON.stringify(data)}`)
 
             return data;
 
         } catch (e) {
-            let msg = `根据分部ID获取设置信息接口异常 msg:${e}`
+            let msg = `获取设置信息接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }

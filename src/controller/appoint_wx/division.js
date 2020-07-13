@@ -64,9 +64,6 @@ module.exports = class extends Base {
 
             logger.info(`新增${entityName}，数据库返回：${JSON.stringify(data)}`)
 
-            //新增分部后同步新增一条设置信息
-            await continueEduSettingService.add(division_id)
-
             this.body = Response.success(data);
 
         } catch (e) {

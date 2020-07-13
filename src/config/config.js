@@ -29,6 +29,7 @@ module.exports = {
         "question",
         "questionMobile",
         "agreement",
+        "continueEduSetting",
     ],
     divisionManager: [
         "login",
@@ -54,7 +55,7 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
-        "continueEduSetting",
+
     ],
     caseManager: [
         "login",
@@ -106,6 +107,8 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
+        "continueEdu",
+        "continueEduSetting",
     ],
     client: [
         "login",
