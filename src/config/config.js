@@ -109,6 +109,7 @@ module.exports = {
         "questionMobile",
         "continueEdu",
         "continueEduSetting",
+        "continueEduItem",
     ],
     client: [
         "login",

@@ -3,6 +3,7 @@ const Base = require('./base.js');
 const Response = require('../../config/response')
 const ROLE = require('../../config/constants/ROLE')
 
+const continueEduItemService = require('../../service/continueEduItem')
 const divisionAdminRelationService = require('../../service/divisionAdminRelation')
 const continueEduService = require('../../service/continueEdu')
 const logger = think.logger;
@@ -45,7 +46,7 @@ module.exports = class extends Base {
         try {
 
             let user_id = this.ctx.state.userInfo.user_id;
-            let year = this.post('year')
+            let year = String(new Date().getFullYear()-1)
 
             let data = await continueEduService.getByUserIdAndYear(user_id, year)
 
@@ -68,23 +69,54 @@ module.exports = class extends Base {
         try {
 
             let user_id = this.ctx.state.userInfo.user_id;
-            let year = String(new Date().getFullYear());
+            let year = String(new Date().getFullYear()-1);
 
-            let name=this.post('name')
 
-            let attachment=this.post('attachment')
+            let data=this.post('data')
 
-            let data = await continueEduService.add({
-                name,
-                attachment,
+            let continue_edu_id=await continueEduService.add({
                 user_id,
                 year
             })
 
-            this.body = Response.success(data);
+
+            await continueEduItemService.addMany(data,continue_edu_id)
+
+            this.body = Response.success();
 
         } catch (e) {
             let msg = `咨询师新增继续教育异常`
+            logger.info(`${msg} msg:${e}`);
+            this.body = Response.businessException(msg);
+        }
+
+
+    }
+
+    /**
+     * 修改咨询师继续教育信息
+     * @returns {Promise<void>}
+     */
+    async updateAction() {
+        try {
+
+            logger.info(`修改咨询师继续教育信息参数：${JSON.stringify(this.post())}`)
+
+
+            let continue_edu_id=this.post('continue_edu_id')
+
+            let data=this.post('data')
+
+            await continueEduService.update({continue_edu_id})
+
+            await continueEduItemService.deleteByContinueEduId(continue_edu_id)
+
+            await continueEduItemService.addMany(data,continue_edu_id)
+
+            this.body = Response.success();
+
+        } catch (e) {
+            let msg = `修改咨询师继续教育信息异常`
             logger.info(`${msg} msg:${e}`);
             this.body = Response.businessException(msg);
         }

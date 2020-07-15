@@ -42,20 +42,57 @@ module.exports = {
 
         try {
 
-            obj.continue_edu_id=Util.uuid();
+            let continue_edu_id=Util.uuid()
+            obj.continue_edu_id=continue_edu_id
             obj.op_date=DateUtil.getNowStr();
 
-            let data = await think.model(tableName).add(obj).catch(e => {
+            let data=await think.model(tableName).where({
+                year:obj.year,
+                user_id:obj.user_id
+            }).find().catch(e => {
+                throw new Error(e)
+            })
+
+            if(!Util.isEmptyObject(data)){
+                throw new Error(`该年度的继续教育记录已存在！不能重复添加！`)
+            }else{
+                data = await think.model(tableName).add(obj).catch(e => {
+                    throw new Error(e)
+                })
+
+                logger.info(`咨询师新增继续教育数据库返回：${JSON.stringify(data)}`)
+
+                return continue_edu_id;
+            }
+
+        } catch (e) {
+            let msg = `咨询师新增继续教育接口异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
+    /**
+     *咨询师修改继续教育
+     * @returns {Promise<{isSuccess, errorMsg}>}
+     */
+    async update(whereObj={},updateObj={}) {
+
+        try {
+
+            updateObj.op_date=DateUtil.getNowStr();
+
+            let data = await think.model(tableName).where(whereObj).update(updateObj).catch(e => {
                 throw new Error(e)
             })
 
 
-            logger.info(`咨询师新增继续教育数据库返回：${JSON.stringify(data)}`)
-
-            return data;
+            logger.info(`咨询师修改继续教育数据库返回：${JSON.stringify(data)}`)
 
         } catch (e) {
-            let msg = `咨询师新增继续教育接口异常 msg:${e}`
+            let msg = `咨询师修改继续教育接口异常 msg:${e}`
             logger.info(msg);
             throw new Error(msg)
         }
