@@ -61,5 +61,33 @@ module.exports =  {
 
     },
 
+    /**
+     * 获取给定工作室ID对应的咨询师列表
+     * @param division_id
+     * @returns {Promise<any>}
+     */
+    async getTherapistIdArrayByStationIds(station_ids) {
+
+
+        try {
+
+            let data = await think.model(tableName).where({
+                station_id:['in',station_ids]
+            }).getField('therapist_id').catch(e => {
+                throw new Error(e)
+            });
+
+            logger.info(`获取给定工作室ID对应的咨询师列表，数据库返回：${data}`)
+
+            return data
+        } catch (e) {
+            let msg = `获取给定工作室ID对应的咨询师列表异常 msg:${e}`
+            logger.info(msg);
+            throw new Error(msg)
+        }
+
+
+    },
+
 
 };

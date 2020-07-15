@@ -1,4 +1,5 @@
 const logger =think.logger
+const Util = require('../util/Util')
 const tableName = 'station_casemanager_relation'
 
 module.exports =  {
@@ -48,6 +49,10 @@ module.exports =  {
                 throw new Error(e)
             });
 
+            if(Util.isEmptyObject(data)){
+                throw new Error('当前案例管理员没有对应的工作室，请联系管理员！')
+            }
+
             logger.info(`根据案例管理者ID查询对应的工作室信息数据库返回：${JSON.stringify(data)}`)
 
             let station_id=data.station_id
@@ -62,9 +67,8 @@ module.exports =  {
             return data;
 
         }catch (e) {
-            let msg=`根据案例管理者ID查询对应的工作室信息异常 msg:${e}`
-            logger.info(msg);
-            throw new Error(msg)
+            logger.info(`根据案例管理者ID查询对应的工作室信息异常 msg:${e}`);
+            throw new Error(e.message)
         }
 
 

@@ -55,6 +55,8 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
+        "continueEdu",
+        "continueEduItem",
 
     ],
     caseManager: [
@@ -81,6 +83,8 @@ module.exports = {
         "measure",
         "question",
         "questionMobile",
+        "continueEdu",
+        "continueEduItem",
     ],
     therapist: [
         "login",

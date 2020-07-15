@@ -65,7 +65,7 @@ module.exports = class extends Base {
 
                     if (data.role === ROLE.caseManager) {
                         station = await stationCasemanagerRelationService.getStationInfoByCasemanagerId(data.user_id)
-                        logger.info(JSON.stringify(station))
+
                     }
 
                     this.body = Response.success({
@@ -77,7 +77,7 @@ module.exports = class extends Base {
 
         } catch (e) {
             logger.info(`pc端用户登录异常 msg:${e}`);
-            this.body = Response.businessException(e);
+            this.body = Response.businessException(e.message);
         }
 
 

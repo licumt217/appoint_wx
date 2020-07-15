@@ -1,10 +1,10 @@
 const Base = require('./base.js');
 
 const Response = require('../../config/response')
-const ROLE = require('../../config/constants/ROLE')
 
+const Page = require('../../config/constants/PAGE')
 const continueEduItemService = require('../../service/continueEduItem')
-const divisionAdminRelationService = require('../../service/divisionAdminRelation')
+const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 const continueEduService = require('../../service/continueEdu')
 const logger = think.logger;
 const DateUtil = require('../../util/DateUtil')
@@ -31,6 +31,36 @@ module.exports = class extends Base {
 
         } catch (e) {
             let msg = `获取继续教育列表异常`
+            logger.info(`${msg} msg:${e}`);
+            this.body = Response.businessException(msg);
+        }
+
+
+    }
+
+    /**
+     * 获取继续教育分页列表
+     * 分部管理员和咨询师查看
+     * @returns {Promise<void>}
+     */
+    async queryListAction() {
+        try {
+
+            let page = this.post('page') || Page.currentPage
+            let pageSize = this.post('pageSize') || Page.pageSize
+
+            let name=this.post('name')||""
+            let year=this.post('year')||""
+
+            let user_id = this.ctx.state.userInfo.user_id;
+            let role = this.ctx.state.userInfo.role;
+
+            let data = await continueEduService.queryList(role,user_id,page,pageSize,name,year)
+
+            this.body = Response.success(data);
+
+        } catch (e) {
+            let msg = `获取继续教育分页列表异常`
             logger.info(`${msg} msg:${e}`);
             this.body = Response.businessException(msg);
         }
