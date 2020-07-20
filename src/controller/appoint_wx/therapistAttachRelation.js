@@ -7,6 +7,7 @@ const Page = require('../../config/constants/PAGE')
 const Constant = require('../../config/Constant')
 const Util = require('../../util/Util')
 const DateUtil = require('../../util/DateUtil')
+const TAX_BY_OFFICE = require('../../config/constants/TAX_BY_OFFICE')
 const md5 = require('md5')
 const logger = think.logger;
 
@@ -31,6 +32,7 @@ module.exports = class extends Base {
             let level_type_id = this.post('level_type_id')
             let area = this.post('area')
             let emergency = this.post('emergency')||Constant.EMERGENCY.DISABLE
+            let tax_by_office = this.post('tax_by_office')||TAX_BY_OFFICE.NO
 
             logger.info(`根据咨询师ID新增预约相关配置参数 :${JSON.stringify(this.post())}`)
 
@@ -76,7 +78,8 @@ module.exports = class extends Base {
                 manner_type_id,
                 level_type_id,
                 emergency,
-                area
+                area,
+                tax_by_office
             })
 
             logger.info(`根据咨询师ID新增预约相关配置，数据库返回：${JSON.stringify(data)}`)
@@ -117,7 +120,8 @@ module.exports = class extends Base {
                 manner_type_id:this.post('manner_type_id'),
                 level_type_id:this.post('level_type_id'),
                 area:this.post('area').join(","),
-                emergency:this.post('emergency')||Constant.EMERGENCY.DISABLE
+                emergency:this.post('emergency')||Constant.EMERGENCY.DISABLE,
+                tax_by_office:this.post('tax_by_office')||TAX_BY_OFFICE.NO
             })
 
             logger.info(`根据咨询师ID更新预约相关配置，数据库返回：${JSON.stringify(data)}`)
