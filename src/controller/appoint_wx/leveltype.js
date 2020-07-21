@@ -144,7 +144,9 @@ module.exports = class extends Base {
 
             logger.info(`获取${entityName}列表参数 `)
 
-            let data = await this.model(tableName).select();
+            let data = await this.model(tableName).order({
+                divide_ratio: 'DESC',
+            }).select();
 
             logger.info(`获取${entityName}列表，数据库返回：${JSON.stringify(data)}`)
 
