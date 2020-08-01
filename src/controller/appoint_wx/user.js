@@ -235,13 +235,14 @@ module.exports = class extends Base {
      */
     async updateAction() {
         try {
-
+            let role = this.ctx.state.userInfo.role;
             let user_id = this.post('user_id')
             let name = this.post('name')
             let phone = this.post('phone')
             let gender = this.post('gender')
             let birthday = this.post('birthday')
             let email = this.post('email')
+            let area = this.post('area')
             let identification_no = this.post('identification_no') || ''
 
             logger.info(`修改用户信息参数 :${JSON.stringify(this.post())}`)
@@ -265,6 +266,14 @@ module.exports = class extends Base {
 
             if (email) {
                 updateJson.email = email
+            }
+
+            let province="",city="";
+            if(ROLE.therapist===role){
+                province=area[0];
+                city=area[1];
+                updateJson.province=province;
+                updateJson.city=city;
             }
 
             updateJson.identification_no = identification_no;

@@ -252,8 +252,8 @@ module.exports = class extends Base {
                 whereObj.gender = gender;
             }
             if (area) {
-                area=area.join(',')
-                whereObj.area = area;
+                whereObj.province = area[0];
+                whereObj.city = area[1];
             }
 
 

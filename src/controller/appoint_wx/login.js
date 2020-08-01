@@ -120,9 +120,9 @@ module.exports = class extends Base {
 
                 //黑名单判断
 
-                let isBlacklist=await blacklistService.isBlacklistUser(user_id)
+                let isBlacklist = await blacklistService.isBlacklistUser(user_id)
 
-                if(isBlacklist){
+                if (isBlacklist) {
                     logger.info(`当前用户是系统黑名单用户，不允许登录系统！`);
                     this.body = Response.businessException(`抱歉，您是系统黑名单用户，不允许登录系统`);
                     return false;
@@ -199,9 +199,9 @@ module.exports = class extends Base {
             //手机号已存在时不允许注册
             //已存在的手机号不允许注册
 
-            let existUser=await userService.getByPhone(phone);
+            let existUser = await userService.getByPhone(phone);
 
-            if(!Util.isEmptyObject(existUser)){
+            if (!Util.isEmptyObject(existUser)) {
                 this.body = Response.businessException(`该手机号对应用户已存在，请修改！`)
                 return false;
             }
@@ -209,7 +209,7 @@ module.exports = class extends Base {
 
             let op_date = DateUtil.getNowStr()
 
-            let user_id=Util.uuid();
+            let user_id = Util.uuid();
 
             await this.model('user').add({
                 user_id,
@@ -289,7 +289,7 @@ module.exports = class extends Base {
 
             let userInfo = await this.model('user').where({
                 phone,
-                password:md5(password)
+                password: md5(password)
             }).join(joinStr).find();
 
             let op_date = DateUtil.getNowStr()
@@ -298,7 +298,7 @@ module.exports = class extends Base {
 
                 this.body = Response.businessException(`用户不存在或密码不正确！`);
 
-            }else{
+            } else {
                 await this.model('weixin_user').add({
                     weixin_user_id: Util.uuid(),
                     openid,
@@ -317,7 +317,6 @@ module.exports = class extends Base {
             }
 
 
-
         } catch (e) {
             logger.info(`PC端已注册的咨询师在微信端登录，和微信号建立绑定关系异常 msg:${e}`);
             this.body = Response.businessException(e);
@@ -334,7 +333,7 @@ module.exports = class extends Base {
     async unbindAction() {
         try {
 
-            let user_id=this.ctx.state.userInfo.user_id
+            let user_id = this.ctx.state.userInfo.user_id
 
             logger.info(`c端用户微信和用户id解绑参数 ${JSON.stringify(this.post())}`);
 
@@ -366,7 +365,8 @@ module.exports = class extends Base {
                 email = this.post('email'),
                 password = this.post('password'),
                 name = this.post('name'),
-                birthday = this.post('birthday');
+                birthday = this.post('birthday'),
+                area = this.post('area');
 
             logger.info(`pc端咨询注册参数 ${JSON.stringify(this.post())}`);
 
@@ -399,11 +399,17 @@ module.exports = class extends Base {
                 this.body = Response.businessException(`出生日期不能为空！`)
                 return false;
             }
+            if (!area) {
+                this.body = Response.businessException(`区域不能为空！`)
+                return false;
+            }
 
             //根据手机号获取用户。如果用户已存在，则提醒用户
             let userInfo = await this.model('user').where({
                 phone
             }).find();
+
+            let [province,city]=area;
 
             let op_date = DateUtil.getNowStr()
 
@@ -421,7 +427,9 @@ module.exports = class extends Base {
                     name,
                     op_date,
                     password: md5(password),
-                    role: ROLE.therapist
+                    role: ROLE.therapist,
+                    province,
+                    city
                 })
 
                 //如果是咨询师的话，初始化可用时段设置
