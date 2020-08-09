@@ -141,5 +141,6 @@ module.exports = {
         "questionMobile",
         "agreement",
         "userAgreement",
+        "cv",
     ]
 };
