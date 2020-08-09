@@ -21,6 +21,11 @@ module.exports = {
                 item.continue_edu_item_id=Util.uuid();
                 item.op_date=op_date;
                 item.continue_edu_id=continue_edu_id;
+                if(item.files){
+                    item.files=JSON.stringify(item.files)
+                }else{
+                    item.files=JSON.stringify([])
+                }
             })
 
             let data = await think.model(tableName).addMany(array).catch(e => {

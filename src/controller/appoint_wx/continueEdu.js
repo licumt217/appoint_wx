@@ -169,7 +169,7 @@ module.exports = class extends Base {
                 let filepath = file.path; //文件路径
                 let filename = file.name; //文件名
                 let suffix = filename.substr(filename.lastIndexOf('.') + 1); //文件后缀
-                let newfilename = think.uuid() + '.' + suffix;
+                let newfilename = think.uuid() + '_'+filename;
 
                 let datas = fs.readFileSync(filepath);
 

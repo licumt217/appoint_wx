@@ -114,6 +114,7 @@ module.exports = {
         "continueEdu",
         "continueEduSetting",
         "continueEduItem",
+        "cv",
     ],
     client: [
         "login",
