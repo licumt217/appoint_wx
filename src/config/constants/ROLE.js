@@ -7,6 +7,7 @@ let ROLE = {
     caseManager: 2,       //案例管理员
     therapist: 3,    //咨询师
     client: 4,    //c端用户
+    receptionist: 5,    //接待员
 };
 
 ROLE.getKeyByValue=(value)=>{
@@ -16,6 +17,7 @@ ROLE.getKeyByValue=(value)=>{
         2:'caseManager',
         3:'therapist',
         4:'client',
+        5:'receptionist',
     }
     return map[value]
 }

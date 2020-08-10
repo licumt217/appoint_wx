@@ -85,6 +85,7 @@ module.exports = {
         "questionMobile",
         "continueEdu",
         "continueEduItem",
+        "stationReceptionistRelation",
     ],
     therapist: [
         "login",
