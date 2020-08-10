@@ -12,6 +12,8 @@ const tableName = 'station_receptionist_relation'
 const userService = require('../../service/user')
 const stationCasemanagerRelationService = require('../../service/stationCasemanagerRelation')
 
+const operateLogService=think.service('operateLog')
+
 
 module.exports = class extends Base {
 
@@ -117,6 +119,8 @@ module.exports = class extends Base {
      */
     async listAction() {
         try {
+
+            operateLogService.add(this.ctx.state.userInfo.user_id,'查询',`${entityName}列表`);
 
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
