@@ -224,6 +224,7 @@ module.exports = class extends Base {
             let qualification_type_id = this.post('qualification_type_id')
             let school_type_id = this.post('school_type_id')
             let area = this.post('area')
+            let stationArea = this.post('stationArea')
             let gender = this.post('gender')
             let page = this.post('page') || Page.currentPage
             let pageSize = this.post('pageSize') || Page.pageSize
@@ -254,6 +255,10 @@ module.exports = class extends Base {
             if (area) {
                 whereObj.province = area[0];
                 whereObj.city = area[1];
+            }
+            if (stationArea) {
+                whereObj.station_province = stationArea[0];
+                whereObj.station_city = stationArea[1];
             }
 
 
