@@ -1,7 +1,7 @@
 // default config
 module.exports = {
     port: 8350,
-    workers: 1,
+    workers: 0,
     admin: [
         "login",
         "leveltype",
