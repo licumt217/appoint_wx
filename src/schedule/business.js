@@ -1,4 +1,3 @@
-const schedule = require('node-schedule');
 
 const orderService = require('../service/order');
 const appointmentService = require('../service/appointment');
@@ -16,17 +15,14 @@ const APPOINTMENT_MULTI = require('../config/constants/APPOINTMENT_MULTI')
 const ORDER_GENERATED_NEXT = require('../config/constants/ORDER_GENERATED_NEXT')
 const DateUtil = require('../util/DateUtil')
 const logger = think.logger
-const job = '1 32 * * * *';
 
 
 const scheduleCronstyle = async () => {
-    schedule.scheduleJob(job, async () => {
         logger.info(`定时任务开始执行：`)
         await scheduleOrder();
         await scheduleAppointment();
         await scheduleRefundQuery()
         await schedulePayingQuery()
-    });
 }
 
 
@@ -266,4 +262,6 @@ const handleCommitedOrders = async () => {
     }
 }
 
-scheduleCronstyle();
+// scheduleCronstyle();
+
+module.exports=scheduleCronstyle;

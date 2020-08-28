@@ -1,8 +1,12 @@
+
+const businessSchedule=require('../schedule/business')
+const wechatSchedule=require('../schedule/wechat')
 module.exports = [{
-    interval: '10s',
+    cron:'1 1 * * * *',
     immediate: false,
     handle: () => {
-        console.log(Math.random())
+        wechatSchedule();
+        businessSchedule()
     },
 
 }]
