@@ -75,10 +75,10 @@ module.exports = class extends Base {
 
             logger.info(`prepay_id ${prepay_id}`);
 
+            //TODO 先去掉支付中这个状态。抽空梳理下影响哪些业务。
             await orderService.update({order_id}, {
                 out_trade_no,
-                prepay_id,
-                state:ORDER_STATE.PAYING
+                prepay_id
             })
 
             let paySign = await WechatUtil.getJsApiPaySign(division,prepay_id)

@@ -87,11 +87,11 @@ const scheduleRefundQuery = async () => {
 
 /**
  *支付中订单查询
- * 定时查询支付中的订单，防止有些支付通知没有接收到的问题
+ * 定时查询已下单的订单，防止有些支付通知没有接收到的问题
  */
 const schedulePayingQuery = async () => {
     let orders = await orderService.getList({
-        'appoint_order.state': ORDER_STATE.PAYING
+        'appoint_order.state': ORDER_STATE.COMMIT
     });
 
     logger.info(`支付中状态订单数:${orders.length}`)
