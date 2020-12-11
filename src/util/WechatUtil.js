@@ -547,7 +547,7 @@ let Util = {
 
         let obj = {
             appId: WechatConfig.APP_ID,
-            timeStamp: BaseUtil.getTimestamp(),
+            timeStamp: String(BaseUtil.getTimestamp()),
             nonceStr: BaseUtil.uuid(),
             package: `prepay_id=${prepay_id}`,
             signType: 'MD5'
