@@ -371,18 +371,10 @@ let Util = {
             refund_fee: refund_fee,
         }
 
-        if (Util.isServiceMerchantModel(division)) {
-            obj = Object.assign(obj, {
-                mch_id: WechatConfig.MCH_ID_OF_SERVICE_MERCHANT,
-                sub_mch_id: division.sub_mch_id,
-                notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL_OF_SMM
-            })
-        } else {
-            obj = Object.assign(obj, {
-                mch_id: WechatConfig.MCH_ID,
-                notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL
-            })
-        }
+        obj = Object.assign(obj, {
+            mch_id: WechatConfig.MCH_ID,
+            notify_url: WechatConfig.URL_OF_REFUND_NOTIFY_URL
+        })
 
         //新增一条退款记录
         await refundRecordService.add({
@@ -392,7 +384,7 @@ let Util = {
 
         logger.info(`微信退款加密前参数 obj:${JSON.stringify(obj)}`)
 
-        let sign = Util.getPaySign(obj, Util.isServiceMerchantModel(division));
+        let sign = Util.getPaySign(obj);
 
         obj.sign = sign;
 

@@ -176,7 +176,7 @@ const handleCommitedAppointments = async () => {
 
 
 /**
- * 已支付：
+ * 已支付：且没有其他的状态为已提交的订单
  * 1、预约前按单支付：超过预约结束时间24小时，如果是持续预约，则生成新单子；否则单子状态设置为已完结,同时预约设置为已完结。
  * 2、预约后按单支付：超过预约结束时间24小时，如果是持续预约，则生成新单子；否则单子状态设置为已完结,同时预约设置为已完结。
  * 3、预约后按月支付：不处理
@@ -190,10 +190,14 @@ const handlePayedOrders = async () => {
     logger.info(`已支付状态订单数:${orders.length}`)
 
     if (orders && orders.length > 0) {
-        let appointment = await appointmentService.getById(orders[0].appointment_id)
+
 
         for (let i = 0; i < orders.length; i++) {
             let order = orders[i]
+
+            let appointment = await appointmentService.getById(order.appointment_id);
+
+            let ordersByAppointment=await orderService.getListByAppointmentId(order.appointment_id);
 
             if (order.pay_manner === PAY_MANNER.BEFORE_SINGLE || order.pay_manner === PAY_MANNER.AFTER_SINGLE) {
                 let order_date = new Date(order.order_date);
@@ -204,8 +208,19 @@ const handlePayedOrders = async () => {
                         await appointmentService.done(order.appointment_id)
                     }
                 } else {
-                    if (DateUtil.beforeNowMoreThanOneDay(order_date)) {
-                        await orderService.add(order.appointment_id)
+                    if (DateUtil.afterNowMoreThanOneDay(order_date)) {
+                        let flag=false;
+                        if(ordersByAppointment.length>1){
+                            ordersByAppointment.forEach((item)=>{
+                                if(item.state===ORDER_STATE.COMMIT){
+                                    flag=true;
+                                }
+                            })
+                        }
+                        if(flag){
+                            await orderService.add(order.appointment_id)
+                        }
+
                     }
 
                 }
@@ -233,6 +248,8 @@ const handleCommitedOrders = async () => {
             let order = orders[i]
 
             if (order.pay_manner === PAY_MANNER.BEFORE_SINGLE) {
+
+                logger.info(`00000:`)
                 let order_date = new Date(order.order_date);
                 let now_date = new Date();
                 //未精确到具体时段。暂时以天计算
@@ -241,6 +258,7 @@ const handleCommitedOrders = async () => {
                     await appointmentService.done(order.appointment_id)
                 }
             } else if (order.pay_manner === PAY_MANNER.AFTER_SINGLE) {
+                logger.info(`11111:`)
                 let order_date = new Date(order.order_date);
 
                 if (DateUtil.beforeNowMoreThanOneDay(order_date)) {
@@ -248,6 +266,7 @@ const handleCommitedOrders = async () => {
                     await appointmentService.done(order.appointment_id)
                 }
             } else if (order.pay_manner === PAY_MANNER.AFTER_MONTH) {
+                logger.info(`22222:${JSON.stringify(order)}`)
                 let order_date = new Date(order.order_date);
                 if (DateUtil.beforeNowMoreThanOneDay(order_date) && order.generated_next === ORDER_GENERATED_NEXT.NO) {
                     await orderService.update({
