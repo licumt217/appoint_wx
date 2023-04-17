@@ -42,14 +42,14 @@ module.exports = class extends Base {
                 return false;
             }
 
-            if (function_level === FUNCTION_LEVEL.ONLINEPAY && receive_side===RECEIVE_SIDE.SELF && !sub_mch_id) {
+            if (function_level === FUNCTION_LEVEL.ONLINEPAY && receive_side === RECEIVE_SIDE.SELF && !sub_mch_id) {
                 this.body = Response.businessException(`收款微信商户号不能为空！`)
                 return false;
             }
 
             let create_date = DateUtil.getNowStr()
 
-            let division_id=Util.uuid()
+            let division_id = Util.uuid()
             let addJson = {
                 division_id,
                 division_name,
@@ -137,7 +137,7 @@ module.exports = class extends Base {
                 return false;
             }
 
-            if (function_level === FUNCTION_LEVEL.ONLINEPAY && receive_side===RECEIVE_SIDE.SELF && !sub_mch_id) {
+            if (function_level === FUNCTION_LEVEL.ONLINEPAY && receive_side === RECEIVE_SIDE.SELF && !sub_mch_id) {
                 this.body = Response.businessException(`收款微信商户号不能为空！`)
                 return false;
             }
@@ -178,7 +178,11 @@ module.exports = class extends Base {
 
             logger.info(`获取${entityName}列表参数 `)
 
-            let data = await this.model(tableName).select();
+            let data = await this.model(tableName).where({
+                state: 0
+            }).order({
+                create_date: "DESC"
+            }).select();
 
             logger.info(`获取${entityName}列表，数据库返回：${JSON.stringify(data)}`)
 

@@ -40,7 +40,7 @@ module.exports = class extends Base {
 
             //只查询对应工作室下边的
             let user_id = this.ctx.state.userInfo.user_id;
-            let station_id = await stationService.getStationIdByCaseManagerId(user_id)
+            let station_id = await stationCasemanagerRelationService.getStationIdByCasemanagerId(user_id)
 
             let op_date = DateUtil.getNowStr()
 
@@ -161,7 +161,7 @@ module.exports = class extends Base {
 
             let appointments = await appointmentService.getListOfUsingByRoomId(room_id)
 
-            if(appointments && appointments.length>0){
+            if (appointments && appointments.length > 0) {
                 this.body = Response.businessException(`当前房间有进行中的预约，不能停用！`)
                 return false;
             }
